@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 *.o
 *.a
 *.so
@@ -35,12 +34,9 @@ _testmain.go
 /output
 *.local.yml
 dumped_hertz_remote_config.json
-		  
-=======
 .git/
 .1024.nix
 .1024nix
 .1024feature*
 .nfs*
 node_modules
->>>>>>> c974f74 (Initial commit)

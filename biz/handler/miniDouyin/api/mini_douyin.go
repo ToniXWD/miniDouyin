@@ -15,6 +15,7 @@ import (
 // Feed .
 // @router /douyin/feed/ [GET]
 func Feed(ctx context.Context, c *app.RequestContext) {
+	fmt.Println("Feed 被调用")
 	var err error
 	var req api.FeedRequest
 	err = c.BindAndValidate(&req)
@@ -24,6 +25,10 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FeedResponse)
+
+	pg.DBVideoFeed(&req, resp)
+
+	fmt.Printf("resp +v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

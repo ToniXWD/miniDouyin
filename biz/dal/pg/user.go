@@ -100,7 +100,7 @@ func DBUserFromRegisterRequest(request *api.UserRegisterRequest) DBUser {
 // 从获取用户信息请求请求构造新用户
 func DBGetUser(request *api.UserRequest) (*DBUser, error) {
 	var user DBUser
-	res := DB.First(&user, request.UserID)
+	res := DB.First(&user, "ID = ?", request.UserID)
 
 	if res.Error != nil {
 		// 没有找到记录

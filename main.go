@@ -4,6 +4,7 @@ package main
 
 import (
 	"miniDouyin/biz/dal"
+	"miniDouyin/utils"
 
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
@@ -11,7 +12,7 @@ import (
 func main() {
 	dal.Init()
 
-	h := server.Default(server.WithHostPorts("0.0.0.0:8889"))
+	h := server.Default(server.WithHostPorts(string("0.0.0.0:") + utils.PORT))
 
 	register(h)
 	h.Spin()

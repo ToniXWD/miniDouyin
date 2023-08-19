@@ -3,6 +3,7 @@ package pg
 import (
 	"fmt"
 	"miniDouyin/biz/model/miniDouyin/api"
+	"miniDouyin/utils"
 )
 
 // 处理登录请求
@@ -60,9 +61,29 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 		// 没有找到用户或token失败
 		response.StatusCode = 1
 		response.StatusMsg = err.Error()
+		return
 	}
 	// 填充结构体
 	response.User = user.ToApiUser()
 	response.StatusCode = 0
 	response.StatusMsg = "Get user information successfully!"
+}
+
+// 处理视频流
+func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
+	vlist, err := GetNewVideoList(request.LatestTime)
+	if err != nil {
+		response.StatusCode = 1
+		response.StatusMsg = "Failed to get video list"
+		return
+	}
+	response.StatusCode = 0
+	response.StatusMsg = "Load video list successfully"
+	for idx, video := range vlist {
+		if idx == len(vlist)-1 {
+			response.NextTime = utils.TimeToI64(video.CreatedAt)
+		}
+		newVideo, _ := video.ToApiVideo()
+		response.VideoList = append(response.VideoList, newVideo)
+	}
 }

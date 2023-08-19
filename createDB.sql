@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     follower_count INT,
     work_count INT,
     favorite_count INT,
-    token INT,
+    token VARCHAR(255),
     avatar VARCHAR(255),
     background_image VARCHAR(255),
     signature VARCHAR(255),

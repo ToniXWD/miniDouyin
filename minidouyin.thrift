@@ -7,7 +7,7 @@ struct FeedRequest {
 }
 
 struct FeedResponse {
-    1: required i64 status_code,        // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,        // 状态码，0-成功，其他值-失败
     2: required string status_msg,      // 返回状态描述
     3: required list<Video> video_list, // 视频列表
     4: required i64 next_time,          // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
@@ -31,7 +31,7 @@ struct UserRegisterRequest {
 }
 
 struct UserRegisterResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
     3: required i64 user_id,       // 用户id
     4: required string token,      // 用户鉴权token
@@ -44,7 +44,7 @@ struct UserLoginRequest {
 }
 
 struct UserLoginResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
     3: required i64 user_id,       // 用户id
     4: required string token,      // 用户鉴权token
@@ -72,7 +72,7 @@ struct UserRequest {
 }
 
 struct UserResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
     3: required User user,         // 用户信息
 }
@@ -85,7 +85,7 @@ struct PublishActionRequest {
 }
 
 struct PublishActionResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
 }
 
@@ -96,7 +96,7 @@ struct PublishListRequest {
 }
 
 struct PublishListResponse {
-    1: required i64 status_code,        // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,        // 状态码，0-成功，其他值-失败
     2: required string status_msg,      // 返回状态描述
     3: required list<Video> video_list, // 用户发布的视频列表
 }
@@ -109,7 +109,7 @@ struct FavoriteActionRequest {
 }
 
 struct FavoriteActionResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
 }
 
@@ -120,7 +120,7 @@ struct FavoriteListRequest {
 }
 
 struct FavoriteListResponse {
-    1: required i64 status_code,        // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,        // 状态码，0-成功，其他值-失败
     2: required string status_msg,      // 返回状态描述
     3: required list<Video> video_list, // 用户点赞视频列表
 }
@@ -135,7 +135,7 @@ struct CommentActionRequest {
 }
 
 struct CommentActionResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
     3: required Comment comment,   // 评论成功返回评论内容，不需要重新拉取整个列表
 }
@@ -154,7 +154,7 @@ struct CommentListRequest {
 }
 
 struct CommentListResponse {
-    1: required i64 status_code,            // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,            // 状态码，0-成功，其他值-失败
     2: required string status_msg,          // 返回状态描述
     3: required list<Comment> comment_list, // 评论列表
 }
@@ -167,7 +167,7 @@ struct RelationActionRequest {
 }
 
 struct RelationActionResponse {
-    1: required i64 status_code,   // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,   // 状态码，0-成功，其他值-失败
     2: required string status_msg, // 返回状态描述
 }
 
@@ -178,7 +178,7 @@ struct RelationFollowListRequest {
 }
 
 struct RelationFollowListResponse {
-    1: required i64 status_code,      // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,      // 状态码，0-成功，其他值-失败
     2: required string status_msg,    // 返回状态描述
     3: required list<User> user_list, // 用户信息列表
 }
@@ -190,7 +190,7 @@ struct RelationFollowerListRequest {
 }
 
 struct RelationFollowerListResponse {
-    1: required i64 status_code,      // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,      // 状态码，0-成功，其他值-失败
     2: required string status_msg,    // 返回状态描述
     3: required list<User> user_list, // 用户列表
 }
@@ -202,7 +202,7 @@ struct RelationFriendListRequest {
 }
 
 struct RelationFriendListResponse {
-    1: required i64 status_code,      // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,      // 状态码，0-成功，其他值-失败
     2: required string status_msg,    // 返回状态描述
     3: required list<User> user_list, // 用户列表
 }
@@ -215,7 +215,7 @@ struct ChatRecordRequest {
 }
 
 struct ChatRecordResponse {
-    1: required i64 status_code,           // 状态码，0-成功，其他值-失败
+    1: required i32 status_code,           // 状态码，0-成功，其他值-失败
     2: required string status_msg,         // 返回状态描述
     3: required list<Message> struct_list, // 消息列表
 }
@@ -236,7 +236,7 @@ struct SendMsgRequest {
 }
 
 struct SendMsgResponse {
-    1: required i64 status_code, // 对方用户id
+    1: required i32 status_code, // 对方用户id
     2: required i64 status_msg,  //返回状态描述
 }
 

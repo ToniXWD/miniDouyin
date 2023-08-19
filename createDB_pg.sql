@@ -1,4 +1,4 @@
-\ c douyin;
+\c douyin;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -8,7 +8,7 @@ CREATE TABLE users (
     follower_count INT DEFAULT 0,
     work_count INT DEFAULT 0,
     favorite_count INT DEFAULT 0,
-    token INT,
+    token VARCHAR(255),
     avatar VARCHAR(255),
     background_image VARCHAR(255),
     signature VARCHAR(255),

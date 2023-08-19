@@ -4,6 +4,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"miniDouyin/biz/dal/pg"
 	"miniDouyin/biz/model/miniDouyin/api"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -55,7 +57,13 @@ func Login(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.UserLoginResponse)
 
+	pg.DBUserLogin(&req, resp)
+
+	fmt.Printf("resp = %+v\n", resp)
+
 	c.JSON(consts.StatusOK, resp)
+
+	fmt.Printf("return: %+v", resp)
 }
 
 // GetUserInfo .

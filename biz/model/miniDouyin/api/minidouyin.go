@@ -211,7 +211,7 @@ func (p *FeedRequest) String() string {
 
 type FeedResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 视频列表
@@ -224,7 +224,7 @@ func NewFeedResponse() *FeedResponse {
 	return &FeedResponse{}
 }
 
-func (p *FeedResponse) GetStatusCode() (v int64) {
+func (p *FeedResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -271,7 +271,7 @@ func (p *FeedResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -366,7 +366,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *FeedResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -454,10 +454,10 @@ WriteStructEndError:
 }
 
 func (p *FeedResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1271,7 +1271,7 @@ func (p *UserRegisterRequest) String() string {
 
 type UserRegisterResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户id
@@ -1284,7 +1284,7 @@ func NewUserRegisterResponse() *UserRegisterResponse {
 	return &UserRegisterResponse{}
 }
 
-func (p *UserRegisterResponse) GetStatusCode() (v int64) {
+func (p *UserRegisterResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -1331,7 +1331,7 @@ func (p *UserRegisterResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1426,7 +1426,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *UserRegisterResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -1503,10 +1503,10 @@ WriteStructEndError:
 }
 
 func (p *UserRegisterResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1780,7 +1780,7 @@ func (p *UserLoginRequest) String() string {
 
 type UserLoginResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户id
@@ -1793,7 +1793,7 @@ func NewUserLoginResponse() *UserLoginResponse {
 	return &UserLoginResponse{}
 }
 
-func (p *UserLoginResponse) GetStatusCode() (v int64) {
+func (p *UserLoginResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -1840,7 +1840,7 @@ func (p *UserLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1935,7 +1935,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *UserLoginResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -2012,10 +2012,10 @@ WriteStructEndError:
 }
 
 func (p *UserLoginResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -2976,7 +2976,7 @@ func (p *UserRequest) String() string {
 
 type UserResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户信息
@@ -2987,7 +2987,7 @@ func NewUserResponse() *UserResponse {
 	return &UserResponse{}
 }
 
-func (p *UserResponse) GetStatusCode() (v int64) {
+func (p *UserResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -3037,7 +3037,7 @@ func (p *UserResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -3116,7 +3116,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *UserResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -3179,10 +3179,10 @@ WriteStructEndError:
 }
 
 func (p *UserResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -3493,7 +3493,7 @@ func (p *PublishActionRequest) String() string {
 
 type PublishActionResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 }
@@ -3502,7 +3502,7 @@ func NewPublishActionResponse() *PublishActionResponse {
 	return &PublishActionResponse{}
 }
 
-func (p *PublishActionResponse) GetStatusCode() (v int64) {
+func (p *PublishActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -3537,7 +3537,7 @@ func (p *PublishActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -3600,7 +3600,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *PublishActionResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -3651,10 +3651,10 @@ WriteStructEndError:
 }
 
 func (p *PublishActionResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -3894,7 +3894,7 @@ func (p *PublishListRequest) String() string {
 
 type PublishListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户发布的视频列表
@@ -3905,7 +3905,7 @@ func NewPublishListResponse() *PublishListResponse {
 	return &PublishListResponse{}
 }
 
-func (p *PublishListResponse) GetStatusCode() (v int64) {
+func (p *PublishListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -3946,7 +3946,7 @@ func (p *PublishListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -4025,7 +4025,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *PublishListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -4100,10 +4100,10 @@ WriteStructEndError:
 }
 
 func (p *PublishListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4422,7 +4422,7 @@ func (p *FavoriteActionRequest) String() string {
 
 type FavoriteActionResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 }
@@ -4431,7 +4431,7 @@ func NewFavoriteActionResponse() *FavoriteActionResponse {
 	return &FavoriteActionResponse{}
 }
 
-func (p *FavoriteActionResponse) GetStatusCode() (v int64) {
+func (p *FavoriteActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -4466,7 +4466,7 @@ func (p *FavoriteActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -4529,7 +4529,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *FavoriteActionResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -4580,10 +4580,10 @@ WriteStructEndError:
 }
 
 func (p *FavoriteActionResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4823,7 +4823,7 @@ func (p *FavoriteListRequest) String() string {
 
 type FavoriteListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户点赞视频列表
@@ -4834,7 +4834,7 @@ func NewFavoriteListResponse() *FavoriteListResponse {
 	return &FavoriteListResponse{}
 }
 
-func (p *FavoriteListResponse) GetStatusCode() (v int64) {
+func (p *FavoriteListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -4875,7 +4875,7 @@ func (p *FavoriteListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -4954,7 +4954,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *FavoriteListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -5029,10 +5029,10 @@ WriteStructEndError:
 }
 
 func (p *FavoriteListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -5459,7 +5459,7 @@ func (p *CommentActionRequest) String() string {
 
 type CommentActionResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 评论成功返回评论内容，不需要重新拉取整个列表
@@ -5470,7 +5470,7 @@ func NewCommentActionResponse() *CommentActionResponse {
 	return &CommentActionResponse{}
 }
 
-func (p *CommentActionResponse) GetStatusCode() (v int64) {
+func (p *CommentActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -5520,7 +5520,7 @@ func (p *CommentActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -5599,7 +5599,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *CommentActionResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -5662,10 +5662,10 @@ WriteStructEndError:
 }
 
 func (p *CommentActionResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -6238,7 +6238,7 @@ func (p *CommentListRequest) String() string {
 
 type CommentListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 评论列表
@@ -6249,7 +6249,7 @@ func NewCommentListResponse() *CommentListResponse {
 	return &CommentListResponse{}
 }
 
-func (p *CommentListResponse) GetStatusCode() (v int64) {
+func (p *CommentListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -6290,7 +6290,7 @@ func (p *CommentListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -6369,7 +6369,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *CommentListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -6444,10 +6444,10 @@ WriteStructEndError:
 }
 
 func (p *CommentListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -6766,7 +6766,7 @@ func (p *RelationActionRequest) String() string {
 
 type RelationActionResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 }
@@ -6775,7 +6775,7 @@ func NewRelationActionResponse() *RelationActionResponse {
 	return &RelationActionResponse{}
 }
 
-func (p *RelationActionResponse) GetStatusCode() (v int64) {
+func (p *RelationActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -6810,7 +6810,7 @@ func (p *RelationActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -6873,7 +6873,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *RelationActionResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -6924,10 +6924,10 @@ WriteStructEndError:
 }
 
 func (p *RelationActionResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -7167,7 +7167,7 @@ func (p *RelationFollowListRequest) String() string {
 
 type RelationFollowListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户信息列表
@@ -7178,7 +7178,7 @@ func NewRelationFollowListResponse() *RelationFollowListResponse {
 	return &RelationFollowListResponse{}
 }
 
-func (p *RelationFollowListResponse) GetStatusCode() (v int64) {
+func (p *RelationFollowListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -7219,7 +7219,7 @@ func (p *RelationFollowListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -7298,7 +7298,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *RelationFollowListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -7373,10 +7373,10 @@ WriteStructEndError:
 }
 
 func (p *RelationFollowListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -7641,7 +7641,7 @@ func (p *RelationFollowerListRequest) String() string {
 
 type RelationFollowerListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户列表
@@ -7652,7 +7652,7 @@ func NewRelationFollowerListResponse() *RelationFollowerListResponse {
 	return &RelationFollowerListResponse{}
 }
 
-func (p *RelationFollowerListResponse) GetStatusCode() (v int64) {
+func (p *RelationFollowerListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -7693,7 +7693,7 @@ func (p *RelationFollowerListResponse) Read(iprot thrift.TProtocol) (err error) 
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -7772,7 +7772,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *RelationFollowerListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -7847,10 +7847,10 @@ WriteStructEndError:
 }
 
 func (p *RelationFollowerListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -8115,7 +8115,7 @@ func (p *RelationFriendListRequest) String() string {
 
 type RelationFriendListResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 用户列表
@@ -8126,7 +8126,7 @@ func NewRelationFriendListResponse() *RelationFriendListResponse {
 	return &RelationFriendListResponse{}
 }
 
-func (p *RelationFriendListResponse) GetStatusCode() (v int64) {
+func (p *RelationFriendListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -8167,7 +8167,7 @@ func (p *RelationFriendListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -8246,7 +8246,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *RelationFriendListResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -8321,10 +8321,10 @@ WriteStructEndError:
 }
 
 func (p *RelationFriendListResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -8643,7 +8643,7 @@ func (p *ChatRecordRequest) String() string {
 
 type ChatRecordResponse struct {
 	// 状态码，0-成功，其他值-失败
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
 	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 	// 消息列表
@@ -8654,7 +8654,7 @@ func NewChatRecordResponse() *ChatRecordResponse {
 	return &ChatRecordResponse{}
 }
 
-func (p *ChatRecordResponse) GetStatusCode() (v int64) {
+func (p *ChatRecordResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -8695,7 +8695,7 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -8774,7 +8774,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *ChatRecordResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -8849,10 +8849,10 @@ WriteStructEndError:
 }
 
 func (p *ChatRecordResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -9586,7 +9586,7 @@ func (p *SendMsgRequest) String() string {
 
 type SendMsgResponse struct {
 	// 对方用户id
-	StatusCode int64 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
+	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	//返回状态描述
 	StatusMsg int64 `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
 }
@@ -9595,7 +9595,7 @@ func NewSendMsgResponse() *SendMsgResponse {
 	return &SendMsgResponse{}
 }
 
-func (p *SendMsgResponse) GetStatusCode() (v int64) {
+func (p *SendMsgResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
@@ -9630,7 +9630,7 @@ func (p *SendMsgResponse) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.I32 {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -9693,7 +9693,7 @@ RequiredFieldNotSetError:
 }
 
 func (p *SendMsgResponse) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return err
 	} else {
 		p.StatusCode = v
@@ -9744,10 +9744,10 @@ WriteStructEndError:
 }
 
 func (p *SendMsgResponse) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_code", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("status_code", thrift.I32, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.StatusCode); err != nil {
+	if err := oprot.WriteI32(p.StatusCode); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {

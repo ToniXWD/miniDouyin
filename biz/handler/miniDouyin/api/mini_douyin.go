@@ -41,6 +41,8 @@ func Register(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.UserRegisterResponse)
 
+	pg.DBUserRegister(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -59,11 +61,10 @@ func Login(ctx context.Context, c *app.RequestContext) {
 
 	pg.DBUserLogin(&req, resp)
 
+	// Debug
 	fmt.Printf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
-
-	fmt.Printf("return: %+v", resp)
 }
 
 // GetUserInfo .
@@ -78,6 +79,8 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserResponse)
+
+	pg.DBGetUserinfo(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

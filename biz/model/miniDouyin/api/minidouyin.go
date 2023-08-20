@@ -11,21 +11,31 @@ import (
 // /douyin/feed/ - 视频流接口
 type FeedRequest struct {
 	// 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
-	LatestTime int64 `thrift:"latest_time,1,required" form:"latest_time,required" json:"latest_time,required" query:"latest_time,required"`
+	LatestTime *int64 `thrift:"latest_time,1,optional" form:"latest_time" json:"latest_time,omitempty" query:"latest_time"`
 	// 可选参数，登录用户设置
-	Token string `thrift:"token,2,required" form:"token,required" json:"token,required" query:"token,required"`
+	Token *string `thrift:"token,2,optional" form:"token" json:"token,omitempty" query:"token"`
 }
 
 func NewFeedRequest() *FeedRequest {
 	return &FeedRequest{}
 }
 
+var FeedRequest_LatestTime_DEFAULT int64
+
 func (p *FeedRequest) GetLatestTime() (v int64) {
-	return p.LatestTime
+	if !p.IsSetLatestTime() {
+		return FeedRequest_LatestTime_DEFAULT
+	}
+	return *p.LatestTime
 }
 
+var FeedRequest_Token_DEFAULT string
+
 func (p *FeedRequest) GetToken() (v string) {
-	return p.Token
+	if !p.IsSetToken() {
+		return FeedRequest_Token_DEFAULT
+	}
+	return *p.Token
 }
 
 var fieldIDToName_FeedRequest = map[int16]string{
@@ -33,12 +43,18 @@ var fieldIDToName_FeedRequest = map[int16]string{
 	2: "token",
 }
 
+func (p *FeedRequest) IsSetLatestTime() bool {
+	return p.LatestTime != nil
+}
+
+func (p *FeedRequest) IsSetToken() bool {
+	return p.Token != nil
+}
+
 func (p *FeedRequest) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
-	var issetLatestTime bool = false
-	var issetToken bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -59,7 +75,6 @@ func (p *FeedRequest) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetLatestTime = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -70,7 +85,6 @@ func (p *FeedRequest) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetToken = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -90,15 +104,6 @@ func (p *FeedRequest) Read(iprot thrift.TProtocol) (err error) {
 		goto ReadStructEndError
 	}
 
-	if !issetLatestTime {
-		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetToken {
-		fieldId = 2
-		goto RequiredFieldNotSetError
-	}
 	return nil
 ReadStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
@@ -113,15 +118,13 @@ ReadFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
 ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-RequiredFieldNotSetError:
-	return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, fmt.Errorf("required field %s is not set", fieldIDToName_FeedRequest[fieldId]))
 }
 
 func (p *FeedRequest) ReadField1(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.LatestTime = v
+		p.LatestTime = &v
 	}
 	return nil
 }
@@ -130,7 +133,7 @@ func (p *FeedRequest) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.Token = v
+		p.Token = &v
 	}
 	return nil
 }
@@ -169,14 +172,16 @@ WriteStructEndError:
 }
 
 func (p *FeedRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("latest_time", thrift.I64, 1); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.LatestTime); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetLatestTime() {
+		if err = oprot.WriteFieldBegin("latest_time", thrift.I64, 1); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.LatestTime); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -186,14 +191,16 @@ WriteFieldEndError:
 }
 
 func (p *FeedRequest) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("token", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.Token); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetToken() {
+		if err = oprot.WriteFieldBegin("token", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.Token); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -213,11 +220,11 @@ type FeedResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 视频列表
 	VideoList []*Video `thrift:"video_list,3,required" form:"video_list,required" json:"video_list,required" query:"video_list,required"`
 	// 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
-	NextTime int64 `thrift:"next_time,4,required" form:"next_time,required" json:"next_time,required" query:"next_time,required"`
+	NextTime *int64 `thrift:"next_time,4,optional" form:"next_time" json:"next_time,omitempty" query:"next_time"`
 }
 
 func NewFeedResponse() *FeedResponse {
@@ -228,16 +235,26 @@ func (p *FeedResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var FeedResponse_StatusMsg_DEFAULT string
+
 func (p *FeedResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return FeedResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *FeedResponse) GetVideoList() (v []*Video) {
 	return p.VideoList
 }
 
+var FeedResponse_NextTime_DEFAULT int64
+
 func (p *FeedResponse) GetNextTime() (v int64) {
-	return p.NextTime
+	if !p.IsSetNextTime() {
+		return FeedResponse_NextTime_DEFAULT
+	}
+	return *p.NextTime
 }
 
 var fieldIDToName_FeedResponse = map[int16]string{
@@ -247,14 +264,20 @@ var fieldIDToName_FeedResponse = map[int16]string{
 	4: "next_time",
 }
 
+func (p *FeedResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
+func (p *FeedResponse) IsSetNextTime() bool {
+	return p.NextTime != nil
+}
+
 func (p *FeedResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetVideoList bool = false
-	var issetNextTime bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -286,7 +309,6 @@ func (p *FeedResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -308,7 +330,6 @@ func (p *FeedResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetNextTime = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -333,18 +354,8 @@ func (p *FeedResponse) Read(iprot thrift.TProtocol) (err error) {
 		goto RequiredFieldNotSetError
 	}
 
-	if !issetStatusMsg {
-		fieldId = 2
-		goto RequiredFieldNotSetError
-	}
-
 	if !issetVideoList {
 		fieldId = 3
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetNextTime {
-		fieldId = 4
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -378,7 +389,7 @@ func (p *FeedResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -407,7 +418,7 @@ func (p *FeedResponse) ReadField4(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.NextTime = v
+		p.NextTime = &v
 	}
 	return nil
 }
@@ -471,14 +482,16 @@ WriteFieldEndError:
 }
 
 func (p *FeedResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -513,14 +526,16 @@ WriteFieldEndError:
 }
 
 func (p *FeedResponse) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("next_time", thrift.I64, 4); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.NextTime); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetNextTime() {
+		if err = oprot.WriteFieldBegin("next_time", thrift.I64, 4); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.NextTime); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -1273,7 +1288,7 @@ type UserRegisterResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户id
 	UserID int64 `thrift:"user_id,3,required" form:"user_id,required" json:"user_id,required" query:"user_id,required"`
 	// 用户鉴权token
@@ -1288,8 +1303,13 @@ func (p *UserRegisterResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var UserRegisterResponse_StatusMsg_DEFAULT string
+
 func (p *UserRegisterResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return UserRegisterResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *UserRegisterResponse) GetUserID() (v int64) {
@@ -1307,12 +1327,15 @@ var fieldIDToName_UserRegisterResponse = map[int16]string{
 	4: "token",
 }
 
+func (p *UserRegisterResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *UserRegisterResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUserID bool = false
 	var issetToken bool = false
 
@@ -1346,7 +1369,6 @@ func (p *UserRegisterResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -1393,11 +1415,6 @@ func (p *UserRegisterResponse) Read(iprot thrift.TProtocol) (err error) {
 		goto RequiredFieldNotSetError
 	}
 
-	if !issetStatusMsg {
-		fieldId = 2
-		goto RequiredFieldNotSetError
-	}
-
 	if !issetUserID {
 		fieldId = 3
 		goto RequiredFieldNotSetError
@@ -1438,7 +1455,7 @@ func (p *UserRegisterResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -1520,14 +1537,16 @@ WriteFieldEndError:
 }
 
 func (p *UserRegisterResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -1782,7 +1801,7 @@ type UserLoginResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户id
 	UserID int64 `thrift:"user_id,3,required" form:"user_id,required" json:"user_id,required" query:"user_id,required"`
 	// 用户鉴权token
@@ -1797,8 +1816,13 @@ func (p *UserLoginResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var UserLoginResponse_StatusMsg_DEFAULT string
+
 func (p *UserLoginResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return UserLoginResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *UserLoginResponse) GetUserID() (v int64) {
@@ -1816,12 +1840,15 @@ var fieldIDToName_UserLoginResponse = map[int16]string{
 	4: "token",
 }
 
+func (p *UserLoginResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *UserLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUserID bool = false
 	var issetToken bool = false
 
@@ -1855,7 +1882,6 @@ func (p *UserLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -1902,11 +1928,6 @@ func (p *UserLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 		goto RequiredFieldNotSetError
 	}
 
-	if !issetStatusMsg {
-		fieldId = 2
-		goto RequiredFieldNotSetError
-	}
-
 	if !issetUserID {
 		fieldId = 3
 		goto RequiredFieldNotSetError
@@ -1947,7 +1968,7 @@ func (p *UserLoginResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -2029,14 +2050,16 @@ WriteFieldEndError:
 }
 
 func (p *UserLoginResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2092,23 +2115,23 @@ type User struct {
 	// 用户名称
 	Name string `thrift:"name,2,required" form:"name,required" json:"name,required" query:"name,required"`
 	// 关注总数
-	FollowCount int64 `thrift:"follow_count,3,required" form:"follow_count,required" json:"follow_count,required" query:"follow_count,required"`
+	FollowCount *int64 `thrift:"follow_count,3,optional" form:"follow_count" json:"follow_count,omitempty" query:"follow_count"`
 	// 粉丝总数
-	FollowerCount int64 `thrift:"follower_count,4,required" form:"follower_count,required" json:"follower_count,required" query:"follower_count,required"`
+	FollowerCount *int64 `thrift:"follower_count,4,optional" form:"follower_count" json:"follower_count,omitempty" query:"follower_count"`
 	// true-已关注，false-未关注
 	IsFollow bool `thrift:"is_follow,5,required" form:"is_follow,required" json:"is_follow,required" query:"is_follow,required"`
 	// 用户头像
-	Avatar string `thrift:"avatar,6,required" form:"avatar,required" json:"avatar,required" query:"avatar,required"`
+	Avatar *string `thrift:"avatar,6,optional" form:"avatar" json:"avatar,omitempty" query:"avatar"`
 	// 用户个人页顶部大图
-	BackgroundImage string `thrift:"background_image,7,required" form:"background_image,required" json:"background_image,required" query:"background_image,required"`
+	BackgroundImage *string `thrift:"background_image,7,optional" form:"background_image" json:"background_image,omitempty" query:"background_image"`
 	// 个人简介
-	Signature string `thrift:"signature,8,required" form:"signature,required" json:"signature,required" query:"signature,required"`
+	Signature *string `thrift:"signature,8,optional" form:"signature" json:"signature,omitempty" query:"signature"`
 	// 获赞数量
-	TotalFavorited int64 `thrift:"total_favorited,9,required" form:"total_favorited,required" json:"total_favorited,required" query:"total_favorited,required"`
+	TotalFavorited *int64 `thrift:"total_favorited,9,optional" form:"total_favorited" json:"total_favorited,omitempty" query:"total_favorited"`
 	// 作品数量
-	WorkCount int64 `thrift:"work_count,10,required" form:"work_count,required" json:"work_count,required" query:"work_count,required"`
+	WorkCount *int64 `thrift:"work_count,10,optional" form:"work_count" json:"work_count,omitempty" query:"work_count"`
 	// 点赞数量
-	FavoriteCount int64 `thrift:"favorite_count,11,required" form:"favorite_count,required" json:"favorite_count,required" query:"favorite_count,required"`
+	FavoriteCount *int64 `thrift:"favorite_count,11,optional" form:"favorite_count" json:"favorite_count,omitempty" query:"favorite_count"`
 }
 
 func NewUser() *User {
@@ -2123,40 +2146,80 @@ func (p *User) GetName() (v string) {
 	return p.Name
 }
 
+var User_FollowCount_DEFAULT int64
+
 func (p *User) GetFollowCount() (v int64) {
-	return p.FollowCount
+	if !p.IsSetFollowCount() {
+		return User_FollowCount_DEFAULT
+	}
+	return *p.FollowCount
 }
 
+var User_FollowerCount_DEFAULT int64
+
 func (p *User) GetFollowerCount() (v int64) {
-	return p.FollowerCount
+	if !p.IsSetFollowerCount() {
+		return User_FollowerCount_DEFAULT
+	}
+	return *p.FollowerCount
 }
 
 func (p *User) GetIsFollow() (v bool) {
 	return p.IsFollow
 }
 
+var User_Avatar_DEFAULT string
+
 func (p *User) GetAvatar() (v string) {
-	return p.Avatar
+	if !p.IsSetAvatar() {
+		return User_Avatar_DEFAULT
+	}
+	return *p.Avatar
 }
+
+var User_BackgroundImage_DEFAULT string
 
 func (p *User) GetBackgroundImage() (v string) {
-	return p.BackgroundImage
+	if !p.IsSetBackgroundImage() {
+		return User_BackgroundImage_DEFAULT
+	}
+	return *p.BackgroundImage
 }
+
+var User_Signature_DEFAULT string
 
 func (p *User) GetSignature() (v string) {
-	return p.Signature
+	if !p.IsSetSignature() {
+		return User_Signature_DEFAULT
+	}
+	return *p.Signature
 }
+
+var User_TotalFavorited_DEFAULT int64
 
 func (p *User) GetTotalFavorited() (v int64) {
-	return p.TotalFavorited
+	if !p.IsSetTotalFavorited() {
+		return User_TotalFavorited_DEFAULT
+	}
+	return *p.TotalFavorited
 }
+
+var User_WorkCount_DEFAULT int64
 
 func (p *User) GetWorkCount() (v int64) {
-	return p.WorkCount
+	if !p.IsSetWorkCount() {
+		return User_WorkCount_DEFAULT
+	}
+	return *p.WorkCount
 }
 
+var User_FavoriteCount_DEFAULT int64
+
 func (p *User) GetFavoriteCount() (v int64) {
-	return p.FavoriteCount
+	if !p.IsSetFavoriteCount() {
+		return User_FavoriteCount_DEFAULT
+	}
+	return *p.FavoriteCount
 }
 
 var fieldIDToName_User = map[int16]string{
@@ -2173,21 +2236,45 @@ var fieldIDToName_User = map[int16]string{
 	11: "favorite_count",
 }
 
+func (p *User) IsSetFollowCount() bool {
+	return p.FollowCount != nil
+}
+
+func (p *User) IsSetFollowerCount() bool {
+	return p.FollowerCount != nil
+}
+
+func (p *User) IsSetAvatar() bool {
+	return p.Avatar != nil
+}
+
+func (p *User) IsSetBackgroundImage() bool {
+	return p.BackgroundImage != nil
+}
+
+func (p *User) IsSetSignature() bool {
+	return p.Signature != nil
+}
+
+func (p *User) IsSetTotalFavorited() bool {
+	return p.TotalFavorited != nil
+}
+
+func (p *User) IsSetWorkCount() bool {
+	return p.WorkCount != nil
+}
+
+func (p *User) IsSetFavoriteCount() bool {
+	return p.FavoriteCount != nil
+}
+
 func (p *User) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetID bool = false
 	var issetName bool = false
-	var issetFollowCount bool = false
-	var issetFollowerCount bool = false
 	var issetIsFollow bool = false
-	var issetAvatar bool = false
-	var issetBackgroundImage bool = false
-	var issetSignature bool = false
-	var issetTotalFavorited bool = false
-	var issetWorkCount bool = false
-	var issetFavoriteCount bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -2230,7 +2317,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetFollowCount = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2241,7 +2327,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetFollowerCount = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2263,7 +2348,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField6(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetAvatar = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2274,7 +2358,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField7(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetBackgroundImage = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2285,7 +2368,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField8(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetSignature = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2296,7 +2378,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField9(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetTotalFavorited = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2307,7 +2388,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField10(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetWorkCount = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2318,7 +2398,6 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField11(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetFavoriteCount = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -2348,48 +2427,8 @@ func (p *User) Read(iprot thrift.TProtocol) (err error) {
 		goto RequiredFieldNotSetError
 	}
 
-	if !issetFollowCount {
-		fieldId = 3
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetFollowerCount {
-		fieldId = 4
-		goto RequiredFieldNotSetError
-	}
-
 	if !issetIsFollow {
 		fieldId = 5
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetAvatar {
-		fieldId = 6
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetBackgroundImage {
-		fieldId = 7
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetSignature {
-		fieldId = 8
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetTotalFavorited {
-		fieldId = 9
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetWorkCount {
-		fieldId = 10
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetFavoriteCount {
-		fieldId = 11
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -2432,7 +2471,7 @@ func (p *User) ReadField3(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.FollowCount = v
+		p.FollowCount = &v
 	}
 	return nil
 }
@@ -2441,7 +2480,7 @@ func (p *User) ReadField4(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.FollowerCount = v
+		p.FollowerCount = &v
 	}
 	return nil
 }
@@ -2459,7 +2498,7 @@ func (p *User) ReadField6(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.Avatar = v
+		p.Avatar = &v
 	}
 	return nil
 }
@@ -2468,7 +2507,7 @@ func (p *User) ReadField7(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.BackgroundImage = v
+		p.BackgroundImage = &v
 	}
 	return nil
 }
@@ -2477,7 +2516,7 @@ func (p *User) ReadField8(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.Signature = v
+		p.Signature = &v
 	}
 	return nil
 }
@@ -2486,7 +2525,7 @@ func (p *User) ReadField9(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.TotalFavorited = v
+		p.TotalFavorited = &v
 	}
 	return nil
 }
@@ -2495,7 +2534,7 @@ func (p *User) ReadField10(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.WorkCount = v
+		p.WorkCount = &v
 	}
 	return nil
 }
@@ -2504,7 +2543,7 @@ func (p *User) ReadField11(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.FavoriteCount = v
+		p.FavoriteCount = &v
 	}
 	return nil
 }
@@ -2613,14 +2652,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("follow_count", thrift.I64, 3); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.FollowCount); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetFollowCount() {
+		if err = oprot.WriteFieldBegin("follow_count", thrift.I64, 3); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.FollowCount); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2630,14 +2671,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("follower_count", thrift.I64, 4); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.FollowerCount); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetFollowerCount() {
+		if err = oprot.WriteFieldBegin("follower_count", thrift.I64, 4); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.FollowerCount); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2664,14 +2707,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField6(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("avatar", thrift.STRING, 6); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.Avatar); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetAvatar() {
+		if err = oprot.WriteFieldBegin("avatar", thrift.STRING, 6); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.Avatar); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2681,14 +2726,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField7(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("background_image", thrift.STRING, 7); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.BackgroundImage); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetBackgroundImage() {
+		if err = oprot.WriteFieldBegin("background_image", thrift.STRING, 7); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.BackgroundImage); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2698,14 +2745,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField8(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("signature", thrift.STRING, 8); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.Signature); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetSignature() {
+		if err = oprot.WriteFieldBegin("signature", thrift.STRING, 8); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.Signature); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2715,14 +2764,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField9(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("total_favorited", thrift.I64, 9); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.TotalFavorited); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetTotalFavorited() {
+		if err = oprot.WriteFieldBegin("total_favorited", thrift.I64, 9); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.TotalFavorited); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2732,14 +2783,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField10(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("work_count", thrift.I64, 10); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.WorkCount); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetWorkCount() {
+		if err = oprot.WriteFieldBegin("work_count", thrift.I64, 10); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.WorkCount); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2749,14 +2802,16 @@ WriteFieldEndError:
 }
 
 func (p *User) writeField11(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("favorite_count", thrift.I64, 11); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.FavoriteCount); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetFavoriteCount() {
+		if err = oprot.WriteFieldBegin("favorite_count", thrift.I64, 11); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.FavoriteCount); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -2978,7 +3033,7 @@ type UserResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户信息
 	User *User `thrift:"user,3,required" form:"user,required" json:"user,required" query:"user,required"`
 }
@@ -2991,8 +3046,13 @@ func (p *UserResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var UserResponse_StatusMsg_DEFAULT string
+
 func (p *UserResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return UserResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var UserResponse_User_DEFAULT *User
@@ -3010,6 +3070,10 @@ var fieldIDToName_UserResponse = map[int16]string{
 	3: "user",
 }
 
+func (p *UserResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *UserResponse) IsSetUser() bool {
 	return p.User != nil
 }
@@ -3019,7 +3083,6 @@ func (p *UserResponse) Read(iprot thrift.TProtocol) (err error) {
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUser bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -3052,7 +3115,6 @@ func (p *UserResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -3085,11 +3147,6 @@ func (p *UserResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -3128,7 +3185,7 @@ func (p *UserResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -3196,14 +3253,16 @@ WriteFieldEndError:
 }
 
 func (p *UserResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -3495,7 +3554,7 @@ type PublishActionResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 }
 
 func NewPublishActionResponse() *PublishActionResponse {
@@ -3506,8 +3565,13 @@ func (p *PublishActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var PublishActionResponse_StatusMsg_DEFAULT string
+
 func (p *PublishActionResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return PublishActionResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var fieldIDToName_PublishActionResponse = map[int16]string{
@@ -3515,12 +3579,15 @@ var fieldIDToName_PublishActionResponse = map[int16]string{
 	2: "status_msg",
 }
 
+func (p *PublishActionResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *PublishActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -3552,7 +3619,6 @@ func (p *PublishActionResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -3574,11 +3640,6 @@ func (p *PublishActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -3612,7 +3673,7 @@ func (p *PublishActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -3668,14 +3729,16 @@ WriteFieldEndError:
 }
 
 func (p *PublishActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -3896,7 +3959,7 @@ type PublishListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户发布的视频列表
 	VideoList []*Video `thrift:"video_list,3,required" form:"video_list,required" json:"video_list,required" query:"video_list,required"`
 }
@@ -3909,8 +3972,13 @@ func (p *PublishListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var PublishListResponse_StatusMsg_DEFAULT string
+
 func (p *PublishListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return PublishListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *PublishListResponse) GetVideoList() (v []*Video) {
@@ -3923,12 +3991,15 @@ var fieldIDToName_PublishListResponse = map[int16]string{
 	3: "video_list",
 }
 
+func (p *PublishListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *PublishListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetVideoList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -3961,7 +4032,6 @@ func (p *PublishListResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -3994,11 +4064,6 @@ func (p *PublishListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -4037,7 +4102,7 @@ func (p *PublishListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -4117,14 +4182,16 @@ WriteFieldEndError:
 }
 
 func (p *PublishListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -4424,7 +4491,7 @@ type FavoriteActionResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 }
 
 func NewFavoriteActionResponse() *FavoriteActionResponse {
@@ -4435,8 +4502,13 @@ func (p *FavoriteActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var FavoriteActionResponse_StatusMsg_DEFAULT string
+
 func (p *FavoriteActionResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return FavoriteActionResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var fieldIDToName_FavoriteActionResponse = map[int16]string{
@@ -4444,12 +4516,15 @@ var fieldIDToName_FavoriteActionResponse = map[int16]string{
 	2: "status_msg",
 }
 
+func (p *FavoriteActionResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *FavoriteActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -4481,7 +4556,6 @@ func (p *FavoriteActionResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -4503,11 +4577,6 @@ func (p *FavoriteActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -4541,7 +4610,7 @@ func (p *FavoriteActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -4597,14 +4666,16 @@ WriteFieldEndError:
 }
 
 func (p *FavoriteActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -4825,7 +4896,7 @@ type FavoriteListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户点赞视频列表
 	VideoList []*Video `thrift:"video_list,3,required" form:"video_list,required" json:"video_list,required" query:"video_list,required"`
 }
@@ -4838,8 +4909,13 @@ func (p *FavoriteListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var FavoriteListResponse_StatusMsg_DEFAULT string
+
 func (p *FavoriteListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return FavoriteListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *FavoriteListResponse) GetVideoList() (v []*Video) {
@@ -4852,12 +4928,15 @@ var fieldIDToName_FavoriteListResponse = map[int16]string{
 	3: "video_list",
 }
 
+func (p *FavoriteListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *FavoriteListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetVideoList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -4890,7 +4969,6 @@ func (p *FavoriteListResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -4923,11 +5001,6 @@ func (p *FavoriteListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -4966,7 +5039,7 @@ func (p *FavoriteListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -5046,14 +5119,16 @@ WriteFieldEndError:
 }
 
 func (p *FavoriteListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -5103,9 +5178,9 @@ type CommentActionRequest struct {
 	// 1-发布评论，2-删除评论
 	ActionType int64 `thrift:"action_type,3,required" form:"action_type,required" json:"action_type,required" query:"action_type,required"`
 	// 用户填写的评论内容，在action_type=1的时候使用
-	CommentText string `thrift:"comment_text,4,required" form:"comment_text,required" json:"comment_text,required" query:"comment_text,required"`
+	CommentText *string `thrift:"comment_text,4,optional" form:"comment_text" json:"comment_text,omitempty" query:"comment_text"`
 	// 要删除的评论id，在action_type=2的时候使用
-	CommentID int64 `thrift:"comment_id,5,required" form:"comment_id,required" json:"comment_id,required" query:"comment_id,required"`
+	CommentID *int64 `thrift:"comment_id,5,optional" form:"comment_id" json:"comment_id,omitempty" query:"comment_id"`
 }
 
 func NewCommentActionRequest() *CommentActionRequest {
@@ -5124,12 +5199,22 @@ func (p *CommentActionRequest) GetActionType() (v int64) {
 	return p.ActionType
 }
 
+var CommentActionRequest_CommentText_DEFAULT string
+
 func (p *CommentActionRequest) GetCommentText() (v string) {
-	return p.CommentText
+	if !p.IsSetCommentText() {
+		return CommentActionRequest_CommentText_DEFAULT
+	}
+	return *p.CommentText
 }
 
+var CommentActionRequest_CommentID_DEFAULT int64
+
 func (p *CommentActionRequest) GetCommentID() (v int64) {
-	return p.CommentID
+	if !p.IsSetCommentID() {
+		return CommentActionRequest_CommentID_DEFAULT
+	}
+	return *p.CommentID
 }
 
 var fieldIDToName_CommentActionRequest = map[int16]string{
@@ -5140,6 +5225,14 @@ var fieldIDToName_CommentActionRequest = map[int16]string{
 	5: "comment_id",
 }
 
+func (p *CommentActionRequest) IsSetCommentText() bool {
+	return p.CommentText != nil
+}
+
+func (p *CommentActionRequest) IsSetCommentID() bool {
+	return p.CommentID != nil
+}
+
 func (p *CommentActionRequest) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
@@ -5147,8 +5240,6 @@ func (p *CommentActionRequest) Read(iprot thrift.TProtocol) (err error) {
 	var issetToken bool = false
 	var issetVideoID bool = false
 	var issetActionType bool = false
-	var issetCommentText bool = false
-	var issetCommentID bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -5202,7 +5293,6 @@ func (p *CommentActionRequest) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetCommentText = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -5213,7 +5303,6 @@ func (p *CommentActionRequest) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField5(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetCommentID = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -5245,16 +5334,6 @@ func (p *CommentActionRequest) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetActionType {
 		fieldId = 3
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetCommentText {
-		fieldId = 4
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetCommentID {
-		fieldId = 5
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -5306,7 +5385,7 @@ func (p *CommentActionRequest) ReadField4(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.CommentText = v
+		p.CommentText = &v
 	}
 	return nil
 }
@@ -5315,7 +5394,7 @@ func (p *CommentActionRequest) ReadField5(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.CommentID = v
+		p.CommentID = &v
 	}
 	return nil
 }
@@ -5417,14 +5496,16 @@ WriteFieldEndError:
 }
 
 func (p *CommentActionRequest) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("comment_text", thrift.STRING, 4); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.CommentText); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetCommentText() {
+		if err = oprot.WriteFieldBegin("comment_text", thrift.STRING, 4); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.CommentText); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -5434,14 +5515,16 @@ WriteFieldEndError:
 }
 
 func (p *CommentActionRequest) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("comment_id", thrift.I64, 5); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.CommentID); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetCommentID() {
+		if err = oprot.WriteFieldBegin("comment_id", thrift.I64, 5); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.CommentID); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -5461,9 +5544,9 @@ type CommentActionResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 评论成功返回评论内容，不需要重新拉取整个列表
-	Comment *Comment `thrift:"comment,3,required" form:"comment,required" json:"comment,required" query:"comment,required"`
+	Comment *Comment `thrift:"comment,3,optional" form:"comment" json:"comment,omitempty" query:"comment"`
 }
 
 func NewCommentActionResponse() *CommentActionResponse {
@@ -5474,8 +5557,13 @@ func (p *CommentActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var CommentActionResponse_StatusMsg_DEFAULT string
+
 func (p *CommentActionResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return CommentActionResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var CommentActionResponse_Comment_DEFAULT *Comment
@@ -5493,6 +5581,10 @@ var fieldIDToName_CommentActionResponse = map[int16]string{
 	3: "comment",
 }
 
+func (p *CommentActionResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *CommentActionResponse) IsSetComment() bool {
 	return p.Comment != nil
 }
@@ -5502,8 +5594,6 @@ func (p *CommentActionResponse) Read(iprot thrift.TProtocol) (err error) {
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
-	var issetComment bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -5535,7 +5625,6 @@ func (p *CommentActionResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -5546,7 +5635,6 @@ func (p *CommentActionResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetComment = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -5568,16 +5656,6 @@ func (p *CommentActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetComment {
-		fieldId = 3
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -5611,7 +5689,7 @@ func (p *CommentActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -5679,14 +5757,16 @@ WriteFieldEndError:
 }
 
 func (p *CommentActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -5696,14 +5776,16 @@ WriteFieldEndError:
 }
 
 func (p *CommentActionResponse) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("comment", thrift.STRUCT, 3); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := p.Comment.Write(oprot); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetComment() {
+		if err = oprot.WriteFieldBegin("comment", thrift.STRUCT, 3); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Comment.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -6240,7 +6322,7 @@ type CommentListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 评论列表
 	CommentList []*Comment `thrift:"comment_list,3,required" form:"comment_list,required" json:"comment_list,required" query:"comment_list,required"`
 }
@@ -6253,8 +6335,13 @@ func (p *CommentListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var CommentListResponse_StatusMsg_DEFAULT string
+
 func (p *CommentListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return CommentListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *CommentListResponse) GetCommentList() (v []*Comment) {
@@ -6267,12 +6354,15 @@ var fieldIDToName_CommentListResponse = map[int16]string{
 	3: "comment_list",
 }
 
+func (p *CommentListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *CommentListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetCommentList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -6305,7 +6395,6 @@ func (p *CommentListResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -6338,11 +6427,6 @@ func (p *CommentListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -6381,7 +6465,7 @@ func (p *CommentListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -6461,14 +6545,16 @@ WriteFieldEndError:
 }
 
 func (p *CommentListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -6768,7 +6854,7 @@ type RelationActionResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 }
 
 func NewRelationActionResponse() *RelationActionResponse {
@@ -6779,8 +6865,13 @@ func (p *RelationActionResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var RelationActionResponse_StatusMsg_DEFAULT string
+
 func (p *RelationActionResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return RelationActionResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var fieldIDToName_RelationActionResponse = map[int16]string{
@@ -6788,12 +6879,15 @@ var fieldIDToName_RelationActionResponse = map[int16]string{
 	2: "status_msg",
 }
 
+func (p *RelationActionResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *RelationActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -6825,7 +6919,6 @@ func (p *RelationActionResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -6847,11 +6940,6 @@ func (p *RelationActionResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -6885,7 +6973,7 @@ func (p *RelationActionResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -6941,14 +7029,16 @@ WriteFieldEndError:
 }
 
 func (p *RelationActionResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -7169,7 +7259,7 @@ type RelationFollowListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户信息列表
 	UserList []*User `thrift:"user_list,3,required" form:"user_list,required" json:"user_list,required" query:"user_list,required"`
 }
@@ -7182,8 +7272,13 @@ func (p *RelationFollowListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var RelationFollowListResponse_StatusMsg_DEFAULT string
+
 func (p *RelationFollowListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return RelationFollowListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *RelationFollowListResponse) GetUserList() (v []*User) {
@@ -7196,12 +7291,15 @@ var fieldIDToName_RelationFollowListResponse = map[int16]string{
 	3: "user_list",
 }
 
+func (p *RelationFollowListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *RelationFollowListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUserList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -7234,7 +7332,6 @@ func (p *RelationFollowListResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -7267,11 +7364,6 @@ func (p *RelationFollowListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -7310,7 +7402,7 @@ func (p *RelationFollowListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -7390,14 +7482,16 @@ WriteFieldEndError:
 }
 
 func (p *RelationFollowListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -7643,7 +7737,7 @@ type RelationFollowerListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户列表
 	UserList []*User `thrift:"user_list,3,required" form:"user_list,required" json:"user_list,required" query:"user_list,required"`
 }
@@ -7656,8 +7750,13 @@ func (p *RelationFollowerListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var RelationFollowerListResponse_StatusMsg_DEFAULT string
+
 func (p *RelationFollowerListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return RelationFollowerListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *RelationFollowerListResponse) GetUserList() (v []*User) {
@@ -7670,12 +7769,15 @@ var fieldIDToName_RelationFollowerListResponse = map[int16]string{
 	3: "user_list",
 }
 
+func (p *RelationFollowerListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *RelationFollowerListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUserList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -7708,7 +7810,6 @@ func (p *RelationFollowerListResponse) Read(iprot thrift.TProtocol) (err error) 
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -7741,11 +7842,6 @@ func (p *RelationFollowerListResponse) Read(iprot thrift.TProtocol) (err error) 
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -7784,7 +7880,7 @@ func (p *RelationFollowerListResponse) ReadField2(iprot thrift.TProtocol) error 
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -7864,14 +7960,16 @@ WriteFieldEndError:
 }
 
 func (p *RelationFollowerListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -8117,7 +8215,7 @@ type RelationFriendListResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 用户列表
 	UserList []*User `thrift:"user_list,3,required" form:"user_list,required" json:"user_list,required" query:"user_list,required"`
 }
@@ -8130,8 +8228,13 @@ func (p *RelationFriendListResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var RelationFriendListResponse_StatusMsg_DEFAULT string
+
 func (p *RelationFriendListResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return RelationFriendListResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *RelationFriendListResponse) GetUserList() (v []*User) {
@@ -8144,12 +8247,15 @@ var fieldIDToName_RelationFriendListResponse = map[int16]string{
 	3: "user_list",
 }
 
+func (p *RelationFriendListResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *RelationFriendListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetUserList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -8182,7 +8288,6 @@ func (p *RelationFriendListResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -8215,11 +8320,6 @@ func (p *RelationFriendListResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -8258,7 +8358,7 @@ func (p *RelationFriendListResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -8338,14 +8438,16 @@ WriteFieldEndError:
 }
 
 func (p *RelationFriendListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -8645,7 +8747,7 @@ type ChatRecordResponse struct {
 	// 状态码，0-成功，其他值-失败
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	// 返回状态描述
-	StatusMsg string `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 消息列表
 	StructList []*Message `thrift:"struct_list,3,required" form:"struct_list,required" json:"struct_list,required" query:"struct_list,required"`
 }
@@ -8658,8 +8760,13 @@ func (p *ChatRecordResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
+var ChatRecordResponse_StatusMsg_DEFAULT string
+
 func (p *ChatRecordResponse) GetStatusMsg() (v string) {
-	return p.StatusMsg
+	if !p.IsSetStatusMsg() {
+		return ChatRecordResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 func (p *ChatRecordResponse) GetStructList() (v []*Message) {
@@ -8672,12 +8779,15 @@ var fieldIDToName_ChatRecordResponse = map[int16]string{
 	3: "struct_list",
 }
 
+func (p *ChatRecordResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 	var issetStructList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
@@ -8710,7 +8820,6 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -8743,11 +8852,6 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 
@@ -8786,7 +8890,7 @@ func (p *ChatRecordResponse) ReadField2(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -8866,14 +8970,16 @@ WriteFieldEndError:
 }
 
 func (p *ChatRecordResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:

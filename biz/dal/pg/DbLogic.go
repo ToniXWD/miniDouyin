@@ -18,17 +18,20 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		// 校验密码
 		if user.Passwd != request.Password {
 			response.StatusCode = 1
-			response.StatusMsg = "Password wrong!"
+			str := "Password wrong!"
+			response.StatusMsg = &str
 			return
 		}
 		response.StatusCode = 0
 		response.UserID = int64(user.ID)
 		response.Token = user.Username + user.Passwd
-		response.StatusMsg = "Login successfully!"
+		str := "Login successfully!"
+		response.StatusMsg = &str
 		return
 	}
 	response.StatusCode = 2
-	response.StatusMsg = "User not exist!"
+	str := "User not exist!"
+	response.StatusMsg = &str
 }
 
 // 处理注册请求
@@ -39,7 +42,8 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 	if user.QueryUser() {
 		// user存在
 		response.StatusCode = 1
-		response.StatusMsg = "User already exists!"
+		str := "User already exists!"
+		response.StatusMsg = &str
 		return
 	}
 
@@ -47,10 +51,12 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 		response.StatusCode = 0
 		response.UserID = int64(user.ID)
 		response.Token = user.Token
-		response.StatusMsg = "Register succesffully!"
+		str := "Register succesffully!"
+		response.StatusMsg = &str
 	} else {
 		response.StatusCode = 2
-		response.StatusMsg = "Register failed!"
+		str := "Register failed!"
+		response.StatusMsg = &str
 	}
 }
 
@@ -60,28 +66,33 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 	if err != nil {
 		// 没有找到用户或token失败
 		response.StatusCode = 1
-		response.StatusMsg = err.Error()
+		str := err.Error()
+		response.StatusMsg = &str
 		return
 	}
 	// 填充结构体
 	response.User = user.ToApiUser()
 	response.StatusCode = 0
-	response.StatusMsg = "Get user information successfully!"
+	str := "Get user information successfully!"
+	response.StatusMsg = &str
 }
 
 // 处理视频流
 func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
-	vlist, err := GetNewVideoList(request.LatestTime)
+	vlist, err := GetNewVideoList(*request.LatestTime)
 	if err != nil {
 		response.StatusCode = 1
-		response.StatusMsg = "Failed to get video list"
+		str := "Failed to get video list"
+		response.StatusMsg = &str
 		return
 	}
 	response.StatusCode = 0
-	response.StatusMsg = "Load video list successfully"
+	str := "Load video list successfully"
+	response.StatusMsg = &str
 	for idx, video := range vlist {
 		if idx == len(vlist)-1 {
-			response.NextTime = utils.TimeToI64(video.CreatedAt)
+			newNext := utils.TimeToI64(video.CreatedAt)
+			response.NextTime = &newNext
 		}
 		newVideo, _ := video.ToApiVideo()
 		response.VideoList = append(response.VideoList, newVideo)

@@ -20,6 +20,7 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	var req api.FeedRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
+		fmt.Println("参数绑定失败")
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}

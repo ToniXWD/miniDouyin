@@ -33,8 +33,8 @@ func (v *DBVideo) Count() int64 {
 
 // 数据库模型转换为api的结构体
 func (v *DBVideo) ToApiVideo() (*api.Video, error) {
-	rPlayurl, _ := utils.Realurl(v.PlayUrl)
-	rCoverurl, _ := utils.Realurl(v.CoverUrl)
+	rPlayurl := utils.Realurl(v.PlayUrl)
+	rCoverurl := utils.Realurl(v.CoverUrl)
 
 	av := &api.Video{
 		ID:            v.ID,
@@ -79,9 +79,12 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	fmt.Printf("mintime = %v\n", mintime)
 
 	if maxDate <= 0 {
-		maxDate = time.Now().Unix()
+		maxDate = time.Now().Unix() * 1000
 	}
 	cmp := utils.I64ToTime(maxDate)
+
+	fmt.Printf("cmp = %v\n", cmp)
+
 	res := DB.Model(&DBVideo{}).Where("created_at <= ?", cmp).
 		Order("ID desc").Limit(int(videoNum)).Find(&vlist)
 	if res.Error != nil {

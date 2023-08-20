@@ -7,19 +7,19 @@ import (
 )
 
 type DBUser struct {
-	ID              int    `gorm:"primaryKey"`
+	ID              int64  `gorm:"primaryKey"`
 	Username        string `gorm:"unique"`
 	Nickname        string
 	Passwd          string
-	FollowCount     int `gorm:"default:0"`
-	FollowerCount   int `gorm:"default:0"`
-	WorkCount       int `gorm:"default:0"`
-	FavoriteCount   int `gorm:"default:0"`
+	FollowCount     int64 `gorm:"default:0"`
+	FollowerCount   int64 `gorm:"default:0"`
+	WorkCount       int64 `gorm:"default:0"`
+	FavoriteCount   int64 `gorm:"default:0"`
 	Token           string
 	Avatar          string
 	BackgroundImage string
 	Signature       string
-	TotalFavorited  int            `gorm:"default:0"`
+	TotalFavorited  int64          `gorm:"default:0"`
 	Deleted         gorm.DeletedAt `gorm:"default:NULL"`
 }
 
@@ -67,15 +67,15 @@ func (u *DBUser) ToApiUser() *api.User {
 	return &api.User{
 		ID:              int64(u.ID),
 		Name:            u.Username,
-		FollowCount:     int64(u.FollowCount),
-		FollowerCount:   int64(u.FollowerCount),
+		FollowCount:     &u.FollowCount,
+		FollowerCount:   &u.FollowerCount,
 		IsFollow:        true,
-		Avatar:          u.Avatar,
-		BackgroundImage: u.BackgroundImage,
-		Signature:       u.Signature,
-		TotalFavorited:  int64(u.TotalFavorited),
-		WorkCount:       int64(u.WorkCount),
-		FavoriteCount:   int64(u.FavoriteCount),
+		Avatar:          &u.Avatar,
+		BackgroundImage: &u.BackgroundImage,
+		Signature:       &u.Signature,
+		TotalFavorited:  &u.TotalFavorited,
+		WorkCount:       &u.WorkCount,
+		FavoriteCount:   &u.FavoriteCount,
 	}
 }
 

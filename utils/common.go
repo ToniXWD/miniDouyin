@@ -1,35 +1,12 @@
 package utils
 
 import (
-	"fmt"
-	"net"
 	"time"
 )
 
-func Realurl(s_url string) (r_url string, r_err error) {
-	r_err = nil
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "", ErrIpInitFailed
-	}
-
-	for _, iface := range interfaces {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			fmt.Println("Error:", err)
-			continue
-		}
-
-		for _, addr := range addrs {
-			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
-				r_url = "http://" + ipnet.IP.String() + ":" + PORT + "/data/" + s_url
-				fmt.Println(r_url)
-				return
-			}
-		}
-	}
-	return "", ErrIpInitFailed
+func Realurl(s_url string) string {
+	r_url := "http://" + ServerIP + ":" + PORT + "/data/" + s_url
+	return r_url
 }
 
 func I64ToTime(num int64) time.Time {

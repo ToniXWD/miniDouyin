@@ -5,11 +5,10 @@ package api
 import (
 	"context"
 	"fmt"
-	"miniDouyin/biz/dal/pg"
-	"miniDouyin/biz/model/miniDouyin/api"
-
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"miniDouyin/biz/dal/pg"
+	"miniDouyin/biz/model/miniDouyin/api"
 )
 
 // Feed .
@@ -96,15 +95,16 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 	var err error
 	var req api.PublishActionRequest
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
-
 	resp := new(api.PublishActionResponse)
 
-	pg.DBReceiveVideo(&req, resp)
+	form, err := c.MultipartForm()
+
+	//err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+	}
+
+	pg.DBReceiveVideo(&req, resp, form, c)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -113,14 +113,14 @@ func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/publish/list/ [GET]
 func PublishList(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.PublishActionRequest
+	var req api.PublishListRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
 
-	resp := new(api.PublishActionResponse)
+	resp := new(api.PublishListResponse)
 
 	c.JSON(consts.StatusOK, resp)
 }

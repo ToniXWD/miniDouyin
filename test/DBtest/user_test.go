@@ -7,6 +7,8 @@ import (
 )
 
 func TestUser_Token(t *testing.T) {
+	pg.Init()
+
 	token := "toni123456"
 	user, _ := pg.ValidateToken(token)
 	assert.NotNil(t, user)

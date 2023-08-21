@@ -11,4 +11,8 @@ var (
 
 	// NetWork errors
 	ErrIpInitFailed = errors.New("failed to init IP")
+
+	// IO erros
+	ErrSaveVideoFaile   = errors.New("save video failed")
+	ErrDBSaveVideoFaile = errors.New("save video in database failed")
 )

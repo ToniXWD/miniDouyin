@@ -2,6 +2,8 @@ package pg
 
 import (
 	"fmt"
+	"github.com/cloudwego/hertz/pkg/app"
+	"mime/multipart"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 )
@@ -100,7 +102,56 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 }
 
 // 接受上传视频
-func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActionResponse) {
+func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActionResponse, form *multipart.Form, c *app.RequestContext) {
+	request.Token = form.Value["token"][0]
+	request.Title = form.Value["title"][0]
 
-	//vName := utils.GetVideoName(request.Title)
+	// 先验证token
+	user, err := ValidateToken(request.Token)
+
+	if err != nil {
+		response.StatusCode = 1
+		str := utils.ErrTokenVerifiedFailed.Error()
+		response.StatusMsg = &str
+		return
+	}
+	file := form.File["data"][0]
+
+	_, saveName, dbURL := utils.GetVideoNameAndPath()
+
+	err = c.SaveUploadedFile(file, saveName)
+
+	if err != nil {
+		response.StatusCode = 2
+		str := utils.ErrSaveVideoFaile.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL}
+
+	tx := DB.Begin()
+	res := video.insert(tx)
+
+	if !res {
+		response.StatusCode = 2
+		str := utils.ErrDBSaveVideoFaile.Error()
+		response.StatusMsg = &str
+		tx.Rollback()
+		return
+	}
+
+	res = user.increaseWork(tx)
+
+	if !res {
+		response.StatusCode = 2
+		str := utils.ErrDBSaveVideoFaile.Error()
+		response.StatusMsg = &str
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
+
+	response.StatusCode = 0
+	response.StatusMsg = &utils.UploadVideosSuccess
 }

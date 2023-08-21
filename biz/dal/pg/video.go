@@ -13,9 +13,9 @@ type DBVideo struct {
 	Title         string
 	Author        int64 // 外键关联到DBUser结构体的主键
 	PlayUrl       string
-	CoverUrl      string
-	FavoriteCount int64 `gorm:"default:0"`
-	CommentCount  int64 `gorm:"default:0"`
+	CoverUrl      string `gorm:"default:'deaults/douyin.jpg'"`
+	FavoriteCount int64  `gorm:"default:0"`
+	CommentCount  int64  `gorm:"default:0"`
 	CreatedAt     time.Time
 	Deleted       gorm.DeletedAt `gorm:"default:NULL"`
 }
@@ -29,6 +29,18 @@ func (v *DBVideo) Count() int64 {
 	var videoNum int64
 	DB.Model(v).Count(&videoNum)
 	return videoNum
+}
+
+// 将当前结构体插入数据库，返回是否成功
+func (v *DBVideo) insert(db *gorm.DB) bool {
+	if v.PlayUrl == "" || v.Author == 0 {
+		// PlayUrl 和 PlayUrl不能为空
+		return false
+	}
+
+	res := db.Create(v)
+
+	return res.Error == nil
 }
 
 // 数据库模型转换为api的结构体

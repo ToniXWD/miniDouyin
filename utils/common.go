@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 )
 
 func Realurl(s_url string) string {
-	r_url := "http://" + ServerIP + ":" + PORT + "/data/" + s_url
+	r_url := "http://" + URLIP + ":" + PORT + "/data/" + s_url
 	return r_url
 }
 
@@ -33,12 +35,41 @@ func TimeToI64(t time.Time) int64 {
 	return milliseconds
 }
 
-func GetVideoName(titile string) string {
+// 返回以时间戳命名的 视频名, 路径, 数据库中的路径
+func GetVideoNameAndPath() (name string, path string, DBpath string) {
 	// 获取当前时间戳（Unix 时间戳，以纳秒为单位）
 	currentTime := time.Now().UnixNano()
 
 	// 将时间戳转换为字符串
 	timestampStr := fmt.Sprintf("%d", currentTime)
 
-	return timestampStr + ".mp4"
+	name = timestampStr + ".mp4"
+
+	projectBase, _ := os.Getwd()
+
+	path = filepath.Join(projectBase, "data", "videos", name)
+
+	DBpath = filepath.Join("videos", name)
+
+	return
 }
+
+// 从字节切片存储视频，弃用
+//func SaveVideo(data []byte, savePath string) error {
+//	// 打开文件以进行写入
+//	file, err := os.Create(savePath)
+//	if err != nil {
+//		fmt.Println("Error creating file:", err)
+//		return ErrSaveVideoFaile
+//	}
+//	defer file.Close()
+//
+//	// 将视频数据写入文件
+//	_, err = file.Write(data)
+//	if err != nil {
+//		return ErrSaveVideoFaile
+//	}
+//	return nil
+//}
+
+// 从视频文件中提取指定帧作为封面图，并保存为图片文件

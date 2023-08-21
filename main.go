@@ -12,7 +12,10 @@ import (
 func main() {
 	dal.Init()
 
-	h := server.Default(server.WithHostPorts(string("0.0.0.0:") + utils.PORT))
+	h := server.Default(
+		server.WithHostPorts(string("0.0.0.0:")+utils.PORT),
+		server.WithMaxRequestBodySize(utils.MaxBody),
+	)
 
 	register(h)
 	h.Spin()

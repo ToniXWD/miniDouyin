@@ -9902,7 +9902,7 @@ type MiniDouyin interface {
 	// 视频投稿
 	VideoPublishAction(ctx context.Context, request *PublishActionRequest) (r *PublishActionResponse, err error)
 	// 发布列表
-	PublishList(ctx context.Context, request *PublishActionRequest) (r *PublishActionResponse, err error)
+	PublishList(ctx context.Context, request *PublishListRequest) (r *PublishListResponse, err error)
 	// 赞操作
 	FavoriteAction(ctx context.Context, request *FavoriteActionResponse) (r *FavoriteActionResponse, err error)
 	// 喜欢列表
@@ -9996,7 +9996,7 @@ func (p *MiniDouyinClient) VideoPublishAction(ctx context.Context, request *Publ
 	}
 	return _result.GetSuccess(), nil
 }
-func (p *MiniDouyinClient) PublishList(ctx context.Context, request *PublishActionRequest) (r *PublishActionResponse, err error) {
+func (p *MiniDouyinClient) PublishList(ctx context.Context, request *PublishListRequest) (r *PublishListResponse, err error) {
 	var _args MiniDouyinPublishListArgs
 	_args.Request = request
 	var _result MiniDouyinPublishListResult
@@ -10411,7 +10411,7 @@ func (p *miniDouyinProcessorPublishList) Process(ctx context.Context, seqId int3
 	iprot.ReadMessageEnd()
 	var err2 error
 	result := MiniDouyinPublishListResult{}
-	var retval *PublishActionResponse
+	var retval *PublishListResponse
 	if retval, err2 = p.handler.PublishList(ctx, args.Request); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PublishList: "+err2.Error())
 		oprot.WriteMessageBegin("PublishList", thrift.EXCEPTION, seqId)
@@ -12381,16 +12381,16 @@ func (p *MiniDouyinVideoPublishActionResult) String() string {
 }
 
 type MiniDouyinPublishListArgs struct {
-	Request *PublishActionRequest `thrift:"request,1"`
+	Request *PublishListRequest `thrift:"request,1"`
 }
 
 func NewMiniDouyinPublishListArgs() *MiniDouyinPublishListArgs {
 	return &MiniDouyinPublishListArgs{}
 }
 
-var MiniDouyinPublishListArgs_Request_DEFAULT *PublishActionRequest
+var MiniDouyinPublishListArgs_Request_DEFAULT *PublishListRequest
 
-func (p *MiniDouyinPublishListArgs) GetRequest() (v *PublishActionRequest) {
+func (p *MiniDouyinPublishListArgs) GetRequest() (v *PublishListRequest) {
 	if !p.IsSetRequest() {
 		return MiniDouyinPublishListArgs_Request_DEFAULT
 	}
@@ -12465,7 +12465,7 @@ ReadStructEndError:
 }
 
 func (p *MiniDouyinPublishListArgs) ReadField1(iprot thrift.TProtocol) error {
-	p.Request = NewPublishActionRequest()
+	p.Request = NewPublishListRequest()
 	if err := p.Request.Read(iprot); err != nil {
 		return err
 	}
@@ -12526,16 +12526,16 @@ func (p *MiniDouyinPublishListArgs) String() string {
 }
 
 type MiniDouyinPublishListResult struct {
-	Success *PublishActionResponse `thrift:"success,0,optional"`
+	Success *PublishListResponse `thrift:"success,0,optional"`
 }
 
 func NewMiniDouyinPublishListResult() *MiniDouyinPublishListResult {
 	return &MiniDouyinPublishListResult{}
 }
 
-var MiniDouyinPublishListResult_Success_DEFAULT *PublishActionResponse
+var MiniDouyinPublishListResult_Success_DEFAULT *PublishListResponse
 
-func (p *MiniDouyinPublishListResult) GetSuccess() (v *PublishActionResponse) {
+func (p *MiniDouyinPublishListResult) GetSuccess() (v *PublishListResponse) {
 	if !p.IsSetSuccess() {
 		return MiniDouyinPublishListResult_Success_DEFAULT
 	}
@@ -12610,7 +12610,7 @@ ReadStructEndError:
 }
 
 func (p *MiniDouyinPublishListResult) ReadField0(iprot thrift.TProtocol) error {
-	p.Success = NewPublishActionResponse()
+	p.Success = NewPublishListResponse()
 	if err := p.Success.Read(iprot); err != nil {
 		return err
 	}

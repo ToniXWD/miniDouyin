@@ -61,6 +61,18 @@ func (u *DBUser) insert() bool {
 	return res.Error == nil
 }
 
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (u *DBUser) increaseWork(db *gorm.DB) bool {
+
+	if u.Username == "" || u.Passwd == "" || u.ID == 0 {
+		// 密码盒用户名不能为空
+		return false
+	}
+	res := db.Model(u).Where("ID = ?", u.ID).Update("work_count", gorm.Expr("work_count + ?", 1))
+	return res.Error == nil
+}
+
 // 从数据库结构体转化为api的结构体
 // IsFollow此时默认设置为true，后续需自行处理
 func (u *DBUser) ToApiUser() *api.User {

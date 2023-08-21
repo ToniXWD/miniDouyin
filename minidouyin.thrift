@@ -252,7 +252,7 @@ service miniDouyin {
     // 视频投稿
     PublishActionResponse VideoPublishAction(1: PublishActionRequest request) (api.post = "/douyin/publish/action/"),
     // 发布列表
-    PublishActionResponse PublishList(1: PublishActionRequest request) (api.get = "/douyin/publish/list/"),
+    PublishListResponse PublishList(1: PublishListRequest request) (api.get = "/douyin/publish/list/"),
     // 赞操作
     FavoriteActionResponse FavoriteAction(1: FavoriteActionResponse request) (api.post = "/douyin/favorite/action/"),
     // 喜欢列表

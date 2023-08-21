@@ -5,10 +5,11 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"miniDouyin/biz/dal/pg"
 	"miniDouyin/biz/model/miniDouyin/api"
+
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
 // Feed .
@@ -121,6 +122,8 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.PublishListResponse)
+
+	pg.DBVideoPublishList(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

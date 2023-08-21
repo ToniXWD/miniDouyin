@@ -2,10 +2,11 @@ package pg
 
 import (
 	"fmt"
-	"github.com/cloudwego/hertz/pkg/app"
 	"mime/multipart"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+
+	"github.com/cloudwego/hertz/pkg/app"
 )
 
 // 处理登录请求
@@ -84,7 +85,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 	vlist, err := GetNewVideoList(*request.LatestTime)
 	if err != nil {
 		response.StatusCode = 1
-		str := "Failed to get video list"
+		str := utils.ErrGetFeedVideoListFailed.Error()
 		response.StatusMsg = &str
 		return
 	}
@@ -154,4 +155,18 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess
+}
+
+func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishListResponse) {
+	vlist, err := GetUserVideoList(request.UserID)
+	if err != nil {
+		response.StatusCode = 1
+		str := utils.ErrGetUserVideoListFailed.Error()
+		response.StatusMsg = &str
+		return
+	}
+	for _, video := range vlist {
+		newVideo, _ := video.ToApiVideo()
+		response.VideoList = append(response.VideoList, newVideo)
+	}
 }

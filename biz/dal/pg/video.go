@@ -2,10 +2,11 @@ package pg
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type DBVideo struct {
@@ -99,6 +100,17 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 
 	res := DB.Model(&DBVideo{}).Where("created_at <= ?", cmp).
 		Order("ID desc").Limit(int(videoNum)).Find(&vlist)
+	if res.Error != nil {
+		r_err = res.Error
+	}
+	return
+}
+
+func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
+	r_err = nil
+
+	res := DB.Model(&DBVideo{}).Where("Author = ?", userID).
+		Order("ID desc").Find(&vlist)
 	if res.Error != nil {
 		r_err = res.Error
 	}

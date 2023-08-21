@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -30,4 +31,14 @@ func TimeToI64(t time.Time) int64 {
 	milliseconds := seconds*1000 + int64(t.Nanosecond())/int64(time.Millisecond)
 
 	return milliseconds
+}
+
+func GetVideoName(titile string) string {
+	// 获取当前时间戳（Unix 时间戳，以纳秒为单位）
+	currentTime := time.Now().UnixNano()
+
+	// 将时间戳转换为字符串
+	timestampStr := fmt.Sprintf("%d", currentTime)
+
+	return timestampStr + ".mp4"
 }

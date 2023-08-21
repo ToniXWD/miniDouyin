@@ -98,3 +98,9 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 		response.VideoList = append(response.VideoList, newVideo)
 	}
 }
+
+// 接受上传视频
+func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActionResponse) {
+
+	//vName := utils.GetVideoName(request.Title)
+}

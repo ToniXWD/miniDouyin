@@ -104,6 +104,8 @@ func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.PublishActionResponse)
 
+	pg.DBReceiveVideo(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 

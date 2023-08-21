@@ -114,3 +114,14 @@ func DBGetUser(request *api.UserRequest) (*DBUser, error) {
 
 	return &user, nil
 }
+
+// 通过鉴权验证token
+// 返回对应的user的指针和错误信息
+func ValidateToken(token string) (*DBUser, error) {
+	var user DBUser
+	res := DB.First(&user, "Token = ?", token)
+	if res.Error != nil {
+		return nil, utils.ErrTokenVerifiedFailed
+	}
+	return &user, nil
+}

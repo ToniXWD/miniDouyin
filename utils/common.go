@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -51,6 +52,16 @@ func GetVideoNameAndPath() (name string, path string, DBpath string) {
 
 	DBpath = filepath.Join("videos", name)
 
+	return
+}
+
+// 返回视频封面存储名和db名
+func GetVideoCoverName(name string) (coverPath string, dbCover string) {
+	coverPath = strings.TrimSuffix(name, ".mp4")
+	coverPath = coverPath + ".png"
+	coverPath = strings.Replace(coverPath, "videos", "bgs", 1)
+	index := strings.Index(coverPath, "bgs")
+	dbCover = coverPath[index:]
 	return
 }
 

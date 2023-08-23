@@ -1,9 +1,17 @@
+/*
+ * @Description:
+ * @Author: Zjy
+ * @Date: 2023-08-23 11:10:17
+ * @LastEditTime: 2023-08-23 22:26:23
+ * @version: 1.0
+ */
 package utils
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
+
 	"time"
 )
 
@@ -50,6 +58,8 @@ func GetVideoNameAndPath() (name string, path string, DBpath string) {
 	path = filepath.Join(projectBase, "data", "videos", name)
 
 	DBpath = filepath.Join("videos", name)
+
+	fmt.Println(path)
 
 	return
 }

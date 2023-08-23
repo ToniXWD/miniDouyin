@@ -1,9 +1,10 @@
 package pg
 
 import (
-	"github.com/stretchr/testify/assert"
 	"miniDouyin/biz/dal/pg"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUser_Token(t *testing.T) {

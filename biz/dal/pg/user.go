@@ -1,9 +1,10 @@
 package pg
 
 import (
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+
+	"gorm.io/gorm"
 )
 
 type DBUser struct {
@@ -74,14 +75,14 @@ func (u *DBUser) increaseWork(db *gorm.DB) bool {
 }
 
 // 从数据库结构体转化为api的结构体
-// IsFollow此时默认设置为true，后续需自行处理
+// IsFollow此时默认设置为false，后续需自行处理
 func (u *DBUser) ToApiUser() *api.User {
 	return &api.User{
 		ID:              int64(u.ID),
 		Name:            u.Username,
 		FollowCount:     &u.FollowCount,
 		FollowerCount:   &u.FollowerCount,
-		IsFollow:        true,
+		IsFollow:        false,
 		Avatar:          &u.Avatar,
 		BackgroundImage: &u.BackgroundImage,
 		Signature:       &u.Signature,

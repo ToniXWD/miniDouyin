@@ -94,6 +94,7 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 // VideoPublishAction .
 // @router /douyin/publish/action/ [POST]
 func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
+	fmt.Println("VideoPublishAction 被调用")
 	var err error
 	var req api.PublishActionRequest
 	resp := new(api.PublishActionResponse)
@@ -106,6 +107,9 @@ func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	pg.DBReceiveVideo(&req, resp, form, c)
+
+	// Debug
+	fmt.Printf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -124,6 +128,9 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.PublishListResponse)
 
 	pg.DBVideoPublishList(&req, resp)
+
+	// Debug
+	fmt.Printf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

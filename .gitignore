@@ -40,4 +40,5 @@ dumped_hertz_remote_config.json
 .1024feature*
 .nfs*
 node_modules
+data
 miniDouyin

@@ -134,7 +134,9 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		return
 	}
 
-	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL}
+	saveCoverPath, dbCoverPath := utils.GetVideoCoverName(saveName)
+
+	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL, CoverUrl: dbCoverPath}
 
 	tx := DB.Begin()
 	res := video.insert(tx)
@@ -160,6 +162,8 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess
+
+	go utils.ExtractCover(saveName, saveCoverPath)
 }
 
 // 获取视频播放列表

@@ -6,5 +6,5 @@ var (
 	PORT     = "8889"
 	URLIP    = "192.168.3.93"
 	ServerIP = "0.0.0.0"
-	MaxBody  = 32 * 1024 * 1024
+	MaxBody  = 128 * 1024 * 1024
 )

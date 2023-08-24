@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"context"
 	"fmt"
 	"mime/multipart"
 	"miniDouyin/biz/model/miniDouyin/api"
@@ -169,4 +170,41 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		newVideo, _ := video.ToApiVideo()
 		response.VideoList = append(response.VideoList, newVideo)
 	}
+}
+
+func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse, ctx context.Context) {
+	if request.VideoID <= 0 {
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+	user, err := ValidateToken(request.Token)
+	if err != nil {
+		response.StatusCode = 1
+		str := utils.ErrTokenVerifiedFailed.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	actionService := NewFavoriteActionService(ctx)
+	if request.ActionType == 1 {
+		err = actionService.AddFavorite(request, user.ID)
+	} else if request.ActionType == 2 {
+		err = actionService.CancelFavorite(request, user.ID)
+	} else {
+		err = utils.ErrTypeNotSupport
+	}
+
+	if err != nil {
+		errStr := err.Error()
+		response.StatusCode = 2
+		response.StatusMsg = &errStr
+		return
+	}
+
+	response.StatusCode = 0
+	str := "Successfully"
+	response.StatusMsg = &str
+	return
 }

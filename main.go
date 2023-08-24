@@ -4,6 +4,7 @@ package main
 
 import (
 	"miniDouyin/biz/dal"
+	"miniDouyin/router"
 	"miniDouyin/utils"
 
 	"github.com/cloudwego/hertz/pkg/app/server"
@@ -17,6 +18,6 @@ func main() {
 		server.WithMaxRequestBodySize(utils.MaxBody),
 	)
 
-	register(h)
+	router.Register(h)
 	h.Spin()
 }

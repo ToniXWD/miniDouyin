@@ -213,7 +213,7 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/relatioin/follow/list/ [GET]
 func FollowList(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.RelationFollowerListRequest
+	var req api.RelationFollowListRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -222,6 +222,10 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFollowListResponse)
 
+	fmt.Println("FollowList 被调用")
+
+	pg.DBFollowList(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -229,7 +233,7 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/relatioin/follower/list/ [GET]
 func FollowerList(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.RelationFollowerListRequest
+	var req api.RelationFollowListRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())

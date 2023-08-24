@@ -264,11 +264,11 @@ service miniDouyin {
     // 关系操作
     RelationActionResponse RelationAction(1: RelationActionRequest request) (api.post = "/douyin/relation/action/"),
     // 用户关注列表
-    RelationFollowListResponse FollowList(1: RelationFollowerListRequest request) (api.get = "/douyin/relatioin/follow/list/"),
+    RelationFollowListResponse FollowList(1: RelationFollowerListRequest request) (api.get = "/douyin/relation/follow/list/"),
     // 用户粉丝列表
-    RelationFollowerListResponse FollowerList(1: RelationFollowerListRequest request) (api.get = "/douyin/relatioin/follower/list/"),
+    RelationFollowerListResponse FollowerList(1: RelationFollowerListRequest request) (api.get = "/douyin/relation/follower/list/"),
     // 用户好友列表
-    RelationFriendListResponse FriendList(1: RelationFriendListRequest request) (api.get = "/douyin/relatioin/friend/list/"),
+    RelationFriendListResponse FriendList(1: RelationFriendListRequest request) (api.get = "/douyin/relation/friend/list/"),
     // 聊天记录
     ChatRecordResponse ChatRec(1: ChatRecordResponse request) (api.get = "/douyin/message/chat/"),
     // 消息操作

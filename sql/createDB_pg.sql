@@ -27,13 +27,13 @@ CREATE TABLE videos
     favorite_count biginteger DEFAULT 0,                                     --获赞数
     comment_count  biginteger DEFAULT 0,                                     --评论数
     created_at     timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --投稿时间
-    deleted        date,                                                  --软删除
+    deleted        date DEFAULT null,                                                --软删除
     FOREIGN KEY (author) REFERENCES users (id)
 );
 CREATE TABLE favorited_videos
 (
-    id       SERIAL PRIMARY KEY,
-    user_id  bigint,               -- 自增主键
+    id       SERIAL PRIMARY KEY,  -- 自增主键
+    user_id  bigint,              
     video_id bigint,               -- 视频id，外键
     deleted  date DEFAULT null, -- 软删除
     FOREIGN KEY (user_id) REFERENCES users (id),

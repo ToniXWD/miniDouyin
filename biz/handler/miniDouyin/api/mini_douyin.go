@@ -212,6 +212,8 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 // FollowList .
 // @router /douyin/relatioin/follow/list/ [GET]
 func FollowList(ctx context.Context, c *app.RequestContext) {
+	fmt.Println("FollowList 被调用")
+
 	var err error
 	var req api.RelationFollowListRequest
 	err = c.BindAndValidate(&req)
@@ -221,8 +223,6 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.RelationFollowListResponse)
-
-	fmt.Println("FollowList 被调用")
 
 	pg.DBFollowList(&req, resp)
 

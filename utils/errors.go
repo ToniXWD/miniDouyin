@@ -10,6 +10,8 @@ var (
 	ErrTokenVerifiedFailed    = errors.New("failed to verify the token in database")
 	ErrGetFeedVideoListFailed = errors.New("failed to get feed video list")
 	ErrGetUserVideoListFailed = errors.New("failed to get user's video list")
+	ErrWrongParam             = errors.New("Wrong Parameter has been given")
+	ErrTypeNotSupport         = errors.New("Type Not Support")
 
 	// NetWork errors
 	ErrIpInitFailed = errors.New("failed to init IP")

@@ -14,7 +14,7 @@ type DBVideo struct {
 	Title         string
 	Author        int64 // 外键关联到DBUser结构体的主键
 	PlayUrl       string
-	CoverUrl      string `gorm:"default:'deaults/douyin.jpg'"`
+	CoverUrl      string `gorm:"default:'defaults/douyin.jpg'"`
 	FavoriteCount int64  `gorm:"default:0"`
 	CommentCount  int64  `gorm:"default:0"`
 	CreatedAt     time.Time

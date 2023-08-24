@@ -100,7 +100,7 @@ func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 
 	form, err := c.MultipartForm()
 
-	//err = c.BindAndValidate(&req)
+	// err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 	}
@@ -132,7 +132,7 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/favorite/action/ [POST]
 func FavoriteAction(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.FavoriteActionResponse
+	var req api.FavoriteActionRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -140,7 +140,7 @@ func FavoriteAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteActionResponse)
-
+	pg.DBFavoriteAction(&req, resp, ctx)
 	c.JSON(consts.StatusOK, resp)
 }
 

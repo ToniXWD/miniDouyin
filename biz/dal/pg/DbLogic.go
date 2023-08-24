@@ -197,3 +197,33 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 	str := "Action failed!"
 	response.StatusMsg = &str
 }
+
+func DBFollowList(request *api.RelationFollowListRequest, response *api.RelationFollowListResponse) {
+	clientuse, _ := ValidateToken(request.Token)
+	var followlist []DBAction
+	err := DB.Where("user_id = ?", clientuse.ID).Find(&followlist)
+	if err.Error != nil {
+		response.StatusCode = 1
+		str := "Get follow list failed"
+		response.StatusMsg = &str
+		response.UserList = nil
+		return
+	}
+
+	for _, follow := range followlist {
+		user := &DBUser{}
+		err := DB.Where("id = ?", follow.FollowID).First(user)
+		if err.Error != nil {
+			response.StatusCode = 1
+			str := "Get follow list failed"
+			response.StatusMsg = &str
+			response.UserList = nil
+			return
+		}
+		apiuser, _ := user.ToApiUser(clientuse)
+		response.UserList = append(response.UserList, apiuser)
+	}
+	response.StatusCode = 0
+	str := "Get follow list successfully"
+	response.StatusMsg = &str
+}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"miniDouyin/biz/dal/pg"
-	"miniDouyin/biz/dal/relation"
 	"miniDouyin/biz/model/miniDouyin/api"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -206,7 +205,7 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationActionResponse)
 
-	relation.DBUserAction(&req, resp)
+	pg.DBUserAction(&req, resp)
 	c.JSON(consts.StatusOK, resp)
 }
 

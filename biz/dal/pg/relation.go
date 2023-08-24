@@ -1,13 +1,10 @@
-package relation
+package pg
 
 import (
-	"miniDouyin/biz/dal/pg"
 	"miniDouyin/biz/model/miniDouyin/api"
 
 	"gorm.io/gorm"
 )
-
-var DB *gorm.DB
 
 type DBAction struct {
 	ID       int64 `gorm:"primaryKey"`
@@ -39,7 +36,7 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 		// 关注
 		err = u.Insert()
 		if err == nil {
-			user := &pg.DBUser{}
+			user := &DBUser{}
 			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count + ?", 1))
 			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count + ?", 1))
 			return err
@@ -49,7 +46,7 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 		// 取消关注
 		err = u.Delete()
 		if err == nil {
-			user := &pg.DBUser{}
+			user := &DBUser{}
 			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count - ?", 1))
 			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count - ?", 1))
 			return err
@@ -61,7 +58,7 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 
 // 从关注请求返回新的DBAction结构体
 func DBActionFromActionRequest(request *api.RelationActionRequest) *DBAction {
-	user, _ := pg.ValidateToken(request.Token)
+	user, _ := ValidateToken(request.Token)
 	return &DBAction{
 		UserID:   int64(user.ID),
 		FollowID: request.ToUserID,

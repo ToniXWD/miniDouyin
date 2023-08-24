@@ -74,7 +74,8 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 		return
 	}
 	// 填充结构体
-	response.User = user.ToApiUser()
+	clientUser, _ := ValidateToken(request.Token)
+	response.User, _ = user.ToApiUser(clientUser)
 	response.StatusCode = 0
 	str := "Get user information successfully!"
 	response.StatusMsg = &str
@@ -97,7 +98,11 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := utils.TimeToI64(video.CreatedAt)
 			response.NextTime = &newNext
 		}
-		newVideo, _ := video.ToApiVideo()
+		var clientUser *DBUser = nil
+		if request.Token != nil {
+			clientUser, _ = ValidateToken(*request.Token)
+		}
+		newVideo, _ := video.ToApiVideo(clientUser)
 		response.VideoList = append(response.VideoList, newVideo)
 	}
 }
@@ -157,6 +162,7 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 	response.StatusMsg = &utils.UploadVideosSuccess
 }
 
+// 获取视频播放列表
 func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishListResponse) {
 	vlist, err := GetUserVideoList(request.UserID)
 	if err != nil {
@@ -165,8 +171,29 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		response.StatusMsg = &str
 		return
 	}
+	clientUser, _ := ValidateToken(request.Token)
 	for _, video := range vlist {
-		newVideo, _ := video.ToApiVideo()
+		newVideo, _ := video.ToApiVideo(clientUser)
 		response.VideoList = append(response.VideoList, newVideo)
+		response.StatusCode = 0
 	}
+}
+
+// 处理关注请求
+// 并填充response结构体
+func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
+	action := DBActionFromActionRequest(request)
+
+	err := action.ifFollow(request.ActionType)
+	fmt.Printf("action = %+v\n", action)
+	if err == nil {
+		// 关注或取消关注成功
+		response.StatusCode = 0
+		str := "Action or DeAction successfully!"
+		response.StatusMsg = &str
+		return
+	}
+	response.StatusCode = 1
+	str := "Action failed!"
+	response.StatusMsg = &str
 }

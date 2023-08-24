@@ -10,6 +10,7 @@ var (
 	ErrTokenVerifiedFailed    = errors.New("failed to verify the token in database")
 	ErrGetFeedVideoListFailed = errors.New("failed to get feed video list")
 	ErrGetUserVideoListFailed = errors.New("failed to get user's video list")
+	ErrMathRealationFailed    = errors.New("failed to get relation of a user to a given token")
 
 	// NetWork errors
 	ErrIpInitFailed = errors.New("failed to init IP")

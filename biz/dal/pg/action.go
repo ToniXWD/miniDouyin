@@ -19,7 +19,7 @@ func (u *DBAction) TableName() string {
 
 // 向数据库中删除当前结构体
 func (u *DBAction) Delete() error {
-	res := DB.Delete(u)
+	res := DB.Where("user_id = ? AND follow_id = ?", u.UserID, u.FollowID).Delete(u)
 	return res.Error
 }
 

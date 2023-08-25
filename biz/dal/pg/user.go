@@ -134,7 +134,7 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 
 	// 否则需要根据clientUser查询该用户是否被关注
 	match := &DBAction{}
-	e := DB.Model(&DBAction{}).Where("UserID = ? AND FollowID = ?", clientUser.ID, u.ID).First(match)
+	e := DB.Model(&DBAction{}).Where("user_id = ? AND follow_id = ?", clientUser.ID, u.ID).First(match)
 	if e.Error == nil {
 		// 查询成功，match是有效的记录
 		apiuser.IsFollow = true

@@ -68,34 +68,31 @@ func Register(r *server.Hertz) {
 			}
 		}
 		{
-			_relatioin := _douyin.Group("/relatioin", _relatioinMw()...)
+			_relation := _douyin.Group("/relation", _relationMw()...)
 			{
-				_follow := _relatioin.Group("/follow", _followMw()...)
+				_action3 := _relation.Group("/action", _action3Mw()...)
+				_action3.POST("/", append(_relationactionMw(), api.RelationAction)...)
+			}
+			{
+				_follow := _relation.Group("/follow", _followMw()...)
 				{
 					_list2 := _follow.Group("/list", _list2Mw()...)
 					_list2.GET("/", append(_followlistMw(), api.FollowList)...)
 				}
 			}
 			{
-				_follower := _relatioin.Group("/follower", _followerMw()...)
+				_follower := _relation.Group("/follower", _followerMw()...)
 				{
 					_list3 := _follower.Group("/list", _list3Mw()...)
 					_list3.GET("/", append(_followerlistMw(), api.FollowerList)...)
 				}
 			}
 			{
-				_friend := _relatioin.Group("/friend", _friendMw()...)
+				_friend := _relation.Group("/friend", _friendMw()...)
 				{
 					_list4 := _friend.Group("/list", _list4Mw()...)
 					_list4.GET("/", append(_friendlistMw(), api.FriendList)...)
 				}
-			}
-		}
-		{
-			_relation := _douyin.Group("/relation", _relationMw()...)
-			{
-				_action3 := _relation.Group("/action", _action3Mw()...)
-				_action3.POST("/", append(_relationactionMw(), api.RelationAction)...)
 			}
 		}
 		{

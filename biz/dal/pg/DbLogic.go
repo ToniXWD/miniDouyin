@@ -295,7 +295,6 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 			response.StatusMsg = 0
 		}
 	}
-
 	response.StatusMsg = 1
 }
 

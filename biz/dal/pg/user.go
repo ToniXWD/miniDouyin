@@ -1,9 +1,10 @@
 package pg
 
 import (
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+
+	"gorm.io/gorm"
 )
 
 type DBUser struct {
@@ -44,6 +45,20 @@ func (u *DBUser) QueryUser() bool {
 	return result.RowsAffected > 0
 }
 
+// 根据User的ID字段在数据库中查询
+// 找到结果就填充整个结构体并返回T True
+// 否则返回 False
+func (u *DBUser) QueryUserByID() bool {
+	result := DB.First(u, "ID = ?", u.ID)
+
+	if result.Error != nil {
+		return false
+	}
+
+	// 检查是否找到了记录
+	return result.RowsAffected > 0
+}
+
 // 将当前结构体插入数据库，返回是否成功
 func (u *DBUser) insert() bool {
 	if u.Username == "" || u.Passwd == "" {
@@ -74,14 +89,16 @@ func (u *DBUser) increaseWork(db *gorm.DB) bool {
 }
 
 // 从数据库结构体转化为api的结构体
-// IsFollow此时默认设置为true，后续需自行处理
-func (u *DBUser) ToApiUser() *api.User {
-	return &api.User{
+// IsFollow此时默认设置为false，后续需自行处理
+// 表示查看当前用户的token
+func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
+	err = nil
+	apiuser = &api.User{
 		ID:              int64(u.ID),
 		Name:            u.Username,
 		FollowCount:     &u.FollowCount,
 		FollowerCount:   &u.FollowerCount,
-		IsFollow:        true,
+		IsFollow:        false,
 		Avatar:          &u.Avatar,
 		BackgroundImage: &u.BackgroundImage,
 		Signature:       &u.Signature,
@@ -89,6 +106,27 @@ func (u *DBUser) ToApiUser() *api.User {
 		WorkCount:       &u.WorkCount,
 		FavoriteCount:   &u.FavoriteCount,
 	}
+
+	// 如果clientUser是空值，意味着前端没有登录，IsFollow默认false就可以返回
+	if clientUser == nil {
+		return
+	}
+
+	if clientUser.ID == apiuser.ID {
+		// 自己一定是关注了自己的
+		apiuser.IsFollow = true
+		return
+	}
+
+	// 否则需要根据clientUser查询该用户是否被关注
+	match := &DBAction{}
+	e := DB.Model(&DBAction{}).Where("UserID = ? AND FollowID = ?", clientUser.ID, u.ID).First(match)
+	if e.Error == nil {
+		// 查询成功，match是有效的记录
+		apiuser.IsFollow = true
+		err = utils.ErrMathRealationFailed
+	}
+	return
 }
 
 // 从登录请求构造新用户

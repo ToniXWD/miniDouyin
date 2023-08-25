@@ -1,6 +1,8 @@
 package dal
 
-import "miniDouyin/biz/dal/pg"
+import (
+	"miniDouyin/biz/dal/pg"
+)
 
 func Init() {
 	pg.Init()

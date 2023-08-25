@@ -2,14 +2,16 @@ package pg
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
+	"miniDouyin/utils"
+
+	"gorm.io/gorm"
 )
 
 type Like struct {
 	gorm.Model
-	UserId  int64 `json:"user_id"`
-	VideoId int64 `json:"video_id"`
+	UserId  int64
+	VideoId int64
 }
 
 func (f *Like) TableName() string {
@@ -31,65 +33,53 @@ func CancelFavorite(like *Like, ctx context.Context) error {
 //
 
 // // ListFavorite 返回userid用户点赞的视频列表
-// func ListFavorite(userId int64, ctx context.Context) ([]*DBVideo, error) {
-// 	resp := make([]*Like, 0)
-// 	if err := DB.WithContext(ctx).Where("user_id = ?", userId).Find(&resp).Error; err != nil {
-// 		return nil, err
-// 	}
-// 	if len(resp) == 0 {
-// 		return make([]*DBVideo, 0), nil
-// 	}
-//
-// 	videoIdList := make([]int64, len(resp))
-// 	for i, like := range resp {
-// 		videoIdList[i] = like.VideoId
-// 	}
-//
-// 	countList, err := MCountFavorite(videoIdList, ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	mresp, err := rpc.MGetVideos(ctx, &publish.VideosMGetRequest{
-// 		UserId:      userId,
-// 		VideoIdList: videoIdList,
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	for i, video := range mresp.Videos {
-// 		video.IsFavorite = true
-// 		video.FavoriteCount = countList[i]
-// 	}
-// 	return mresp.Videos, nil
-// }
-//
-// func MCountFavorite(videoIdList []int64, ctx context.Context) ([]int64, error) {
-// 	countList := make([]int64, len(videoIdList))
-// 	for i, videoId := range videoIdList {
-// 		if err := DB.WithContext(ctx).Model(&Like{}).Where("video_id = ?", videoId).Count(&countList[i]).Error; err != nil {
-// 			return nil, err
-// 		}
-// 	}
-// 	return countList, nil
-// }
-//
-// func MCheckFavorite(userId int64, videoIdList []int64, ctx context.Context) ([]bool, error) {
-// 	set := utils.NewSet[int64]()
-// 	likes := make([]*Like, 0)
-// 	if err := DB.WithContext(ctx).Where("user_id = ? AND video_id IN ?", userId, videoIdList).Find(&likes).Error; err != nil {
-// 		return nil, err
-// 	}
-// 	for _, like := range likes {
-// 		set.Add(like.VideoId)
-// 	}
-// 	boolList := make([]bool, len(videoIdList))
-// 	for i, videoId := range videoIdList {
-// 		boolList[i] = set.Contains(videoId)
-// 	}
-// 	return boolList, nil
-// }
+func ListFavorite(userId int64, ctx context.Context) ([]*DBVideo, []int64, error) {
+	data := make([]*Like, 0)
+	if err := DB.WithContext(ctx).Where("user_id = ?", userId).Find(&data).Error; err != nil {
+		return nil, nil, err
+	}
+	if len(data) == 0 {
+		return make([]*DBVideo, 0), nil, nil
+	}
+
+	videoIdList := make([]int64, len(data))
+	for i, like := range data {
+		videoIdList[i] = like.VideoId
+	}
+
+	countList, err := MCountFavorite(videoIdList, ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	DBVideos, err := MGetVideos(videoIdList, ctx)
+	if err != nil {
+		return nil, countList, err
+	}
+
+	return DBVideos, countList, err
+
+}
+
+// MCountFavorite 统计videoId点赞数量
+func MCountFavorite(videoIdList []int64, ctx context.Context) ([]int64, error) {
+	countList := make([]int64, len(videoIdList))
+	for i, videoId := range videoIdList {
+		if err := DB.WithContext(ctx).Model(&Like{}).Where("video_id = ?", videoId).Count(&countList[i]).Error; err != nil {
+			return nil, err
+		}
+	} //
+	return countList, nil
+}
+
+// MGetVideos 通过 videoID 获取对应 DBVideo
+func MGetVideos(videoIdList []int64, ctx context.Context) ([]*DBVideo, error) {
+	data := make([]*DBVideo, 0)
+	if err := DB.WithContext(ctx).Where("id in ?", videoIdList).Find(&data).Error; err != nil {
+		return nil, err
+	}
+	return data, nil
+}
 
 type FavoriteActionService struct {
 	ctx context.Context
@@ -119,4 +109,31 @@ func (s *FavoriteActionService) CancelFavorite(req *api.FavoriteActionRequest, u
 		return err
 	}
 	return nil
+}
+
+type FavoriteListService struct {
+	ctx context.Context
+}
+
+// NewFavoriteListService creates a new FavoriteListService
+func NewFavoriteListService(ctx context.Context) *FavoriteListService {
+	return &FavoriteListService{
+		ctx: ctx,
+	}
+}
+
+func (s *FavoriteListService) ListFavorite(req *api.FavoriteListRequest, userId int64) ([]*api.Video, error) {
+	clientUser, _ := ValidateToken(req.Token)
+	videos, countList, err := ListFavorite(req.UserID, s.ctx)
+	if err != nil {
+		return nil, utils.ErrWrongParam
+	}
+	res := make([]*api.Video, len(videos))
+	for i, video := range videos {
+		video.FavoriteCount = countList[i]
+		apiVideo, _ := video.ToApiVideo(clientUser)
+		res = append(res, apiVideo)
+		apiVideo.IsFavorite = true
+	}
+	return res, nil
 }

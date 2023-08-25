@@ -75,7 +75,8 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 		return
 	}
 	// 填充结构体
-	response.User = user.ToApiUser()
+	clientUser, _ := ValidateToken(request.Token)
+	response.User, _ = user.ToApiUser(clientUser)
 	response.StatusCode = 0
 	str := "Get user information successfully!"
 	response.StatusMsg = &str
@@ -98,7 +99,11 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := utils.TimeToI64(video.CreatedAt)
 			response.NextTime = &newNext
 		}
-		newVideo, _ := video.ToApiVideo()
+		var clientUser *DBUser = nil
+		if request.Token != nil {
+			clientUser, _ = ValidateToken(*request.Token)
+		}
+		newVideo, _ := video.ToApiVideo(clientUser)
 		response.VideoList = append(response.VideoList, newVideo)
 	}
 }
@@ -130,7 +135,9 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		return
 	}
 
-	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL}
+	saveCoverPath, dbCoverPath := utils.GetVideoCoverName(saveName)
+
+	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL, CoverUrl: dbCoverPath}
 
 	tx := DB.Begin()
 	res := video.insert(tx)
@@ -156,8 +163,11 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess
+
+	go utils.ExtractCover(saveName, saveCoverPath)
 }
 
+// 获取视频播放列表
 func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishListResponse) {
 	vlist, err := GetUserVideoList(request.UserID)
 	if err != nil {
@@ -166,10 +176,31 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		response.StatusMsg = &str
 		return
 	}
+	clientUser, _ := ValidateToken(request.Token)
 	for _, video := range vlist {
-		newVideo, _ := video.ToApiVideo()
+		newVideo, _ := video.ToApiVideo(clientUser)
 		response.VideoList = append(response.VideoList, newVideo)
+		response.StatusCode = 0
 	}
+}
+
+// 处理关注请求
+// 并填充response结构体
+func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
+	action := DBActionFromActionRequest(request)
+
+	err := action.ifFollow(request.ActionType)
+	fmt.Printf("action = %+v\n", action)
+	if err == nil {
+		// 关注或取消关注成功
+		response.StatusCode = 0
+		str := "Action or DeAction successfully!"
+		response.StatusMsg = &str
+		return
+	}
+	response.StatusCode = 1
+	str := "Action failed!"
+	response.StatusMsg = &str
 }
 
 func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse, ctx context.Context) {
@@ -179,7 +210,7 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		response.StatusMsg = &str
 		return
 	}
-	user, err := ValidateToken(request.Token)
+	clientUser, err := ValidateToken(request.Token)
 	if err != nil {
 		response.StatusCode = 1
 		str := utils.ErrTokenVerifiedFailed.Error()
@@ -189,9 +220,9 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 
 	actionService := NewFavoriteActionService(ctx)
 	if request.ActionType == 1 {
-		err = actionService.AddFavorite(request, user.ID)
+		err = actionService.AddFavorite(request, clientUser.ID)
 	} else if request.ActionType == 2 {
-		err = actionService.CancelFavorite(request, user.ID)
+		err = actionService.CancelFavorite(request, clientUser.ID)
 	} else {
 		err = utils.ErrTypeNotSupport
 	}
@@ -207,4 +238,104 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 	str := "Successfully"
 	response.StatusMsg = &str
 	return
+}
+
+func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse, ctx context.Context) {
+	// type FavoriteListResponse struct {
+	//	// 状态码，0-成功，其他值-失败
+	//	StatusCode int32
+	//	// 返回状态描述
+	//	StatusMsg *string
+	//	// 用户点赞视频列表
+	//	VideoList []*Video
+	// }
+	if request.UserID <= 0 {
+		response.VideoList = nil
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	videos, err := NewFavoriteListService(ctx).ListFavorite(request, request.UserID)
+	if err != nil {
+		errStr := err.Error()
+		response.VideoList = nil
+		response.StatusCode = 2
+		response.StatusMsg = &errStr
+		return
+	}
+	response.VideoList = videos
+	response.StatusCode = 0
+	str := "Successfully"
+	response.StatusMsg = &str
+	return
+}
+
+// 添加评论和删除评论
+func DBCommentAction(request *api.CommentActionRequest, response *api.CommentActionResponse, ctx context.Context) {
+	if request.VideoID <= 0 {
+		response.Comment = nil
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	clientUser, err := ValidateToken(request.Token)
+	apiUser, _ := clientUser.ToApiUser(clientUser)
+	if err != nil {
+		return
+	}
+
+	commentService := NewActionCommentService(ctx)
+	if request.ActionType == 1 {
+		if len(*request.CommentText) == 0 {
+			response.StatusCode = 2
+			str := utils.ErrWrongParam.Error()
+			response.StatusMsg = &str
+			return
+		}
+		comment, _ := commentService.CreateComment(request, clientUser.ID)
+		response.StatusCode = 0
+		response.Comment = &api.Comment{
+			ID:         int64(comment.ID),
+			User:       apiUser,
+			Content:    *request.CommentText,
+			CreateDate: comment.CreatedAt.Format("2006-01-02 15:04:05"),
+		}
+	} else if request.ActionType == 2 {
+		if *request.CommentID <= 0 {
+			response.StatusCode = 2
+			str := utils.ErrWrongParam.Error()
+			response.StatusMsg = &str
+			return
+		}
+		if err = commentService.DeleteComment(request); err != nil {
+			return
+		}
+		response.StatusCode = 0
+		str := "Delete comment successfully!"
+		response.StatusMsg = &str
+	} else {
+		err = utils.ErrTypeNotSupport
+	}
+
+	dbv := &DBVideo{ID: request.VideoID}
+	txn := DB.Begin()
+	dbv.increaseComment(txn)
+	txn.Commit()
+}
+
+// 获取评论列表
+func DBCommentList(request *api.CommentListRequest, response *api.CommentListResponse) {
+	if request.VideoID <= 0 {
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
+	response.CommentList = comments
 }

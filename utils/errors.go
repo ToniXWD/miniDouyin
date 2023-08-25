@@ -12,6 +12,9 @@ var (
 	ErrGetUserVideoListFailed = errors.New("failed to get user's video list")
 	ErrWrongParam             = errors.New("Wrong Parameter has been given")
 	ErrTypeNotSupport         = errors.New("Type Not Support")
+	ErrMathRealationFailed    = errors.New("failed to get relation of a user to a given token")
+	ErrGetCommentListFailed   = errors.New("failed to get comment list of a video from database")
+	ErrVideoNotExist          = errors.New("failed to get a video of a given id from database")
 
 	// NetWork errors
 	ErrIpInitFailed = errors.New("failed to init IP")

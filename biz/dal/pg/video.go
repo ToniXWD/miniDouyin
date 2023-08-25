@@ -44,8 +44,18 @@ func (v *DBVideo) insert(db *gorm.DB) bool {
 	return res.Error == nil
 }
 
+func (v *DBVideo) increaseComment(db *gorm.DB) bool {
+
+	if v.ID <= 0 {
+		// 视频iD不能小于等于0
+		return false
+	}
+	res := db.Model(v).Where("ID = ?", v.ID).Update("comment_count", gorm.Expr("comment_count + ?", 1))
+	return res.Error == nil
+}
+
 // 数据库模型转换为api的结构体
-func (v *DBVideo) ToApiVideo() (*api.Video, error) {
+func (v *DBVideo) ToApiVideo(clientUser *DBUser) (*api.Video, error) {
 	rPlayurl := utils.Realurl(v.PlayUrl)
 	rCoverurl := utils.Realurl(v.CoverUrl)
 
@@ -55,7 +65,7 @@ func (v *DBVideo) ToApiVideo() (*api.Video, error) {
 		CoverURL:      rCoverurl,
 		FavoriteCount: v.FavoriteCount,
 		CommentCount:  v.CommentCount,
-		IsFavorite:    true,
+		IsFavorite:    false,
 		Title:         v.Title,
 	}
 
@@ -67,7 +77,7 @@ func (v *DBVideo) ToApiVideo() (*api.Video, error) {
 		return nil, utils.ErrVideoUserNotExist
 	}
 
-	av.Author = dbuser.ToApiUser()
+	av.Author, _ = dbuser.ToApiUser(clientUser)
 
 	return av, nil
 }

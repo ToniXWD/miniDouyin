@@ -6596,7 +6596,7 @@ func (p *CommentListResponse) String() string {
 }
 
 // /douyin/relation/action/ - 关系操作
-type RelationActionRequest struct {
+type  RelationActionRequest struct {
 	// 用户鉴权token
 	Token string `thrift:"token,1,required" form:"token,required" json:"token,required" query:"token,required"`
 	// 对方用户id

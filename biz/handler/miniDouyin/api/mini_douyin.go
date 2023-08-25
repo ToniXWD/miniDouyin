@@ -260,6 +260,8 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFriendListResponse)
 
+	pg.DBFriendList(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 

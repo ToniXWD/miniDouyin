@@ -163,7 +163,7 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteListResponse)
-
+	pg.DBFavoriteList(&req, resp, ctx)
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -171,7 +171,7 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/comment/action/ [POST]
 func CommentAction(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.CommentActionResponse
+	var req api.CommentActionRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -179,7 +179,7 @@ func CommentAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.CommentActionResponse)
-
+	pg.DBCommentAction(&req, resp, ctx)
 	c.JSON(consts.StatusOK, resp)
 }
 

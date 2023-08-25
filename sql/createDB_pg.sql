@@ -32,8 +32,8 @@ CREATE TABLE videos
 );
 CREATE TABLE favorited_videos
 (
-    id       SERIAL PRIMARY KEY,
-    user_id  bigint,               -- 自增主键
+    id       SERIAL PRIMARY KEY,   -- 自增主键
+    user_id  bigint,
     video_id bigint,               -- 视频id，外键
     deleted  date DEFAULT null, -- 软删除
     FOREIGN KEY (user_id) REFERENCES users (id),

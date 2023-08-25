@@ -210,7 +210,7 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		response.StatusMsg = &str
 		return
 	}
-	user, err := ValidateToken(request.Token)
+	clientUser, err := ValidateToken(request.Token)
 	if err != nil {
 		response.StatusCode = 1
 		str := utils.ErrTokenVerifiedFailed.Error()
@@ -220,9 +220,9 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 
 	actionService := NewFavoriteActionService(ctx)
 	if request.ActionType == 1 {
-		err = actionService.AddFavorite(request, user.ID)
+		err = actionService.AddFavorite(request, clientUser.ID)
 	} else if request.ActionType == 2 {
-		err = actionService.CancelFavorite(request, user.ID)
+		err = actionService.CancelFavorite(request, clientUser.ID)
 	} else {
 		err = utils.ErrTypeNotSupport
 	}
@@ -238,4 +238,97 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 	str := "Successfully"
 	response.StatusMsg = &str
 	return
+}
+
+func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse, ctx context.Context) {
+	// type FavoriteListResponse struct {
+	//	// 状态码，0-成功，其他值-失败
+	//	StatusCode int32
+	//	// 返回状态描述
+	//	StatusMsg *string
+	//	// 用户点赞视频列表
+	//	VideoList []*Video
+	// }
+	if request.UserID <= 0 {
+		response.VideoList = nil
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	videos, err := NewFavoriteListService(ctx).ListFavorite(request, request.UserID)
+	if err != nil {
+		errStr := err.Error()
+		response.VideoList = nil
+		response.StatusCode = 2
+		response.StatusMsg = &errStr
+		return
+	}
+	response.VideoList = videos
+	response.StatusCode = 0
+	str := "Successfully"
+	response.StatusMsg = &str
+	return
+}
+
+func DBCommentAction(request *api.CommentActionRequest, response *api.CommentActionResponse, ctx context.Context) {
+	if request.VideoID <= 0 {
+		response.Comment = nil
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	clientUser, err := ValidateToken(request.Token)
+	apiUser, _ := clientUser.ToApiUser(clientUser)
+	if err != nil {
+		return
+	}
+
+	commentService := NewActionCommentService(ctx)
+	if request.ActionType == 1 {
+		if len(*request.CommentText) == 0 {
+			response.StatusCode = 2
+			str := utils.ErrWrongParam.Error()
+			response.StatusMsg = &str
+			return
+		}
+		comment, _ := commentService.CreateComment(request, clientUser.ID)
+		response.StatusCode = 0
+		response.Comment = &api.Comment{
+			ID:         int64(comment.ID),
+			User:       apiUser,
+			Content:    *request.CommentText,
+			CreateDate: comment.CreatedAt.Format("2006-01-02 15:04:05"),
+		}
+	} else if request.ActionType == 2 {
+		if *request.CommentID <= 0 {
+			response.StatusCode = 2
+			str := utils.ErrWrongParam.Error()
+			response.StatusMsg = &str
+			return
+		}
+		if err = commentService.DeleteComment(request); err != nil {
+			return
+		}
+		response.StatusCode = 0
+		str := "Delete comment successfully!"
+		response.StatusMsg = &str
+	} else {
+		err = utils.ErrTypeNotSupport
+	}
+}
+
+func DBCommentList(request *api.CommentListRequest, response *api.CommentListResponse, ctx context.Context) {
+	if request.VideoID <= 0 {
+		response.StatusCode = 2
+		str := utils.ErrWrongParam.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	comments, _ := NewGetCommentListService(ctx).GetCommonList(request)
+	response.CommentList = comments
 }

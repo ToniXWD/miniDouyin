@@ -44,6 +44,20 @@ func (v *DBVideo) insert(db *gorm.DB) bool {
 	return res.Error == nil
 }
 
+// 根据User的ID字段在数据库中查询
+// 找到结果就填充整个结构体并返回T True
+// 否则返回 False
+func (v *DBVideo) QueryVideoByID() bool {
+	result := DB.First(v, "ID = ?", v.ID)
+
+	if result.Error != nil {
+		return false
+	}
+
+	// 检查是否找到了记录
+	return result.RowsAffected > 0
+}
+
 func (v *DBVideo) increaseComment(db *gorm.DB) bool {
 
 	if v.ID <= 0 {
@@ -54,8 +68,16 @@ func (v *DBVideo) increaseComment(db *gorm.DB) bool {
 	return res.Error == nil
 }
 
+// 被点赞数自增
+// 需要保证ID有效
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (v *DBVideo) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
+	return db.Model(v).Where("ID = ?", v.ID).Update("favorite_count", gorm.Expr("favorite_count + ?", num))
+}
+
 // 数据库模型转换为api的结构体
-func (v *DBVideo) ToApiVideo(clientUser *DBUser) (*api.Video, error) {
+func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api.Video, error) {
 	rPlayurl := utils.Realurl(v.PlayUrl)
 	rCoverurl := utils.Realurl(v.CoverUrl)
 
@@ -69,6 +91,7 @@ func (v *DBVideo) ToApiVideo(clientUser *DBUser) (*api.Video, error) {
 		Title:         v.Title,
 	}
 
+	// 填充用户
 	var dbuser DBUser
 
 	res := DB.Model(&DBUser{}).First(&dbuser, "ID = ?", v.Author)
@@ -79,6 +102,25 @@ func (v *DBVideo) ToApiVideo(clientUser *DBUser) (*api.Video, error) {
 
 	av.Author, _ = dbuser.ToApiUser(clientUser)
 
+	if clientUser == nil {
+		// 如果客户端未登录，IsFavorite设置为false
+		av.IsFavorite = false
+		return av, nil
+	}
+
+	// islike设置为true表示调用者确认这个video已是被喜欢的状态
+	if islike {
+		av.IsFavorite = true
+		return av, nil
+	}
+
+	// 否则需要进行查询以判断前端用户是否喜欢该视频
+	findres := &Like{}
+	r := db.Model(&Like{}).First(findres, "user_id = ? AND video_id = ?", clientUser.ID, v.ID)
+	if r.RowsAffected != 0 {
+		// 如果找到了记录，设置IsFavorite为true
+		av.IsFavorite = true
+	}
 	return av, nil
 }
 

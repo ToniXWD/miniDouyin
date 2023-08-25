@@ -84,6 +84,7 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 
 // 处理视频流
 func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
+
 	vlist, err := GetNewVideoList(*request.LatestTime)
 	if err != nil {
 		response.StatusCode = 1
@@ -103,7 +104,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 		if request.Token != nil {
 			clientUser, _ = ValidateToken(*request.Token)
 		}
-		newVideo, _ := video.ToApiVideo(clientUser)
+		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
 	}
 }
@@ -150,7 +151,7 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		return
 	}
 
-	res = user.increaseWork(tx)
+	res = user.increaseWork(tx, 1)
 
 	if !res {
 		response.StatusCode = 2
@@ -178,7 +179,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 	}
 	clientUser, _ := ValidateToken(request.Token)
 	for _, video := range vlist {
-		newVideo, _ := video.ToApiVideo(clientUser)
+		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
 		response.StatusCode = 0
 	}
@@ -203,52 +204,62 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 	response.StatusMsg = &str
 }
 
+// 喜欢操作
 func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse, ctx context.Context) {
+	// 校验 VideoID
 	if request.VideoID <= 0 {
 		response.StatusCode = 2
 		str := utils.ErrWrongParam.Error()
 		response.StatusMsg = &str
 		return
 	}
-	clientUser, err := ValidateToken(request.Token)
+	// 校验 token
+	_, err := ValidateToken(request.Token)
 	if err != nil {
 		response.StatusCode = 1
 		str := utils.ErrTokenVerifiedFailed.Error()
 		response.StatusMsg = &str
 		return
 	}
-
-	actionService := NewFavoriteActionService(ctx)
-	if request.ActionType == 1 {
-		err = actionService.AddFavorite(request, clientUser.ID)
-	} else if request.ActionType == 2 {
-		err = actionService.CancelFavorite(request, clientUser.ID)
-	} else {
-		err = utils.ErrTypeNotSupport
+	clientUser, _ := ValidateToken(request.Token)
+	newRecord := &Like{
+		VideoId: request.VideoID,
+		UserId:  clientUser.ID,
 	}
 
-	if err != nil {
-		errStr := err.Error()
+	curVideo := &DBVideo{
+		ID: request.VideoID,
+	}
+
+	var ans bool // 点赞或取消点赞是否成功
+
+	// 更改favorited_videos表时，需要同步更改users表盒videos表
+	if request.ActionType == 1 {
+		// 点赞
+		ans = newRecord.insert(DB, clientUser, curVideo)
+
+	} else if request.ActionType == 2 {
+		// 取消点赞
+		ans = newRecord.delete(DB, clientUser, curVideo)
+	} else {
+		ans = false
+	}
+	if !ans {
 		response.StatusCode = 2
-		response.StatusMsg = &errStr
+		str := utils.ErrLikeFaile.Error()
+		response.StatusMsg = &str
 		return
 	}
 
 	response.StatusCode = 0
-	str := "Successfully"
-	response.StatusMsg = &str
-	return
+	response.StatusMsg = &utils.FavoriteVideoActionSuccess
+
 }
 
-func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse, ctx context.Context) {
-	// type FavoriteListResponse struct {
-	//	// 状态码，0-成功，其他值-失败
-	//	StatusCode int32
-	//	// 返回状态描述
-	//	StatusMsg *string
-	//	// 用户点赞视频列表
-	//	VideoList []*Video
-	// }
+// 获取喜欢列表
+func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse) {
+
+	// 如果UserID不合法，直接返回
 	if request.UserID <= 0 {
 		response.VideoList = nil
 		response.StatusCode = 2
@@ -257,19 +268,33 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 		return
 	}
 
-	videos, err := NewFavoriteListService(ctx).ListFavorite(request, request.UserID)
-	if err != nil {
-		errStr := err.Error()
-		response.VideoList = nil
-		response.StatusCode = 2
-		response.StatusMsg = &errStr
+	// 验证token
+	clientUser, err := ValidateToken(request.Token)
+	if err != nil || clientUser.ID != request.UserID {
+		response.StatusCode = 1
+		str := utils.ErrWrongToken.Error()
+		response.StatusMsg = &str
 		return
 	}
-	response.VideoList = videos
+	likeobj := &Like{UserId: request.UserID}
+
+	// 根据映射关系查询喜欢列表
+	dbvlist, find := likeobj.QueryVideoByUser(DB)
+	if !find {
+		// 没有找到
+		response.StatusCode = 2
+		str := utils.ErrGetVideoFromUSer.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	for _, item := range dbvlist {
+		// true 表示确信当前的视频被喜欢
+		apiVideo, _ := item.ToApiVideo(DB, clientUser, true)
+		response.VideoList = append(response.VideoList, apiVideo)
+	}
 	response.StatusCode = 0
-	str := "Successfully"
-	response.StatusMsg = &str
-	return
+	response.StatusMsg = &utils.FavoriteVideoListSuccess
 }
 
 // 添加评论和删除评论

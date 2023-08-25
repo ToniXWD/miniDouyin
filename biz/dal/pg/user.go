@@ -78,14 +78,28 @@ func (u *DBUser) insert() bool {
 
 // 将当前结构体插入数据库，返回是否成功
 // 需要提前保证该结构体有效
-func (u *DBUser) increaseWork(db *gorm.DB) bool {
+func (u *DBUser) increaseWork(db *gorm.DB, num int64) bool {
 
 	if u.Username == "" || u.Passwd == "" || u.ID == 0 {
 		// 密码盒用户名不能为空
 		return false
 	}
-	res := db.Model(u).Where("ID = ?", u.ID).Update("work_count", gorm.Expr("work_count + ?", 1))
+	res := db.Model(u).Where("ID = ?", u.ID).Update("work_count", gorm.Expr("work_count + ?", num))
 	return res.Error == nil
+}
+
+// 点赞数自增
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (u *DBUser) increaseFavorite(db *gorm.DB, num int64) *gorm.DB {
+	return db.Model(u).Where("ID = ?", u.ID).Update("favorite_count", gorm.Expr("favorite_count + ?", num))
+}
+
+// 获赞数自增
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (u *DBUser) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
+	return db.Model(u).Where("ID = ?", u.ID).Update("total_favorited", gorm.Expr("total_favorited + ?", num))
 }
 
 // 从数据库结构体转化为api的结构体

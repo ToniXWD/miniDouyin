@@ -163,7 +163,7 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteListResponse)
-	pg.DBFavoriteList(&req, resp, ctx)
+	pg.DBFavoriteList(&req, resp)
 	c.JSON(consts.StatusOK, resp)
 }
 

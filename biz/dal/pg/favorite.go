@@ -4,14 +4,18 @@ import (
 	"context"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type Like struct {
-	gorm.Model
-	UserId  int64
-	VideoId int64
+	ID        int64 `gorm:"primaryKey"`
+	UserId    int64
+	VideoId   int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Deleted   gorm.DeletedAt `gorm:"default:NULL"`
 }
 
 func (f *Like) TableName() string {

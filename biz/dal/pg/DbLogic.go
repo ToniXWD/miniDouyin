@@ -199,9 +199,9 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 }
 
 func DBFollowList(request *api.RelationFollowListRequest, response *api.RelationFollowListResponse) {
-	clientuse, _ := ValidateToken(request.Token)
+	clientuser, _ := ValidateToken(request.Token)
 	var followlist []DBAction
-	err := DB.Where("user_id = ?", clientuse.ID).Find(&followlist)
+	err := DB.Where("user_id = ?", clientuser.ID).Find(&followlist)
 	if err.Error != nil {
 		response.StatusCode = 1
 		str := "Get follow list failed"
@@ -220,10 +220,102 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 			response.UserList = nil
 			return
 		}
-		apiuser, _ := user.ToApiUser(clientuse)
+		apiuser, _ := user.ToApiUser(clientuser)
 		response.UserList = append(response.UserList, apiuser)
 	}
 	response.StatusCode = 0
 	str := "Get follow list successfully"
+	response.StatusMsg = &str
+}
+
+func DBFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) {
+	clientuser, _ := ValidateToken(request.Token)
+	var followerList []DBAction
+	err := DB.Where("follow_id = ?", clientuser.ID).Find(&followerList)
+	if err.Error != nil {
+		response.StatusCode = 1
+		str := "Get follower list failed"
+		response.StatusMsg = &str
+		response.UserList = nil
+		return
+	}
+
+	for _, follower := range followerList {
+		user := &DBUser{}
+		err := DB.Where("id = ?", follower.UserID).First(user)
+		if err.Error != nil {
+			response.StatusCode = 1
+			str := "Get follower list failed"
+			response.StatusMsg = &str
+			response.UserList = nil
+			return
+		}
+		apiuser, _ := user.ToApiUser(clientuser)
+		response.UserList = append(response.UserList, apiuser)
+	}
+	response.StatusCode = 0
+	str := "Get follower list successfully"
+	response.StatusMsg = &str
+}
+
+func DBFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) {
+	clientuser, _ := ValidateToken(request.Token)
+	var friendList []DBfriend
+	err := DB.Where("user_id = ?", clientuser.ID).Find(&friendList)
+	if err.Error != nil {
+		response.StatusCode = 1
+		str := "Get friend list failed"
+		response.StatusMsg = &str
+		response.UserList = nil
+		return
+	}
+
+	for _, friend := range friendList {
+		user := &DBUser{}
+		err := DB.Where("id = ?", friend.FriendID).First(user)
+		if err.Error != nil {
+			response.StatusCode = 1
+			str := "Get friend list failed"
+			response.StatusMsg = &str
+			response.UserList = nil
+			return
+		}
+		apiuser, _ := user.ToApiUser(clientuser)
+		response.UserList = append(response.UserList, apiuser)
+	}
+	response.StatusCode = 0
+	str := "Get friend list successfully"
+	response.StatusMsg = &str
+}
+
+func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
+	if request.ActionType == 1 {
+		if sendMsg(request.Token, request.ToUserID, request.Content) {
+			response.StatusCode = int32(request.ToUserID)
+			response.StatusMsg = 0
+		}
+	}
+
+	response.StatusMsg = 1
+}
+
+func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) {
+	clientuser, _ := ValidateToken(request.Token)
+	var msgList []DBMessage
+	err := DB.Where("from_id = ? AND to_id = ?", clientuser.ID, request.ToUserID).Find(&msgList)
+	if err.Error != nil {
+		response.StatusCode = 1
+		str := "Get chat record failed"
+		response.StatusMsg = &str
+		response.StructList = nil
+		return
+	}
+
+	for _, msg := range msgList {
+		apimsg := msg.ToApiMessage()
+		response.StructList = append(response.StructList, apimsg)
+	}
+	response.StatusCode = 0
+	str := "Get chat record successfully"
 	response.StatusMsg = &str
 }

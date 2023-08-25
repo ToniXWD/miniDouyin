@@ -210,7 +210,7 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 }
 
 // FollowList .
-// @router /douyin/relatioin/follow/list/ [GET]
+// @router /douyin/relation/follow/list/ [GET]
 func FollowList(ctx context.Context, c *app.RequestContext) {
 	fmt.Println("FollowList 被调用")
 
@@ -230,10 +230,10 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 }
 
 // FollowerList .
-// @router /douyin/relatioin/follower/list/ [GET]
+// @router /douyin/relation/follower/list/ [GET]
 func FollowerList(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.RelationFollowListRequest
+	var req api.RelationFollowerListRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -242,11 +242,13 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFollowerListResponse)
 
+	pg.DBFollowerList(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 
 // FriendList .
-// @router /douyin/relatioin/friend/list/ [GET]
+// @router /douyin/relation/friend/list/ [GET]
 func FriendList(ctx context.Context, c *app.RequestContext) {
 	var err error
 	var req api.RelationFriendListRequest
@@ -265,7 +267,7 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/message/chat/ [GET]
 func ChatRec(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.ChatRecordResponse
+	var req api.ChatRecordRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -273,6 +275,8 @@ func ChatRec(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.ChatRecordResponse)
+
+	pg.DBChatRec(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -288,7 +292,9 @@ func SendMsg(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(api.SendMsgRequest)
+	resp := new(api.SendMsgResponse)
+
+	pg.DBSendMsg(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

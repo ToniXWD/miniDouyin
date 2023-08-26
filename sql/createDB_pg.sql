@@ -20,11 +20,11 @@ CREATE TABLE videos
 (
     id             serial PRIMARY KEY,                                    -- 自增主键
     title          character varying(255) NOT NULL,                       -- 标题
-    author         biginteger,                                            -- 作者id，外键
+    author         bigint,                                            -- 作者id，外键
     play_url       character varying(255) NOT NULL UNIQUE,                --视频url
     cover_url      character varying(255) NOT NULL,                       --封面url
-    favorite_count biginteger DEFAULT 0,                                  --获赞数
-    comment_count  biginteger DEFAULT 0,                                  --评论数
+    favorite_count bigint DEFAULT 0,                                  --获赞数
+    comment_count  bigint DEFAULT 0,                                  --评论数
     created_at     timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --投稿时间
     deleted        date,                                                  --软删除
     FOREIGN KEY (author) REFERENCES users (id)

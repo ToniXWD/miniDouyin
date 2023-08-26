@@ -1,8 +1,11 @@
 package pg
 
 import (
+	"fmt"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -10,12 +13,12 @@ const (
 )
 
 type DBMessage struct {
-	ID      int64 `gorm:"primaryKey"`
-	FromID  int64
-	ToID    int64
-	Content string
-	Date    string
-	Deleted int64 `gorm:"default:0"`
+	ID        int64 `gorm:"primaryKey"`
+	FromID    int64
+	ToID      int64
+	Content   string
+	CreatedAt time.Time
+	Deleted   gorm.DeletedAt `gorm:"default:NULL"`
 }
 
 func (u *DBMessage) TableName() string {
@@ -23,29 +26,30 @@ func (u *DBMessage) TableName() string {
 }
 
 func (u *DBMessage) insert() bool {
-	return DB.Create(u).Error == nil
+	res := DB.Create(u)
+	return res.Error == nil
 }
 
 func (u *DBMessage) ToApiMessage() (apimsg *api.Message) {
+	time := u.CreatedAt.UnixMilli()
+	fmt.Println("传出的时间戳为:", time)
 	apimsg = &api.Message{
 		ID:         u.ID,
 		ToUserID:   u.ToID,
 		FromUserID: u.FromID,
 		Content:    u.Content,
-		CreateTime: u.Date,
+		CreateTime: &time,
 	}
 	return
 }
 
 func sendMsg(token string, toUerID int64, content string) bool {
 	clientuser, _ := ValidateToken(token)
-	t := time.Now()
-	date := t.Format(DATE)
 	msg := &DBMessage{
-		FromID:  clientuser.ID,
-		ToID:    toUerID,
-		Content: content,
-		Date:    date,
+		FromID:    clientuser.ID,
+		ToID:      toUerID,
+		Content:   content,
+		CreatedAt: time.Now(),
 	}
 	return msg.insert()
 }

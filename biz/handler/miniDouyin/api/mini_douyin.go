@@ -271,6 +271,8 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFriendListResponse)
 
+	pg.DBFriendList(&req, resp)
+
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -288,6 +290,8 @@ func ChatRec(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.ChatRecordResponse)
 
 	pg.DBChatRec(&req, resp)
+
+	fmt.Printf("CgatRec: %+v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

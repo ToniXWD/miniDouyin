@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 )
@@ -457,29 +458,45 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	if request.ActionType == 1 {
 		if sendMsg(request.Token, request.ToUserID, request.Content) {
-			response.StatusCode = int32(request.ToUserID)
-			response.StatusMsg = 0
+			response.StatusCode = 0
+			str := utils.SendMessageSuccess
+			response.StatusMsg = &str
+			return
 		}
 	}
 
-	response.StatusMsg = 1
+	response.StatusCode = 1
 }
 
 func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) {
 	clientuser, _ := ValidateToken(request.Token)
 	var msgList []DBMessage
-	err := DB.Where("from_id = ? AND to_id = ?", clientuser.ID, request.ToUserID).Find(&msgList)
+	fmt.Println("传入的时间戳为 = ", request.PreMsgTime)
+
+	// cmp := time.Unix(request.PreMsgTime, 0)
+	var cmp time.Time
+	cmp = time.UnixMilli(0)
+
+	if request.PreMsgTime != 0 {
+		cmp = time.UnixMilli(request.PreMsgTime)
+		cmp = cmp.Add(time.Second * 2)
+	}
+
+	fmt.Printf("DBChatRec cmp = %v\n", cmp)
+
+	err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) AND created_at > ?", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID, cmp).Order("ID").Find(&msgList)
+	// err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?))", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID).Order("ID desc").Find(&msgList)
 	if err.Error != nil {
 		response.StatusCode = 1
 		str := "Get chat record failed"
 		response.StatusMsg = &str
-		response.StructList = nil
+		response.MessageList = nil
 		return
 	}
 
 	for _, msg := range msgList {
 		apimsg := msg.ToApiMessage()
-		response.StructList = append(response.StructList, apimsg)
+		response.MessageList = append(response.MessageList, apimsg)
 	}
 	response.StatusCode = 0
 	str := "Get chat record successfully"

@@ -20,13 +20,13 @@ CREATE TABLE videos
 (
     id             serial PRIMARY KEY,                                    -- 自增主键
     title          character varying(255) NOT NULL,                       -- 标题
-    author         biginteger,                                            -- 作者id，外键
+    author         bigint,                                                -- 作者id，外键
     play_url       character varying(255) NOT NULL UNIQUE,                --视频url
     cover_url      character varying(255) NOT NULL,                       --封面url
-    favorite_count biginteger DEFAULT 0,                                  --获赞数
-    comment_count  biginteger DEFAULT 0,                                  --评论数
+    favorite_count bigint                      DEFAULT 0,                 --获赞数
+    comment_count  bigint                      DEFAULT 0,                 --评论数
     created_at     timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --投稿时间
-    deleted        date,                                                  --软删除
+    deleted        date                        DEFAULT null,              --软删除
     FOREIGN KEY (author) REFERENCES users (id)
 );
 CREATE TABLE favorited_videos
@@ -36,7 +36,7 @@ CREATE TABLE favorited_videos
     video_id   bigint,                                                -- 视频id，外键
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --创建时间
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --更新时间
-    deleted    date DEFAULT null,                                     -- 软删除
+    deleted    date                        DEFAULT null,              -- 软删除
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (video_id) REFERENCES videos (id)
 );
@@ -48,29 +48,20 @@ CREATE TABLE comments
     content    TEXT NOT NULL,                                         --内容
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --评论时间
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP, --更新时间
-    deleted    date DEFAULT null,                                     --
+    deleted    date                        DEFAULT null,              --
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (video_id) REFERENCES videos (id)
 );
 CREATE TABLE messages
 (
-    id      SERIAL PRIMARY KEY,    -- 自增主键
-    from_id bigint,                -- 发送者id，外键
-    to_id   bigint,                -- 接受者id，外键
-    content VARCHAR(255) NOT NULL, -- 内容
-    date    DATE         NOT NULL, -- 日期
-    deleted date DEFAULT null,     -- 软删除
+    id         SERIAL PRIMARY KEY,                                    -- 自增主键
+    from_id    bigint,                                                -- 发送者id，外键
+    to_id      bigint,                                                -- 接受者id，外键
+    content    VARCHAR(255) NOT NULL,                                 -- 内容
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP, -- 日期
+    deleted    date                        DEFAULT null,              -- 软删除
     FOREIGN KEY (from_id) REFERENCES users (id),
     FOREIGN KEY (to_id) REFERENCES users (id)
-);
-CREATE TABLE followers
-(
-    id          SERIAL PRIMARY KEY, -- 自增主键
-    user_id     bigint,             -- 用户id，外键
-    follower_id bigint,             -- 粉丝id，外键
-    deleted     date DEFAULT null,  -- 软删除
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (follower_id) REFERENCES users (id)
 );
 CREATE TABLE follows
 (

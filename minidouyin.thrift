@@ -217,7 +217,7 @@ struct ChatRecordRequest {
 struct ChatRecordResponse {
     1: required i32 status_code,           // 状态码，0-成功，其他值-失败
     2: optional string status_msg,         // 返回状态描述
-    3: required list<Message> struct_list, // 消息列表
+    3: required list<Message> message_list, // 消息列表
 }
 
 struct Message {
@@ -225,7 +225,7 @@ struct Message {
     2: required i64 to_user_id,     // 该消息接收者的id
     3: required i64 from_user_id,   // 该消息发送者的id
     4: required string content,     // 消息内容
-    5: required string create_time, // 消息创建时间
+    5: optional i64 create_time, // 消息创建时间
 }
 
 struct SendMsgRequest {
@@ -236,8 +236,8 @@ struct SendMsgRequest {
 }
 
 struct SendMsgResponse {
-    1: required i32 status_code, // 对方用户id
-    2: required i64 status_msg,  //返回状态描述
+    1: required i32 status_code,
+    2: optional string status_msg,  //返回状态描述
 }
 
 service miniDouyin {

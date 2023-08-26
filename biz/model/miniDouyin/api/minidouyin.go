@@ -8749,7 +8749,7 @@ type ChatRecordResponse struct {
 	// 返回状态描述
 	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 	// 消息列表
-	StructList []*Message `thrift:"struct_list,3,required" form:"struct_list,required" json:"struct_list,required" query:"struct_list,required"`
+	MessageList []*Message `thrift:"message_list,3,required" form:"message_list,required" json:"message_list,required" query:"message_list,required"`
 }
 
 func NewChatRecordResponse() *ChatRecordResponse {
@@ -8769,14 +8769,14 @@ func (p *ChatRecordResponse) GetStatusMsg() (v string) {
 	return *p.StatusMsg
 }
 
-func (p *ChatRecordResponse) GetStructList() (v []*Message) {
-	return p.StructList
+func (p *ChatRecordResponse) GetMessageList() (v []*Message) {
+	return p.MessageList
 }
 
 var fieldIDToName_ChatRecordResponse = map[int16]string{
 	1: "status_code",
 	2: "status_msg",
-	3: "struct_list",
+	3: "message_list",
 }
 
 func (p *ChatRecordResponse) IsSetStatusMsg() bool {
@@ -8788,7 +8788,7 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStructList bool = false
+	var issetMessageList bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -8830,7 +8830,7 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStructList = true
+				issetMessageList = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -8855,7 +8855,7 @@ func (p *ChatRecordResponse) Read(iprot thrift.TProtocol) (err error) {
 		goto RequiredFieldNotSetError
 	}
 
-	if !issetStructList {
+	if !issetMessageList {
 		fieldId = 3
 		goto RequiredFieldNotSetError
 	}
@@ -8900,14 +8900,14 @@ func (p *ChatRecordResponse) ReadField3(iprot thrift.TProtocol) error {
 	if err != nil {
 		return err
 	}
-	p.StructList = make([]*Message, 0, size)
+	p.MessageList = make([]*Message, 0, size)
 	for i := 0; i < size; i++ {
 		_elem := NewMessage()
 		if err := _elem.Read(iprot); err != nil {
 			return err
 		}
 
-		p.StructList = append(p.StructList, _elem)
+		p.MessageList = append(p.MessageList, _elem)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return err
@@ -8989,13 +8989,13 @@ WriteFieldEndError:
 }
 
 func (p *ChatRecordResponse) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("struct_list", thrift.LIST, 3); err != nil {
+	if err = oprot.WriteFieldBegin("message_list", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.StructList)); err != nil {
+	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.MessageList)); err != nil {
 		return err
 	}
-	for _, v := range p.StructList {
+	for _, v := range p.MessageList {
 		if err := v.Write(oprot); err != nil {
 			return err
 		}
@@ -9030,7 +9030,7 @@ type Message struct {
 	// 消息内容
 	Content string `thrift:"content,4,required" form:"content,required" json:"content,required" query:"content,required"`
 	// 消息创建时间
-	CreateTime string `thrift:"create_time,5,required" form:"create_time,required" json:"create_time,required" query:"create_time,required"`
+	CreateTime *int64 `thrift:"create_time,5,optional" form:"create_time" json:"create_time,omitempty" query:"create_time"`
 }
 
 func NewMessage() *Message {
@@ -9053,8 +9053,13 @@ func (p *Message) GetContent() (v string) {
 	return p.Content
 }
 
-func (p *Message) GetCreateTime() (v string) {
-	return p.CreateTime
+var Message_CreateTime_DEFAULT int64
+
+func (p *Message) GetCreateTime() (v int64) {
+	if !p.IsSetCreateTime() {
+		return Message_CreateTime_DEFAULT
+	}
+	return *p.CreateTime
 }
 
 var fieldIDToName_Message = map[int16]string{
@@ -9065,6 +9070,10 @@ var fieldIDToName_Message = map[int16]string{
 	5: "create_time",
 }
 
+func (p *Message) IsSetCreateTime() bool {
+	return p.CreateTime != nil
+}
+
 func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
@@ -9073,7 +9082,6 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 	var issetToUserID bool = false
 	var issetFromUserID bool = false
 	var issetContent bool = false
-	var issetCreateTime bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -9134,11 +9142,10 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 5:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField5(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetCreateTime = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -9175,11 +9182,6 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetContent {
 		fieldId = 4
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetCreateTime {
-		fieldId = 5
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -9237,10 +9239,10 @@ func (p *Message) ReadField4(iprot thrift.TProtocol) error {
 }
 
 func (p *Message) ReadField5(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		p.CreateTime = v
+		p.CreateTime = &v
 	}
 	return nil
 }
@@ -9359,14 +9361,16 @@ WriteFieldEndError:
 }
 
 func (p *Message) writeField5(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("create_time", thrift.STRING, 5); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteString(p.CreateTime); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetCreateTime() {
+		if err = oprot.WriteFieldBegin("create_time", thrift.I64, 5); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.CreateTime); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -9691,10 +9695,9 @@ func (p *SendMsgRequest) String() string {
 }
 
 type SendMsgResponse struct {
-	// 对方用户id
 	StatusCode int32 `thrift:"status_code,1,required" form:"status_code,required" json:"status_code,required" query:"status_code,required"`
 	//返回状态描述
-	StatusMsg int64 `thrift:"status_msg,2,required" form:"status_msg,required" json:"status_msg,required" query:"status_msg,required"`
+	StatusMsg *string `thrift:"status_msg,2,optional" form:"status_msg" json:"status_msg,omitempty" query:"status_msg"`
 }
 
 func NewSendMsgResponse() *SendMsgResponse {
@@ -9705,8 +9708,13 @@ func (p *SendMsgResponse) GetStatusCode() (v int32) {
 	return p.StatusCode
 }
 
-func (p *SendMsgResponse) GetStatusMsg() (v int64) {
-	return p.StatusMsg
+var SendMsgResponse_StatusMsg_DEFAULT string
+
+func (p *SendMsgResponse) GetStatusMsg() (v string) {
+	if !p.IsSetStatusMsg() {
+		return SendMsgResponse_StatusMsg_DEFAULT
+	}
+	return *p.StatusMsg
 }
 
 var fieldIDToName_SendMsgResponse = map[int16]string{
@@ -9714,12 +9722,15 @@ var fieldIDToName_SendMsgResponse = map[int16]string{
 	2: "status_msg",
 }
 
+func (p *SendMsgResponse) IsSetStatusMsg() bool {
+	return p.StatusMsg != nil
+}
+
 func (p *SendMsgResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
 	var issetStatusCode bool = false
-	var issetStatusMsg bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -9747,11 +9758,10 @@ func (p *SendMsgResponse) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetStatusMsg = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -9773,11 +9783,6 @@ func (p *SendMsgResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetStatusCode {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetStatusMsg {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -9808,10 +9813,10 @@ func (p *SendMsgResponse) ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *SendMsgResponse) ReadField2(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(); err != nil {
+	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.StatusMsg = v
+		p.StatusMsg = &v
 	}
 	return nil
 }
@@ -9867,14 +9872,16 @@ WriteFieldEndError:
 }
 
 func (p *SendMsgResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("status_msg", thrift.I64, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.StatusMsg); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetStatusMsg() {
+		if err = oprot.WriteFieldBegin("status_msg", thrift.STRING, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.StatusMsg); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:

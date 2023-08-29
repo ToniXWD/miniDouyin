@@ -2,7 +2,7 @@ package rdb
 
 import (
 	"context"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"strconv"
@@ -17,7 +17,7 @@ func NewUser(data map[string]interface{}) {
 	token := data["Token"].(string)
 	_, err := Rdb.HMSet(ctx, token, data).Result()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Debugln(err.Error())
 	}
 	// 设置过期时间
 	Rdb.Expire(ctx, token, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
@@ -26,7 +26,7 @@ func NewUser(data map[string]interface{}) {
 	ID := strconv.Itoa(int(data["ID"].(int64)))
 	_, err = Rdb.HMSet(ctx, ID, data).Result()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Debugln(err.Error())
 	}
 	// 设置过期时间
 	Rdb.Expire(ctx, ID, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
@@ -39,7 +39,7 @@ func GetUserByToken(token string) (map[string]string, bool) {
 	// 使用 Exists 方法判断键是否存在
 	exists, err := Rdb.Exists(ctx, token).Result()
 	if err != nil || exists != 1 {
-		fmt.Println("Error:", err)
+		log.Debugln("Error:", err)
 		return nil, false
 	}
 
@@ -58,7 +58,7 @@ func GetUserById(ID int64) (map[string]string, bool) {
 	// 使用 Exists 方法判断键是否存在
 	exists, err := Rdb.Exists(ctx, id).Result()
 	if err != nil || exists != 1 {
-		fmt.Println("Error:", err)
+		log.Debugln("Error:", err)
 		return nil, false
 	}
 

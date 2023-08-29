@@ -1,14 +1,14 @@
 package rdb
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
 )
 
 // 缓存完成路由业务Login
 func RedisLogin(request *api.UserLoginRequest, response *api.UserLoginResponse) bool {
-	fmt.Println("Trying to get User from redis!")
+	log.Debugln("Trying to get User from redis!")
 
 	// 数据库中的key是token
 	user_key := request.Username + request.Password

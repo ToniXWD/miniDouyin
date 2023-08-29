@@ -1,7 +1,7 @@
 package pg
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
@@ -141,7 +141,7 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 	res, err := rdb.IsFollow(clientUser.Token, u.ID)
 	if err == nil {
 		// 缓存查询成功
-		fmt.Println("ToApiUser: 从缓存查询关注记录成功")
+		log.Debugln("ToApiUser: 从缓存查询关注记录成功")
 		apiuser.IsFollow = res
 		return
 	} else {

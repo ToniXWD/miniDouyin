@@ -1,7 +1,7 @@
 package pg
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
@@ -99,7 +99,7 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 	dbMap, find := rdb.GetUserById(v.Author)
 	if find {
 		// 如果缓存命中
-		fmt.Println("ToApiVideo: 从缓存查询视频author记录成功")
+		log.Debugln("ToApiVideo: 从缓存查询视频author记录成功")
 		dbuser.InitSelfFromMap(dbMap)
 	} else {
 		// 否则需要重数据库加载用户
@@ -158,7 +158,7 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	}
 	//mintime := dbv.GetMinTimestamp()
 	//
-	//fmt.Printf("mintime = %v\n", mintime)
+	//log.Debugf("mintime = %v\n", mintime)
 
 	var cmp time.Time
 	if maxDate <= 0 {
@@ -167,7 +167,7 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 		cmp = time.UnixMilli(maxDate)
 	}
 
-	fmt.Printf("cmp = %v\n", cmp)
+	log.Debugf("cmp = %v\n", cmp)
 
 	res := DB.Model(&DBVideo{}).Where("created_at <= ?", cmp).
 		Order("ID desc").Limit(int(videoNum)).Find(&vlist)

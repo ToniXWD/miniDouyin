@@ -2,7 +2,7 @@ package rdb
 
 import (
 	"context"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 // 通过token获取缓存中的记录
@@ -12,7 +12,7 @@ func GetVideoById(ID string) (map[string]string, bool) {
 	// 使用 Exists 方法判断键是否存在
 	exists, err := Rdb.Exists(ctx, ID).Result()
 	if err != nil || exists != 1 {
-		fmt.Println("Error:", err)
+		log.Debugln("Error:", err)
 		return nil, false
 	}
 
@@ -45,7 +45,7 @@ func GetVideoById(ID string) (map[string]string, bool) {
 //	// 获取 LIST 的长度
 //	length, err := Rdb.LLen(ctx, "feed").Result()
 //	if err != nil {
-//		fmt.Println("Error:", err)
+//		log.Debugln("Error:", err)
 //		return nil, err
 //	}
 //
@@ -74,7 +74,7 @@ func GetVideoById(ID string) (map[string]string, bool) {
 //	}
 //	vlists, err := Rdb.LRange(ctx, "feed", start, end-1).Result()
 //	if err != nil {
-//		fmt.Println("Error:", err)
+//		log.Debugln("Error:", err)
 //		return nil, err
 //	}
 //

@@ -1,7 +1,7 @@
 package pg
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"time"
 
@@ -32,7 +32,7 @@ func (u *DBMessage) insert() bool {
 
 func (u *DBMessage) ToApiMessage() (apimsg *api.Message) {
 	time := u.CreatedAt.UnixMilli()
-	fmt.Println("传出的时间戳为:", time)
+	log.Debugln("传出的时间戳为:", time)
 	apimsg = &api.Message{
 		ID:         u.ID,
 		ToUserID:   u.ToID,

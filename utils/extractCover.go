@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os/exec"
 )
 
@@ -12,10 +12,9 @@ func ExtractCover(v_path string, savePath string) {
 	// 执行命令并捕获输出
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("Error running ffmpeg command:", err)
-		fmt.Println("Output:", string(output))
+		log.Infoln("Error running ffmpeg command:", err)
+		log.Infoln("Output:", string(output))
 		return
 	}
-
-	fmt.Println("Image extracted and saved successfully!")
+	log.Infoln("Image extracted and saved successfully!")
 }

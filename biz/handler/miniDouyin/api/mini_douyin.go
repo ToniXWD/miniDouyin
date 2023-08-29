@@ -4,7 +4,7 @@ package api
 
 import (
 	"context"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/pg"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
@@ -16,12 +16,12 @@ import (
 // Feed .
 // @router /douyin/feed/ [GET]
 func Feed(ctx context.Context, c *app.RequestContext) {
-	fmt.Println("Feed 被调用")
+	log.Debugln("Feed 被调用")
 	var err error
 	var req api.FeedRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		fmt.Println("参数绑定失败")
+		log.Debugln("参数绑定失败")
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
@@ -29,11 +29,11 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.FeedResponse)
 	// 先尝试从缓存完成业务（此功能还未使用，因为缓存同步时间序列较为复杂）
 	//if rdb.RedisFeed(&req, resp) {
-	//	fmt.Println("从缓存完成用户登录")
+	//	log.Debugln("从缓存完成用户登录")
 	//} else {
 	pg.DBVideoFeed(&req, resp)
 	//}
-	fmt.Printf("resp +v", resp)
+	log.Debugf("resp +v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -70,13 +70,13 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.UserLoginResponse)
 	// 先尝试从缓存完成业务
 	if rdb.RedisLogin(&req, resp) {
-		fmt.Println("从缓存完成用户登录")
+		log.Debugln("从缓存完成用户登录")
 	} else {
 		// 从数据库读取的业务要记得更新缓存
 		pg.DBUserLogin(&req, resp)
 	}
 	// Debug
-	fmt.Printf("resp = %+v\n", resp)
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -95,7 +95,7 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.UserResponse)
 	// 先尝试从缓存完成业务
 	if rdb.RedisGetUserInfo(&req, resp) {
-		fmt.Println("从缓存完成用户信息获取")
+		log.Infoln("从缓存完成用户信息获取")
 	} else {
 		pg.DBGetUserinfo(&req, resp)
 	}
@@ -105,7 +105,7 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 // VideoPublishAction .
 // @router /douyin/publish/action/ [POST]
 func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
-	fmt.Println("VideoPublishAction 被调用")
+	log.Debugln("VideoPublishAction 被调用")
 	var err error
 	var req api.PublishActionRequest
 	resp := new(api.PublishActionResponse)
@@ -120,7 +120,7 @@ func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
 	pg.DBReceiveVideo(&req, resp, form, c)
 
 	// Debug
-	fmt.Printf("resp = %+v\n", resp)
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -141,7 +141,7 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 	pg.DBVideoPublishList(&req, resp)
 
 	// Debug
-	fmt.Printf("resp = %+v\n", resp)
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -234,7 +234,7 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 // FollowList .
 // @router /douyin/relation/follow/list/ [GET]
 func FollowList(ctx context.Context, c *app.RequestContext) {
-	fmt.Println("FollowList 被调用")
+	log.Debugln("FollowList 被调用")
 
 	var err error
 	var req api.RelationFollowListRequest
@@ -302,7 +302,7 @@ func ChatRec(ctx context.Context, c *app.RequestContext) {
 
 	pg.DBChatRec(&req, resp)
 
-	fmt.Printf("CgatRec: %+v", resp)
+	log.Debugf("CgatRec: %+v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

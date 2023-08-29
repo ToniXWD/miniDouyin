@@ -4,6 +4,7 @@ package main
 
 import (
 	"miniDouyin/biz/dal"
+	"miniDouyin/log"
 	"miniDouyin/router"
 	"miniDouyin/utils"
 
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	dal.Init()
+	log.Init()
 
 	h := server.Default(
 		server.WithHostPorts(string("0.0.0.0:")+utils.PORT),

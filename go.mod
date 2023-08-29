@@ -5,7 +5,9 @@ go 1.20
 require (
 	github.com/apache/thrift v0.18.1
 	github.com/cloudwego/hertz v0.6.7
+	github.com/onrik/gorm-logrus v0.5.0
 	github.com/redis/go-redis/v9 v9.1.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.1
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.3

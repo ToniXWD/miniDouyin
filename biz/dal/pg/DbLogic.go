@@ -2,7 +2,7 @@ package pg
 
 import (
 	"context"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mime/multipart"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
@@ -19,7 +19,7 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 
 	if user.QueryUser() {
 		// user存在
-		fmt.Printf("user = %+v\n", user)
+		log.Debugf("user = %+v\n", user)
 
 		// 校验密码
 		if user.Passwd != request.Password {
@@ -43,9 +43,9 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 
 		//select {
 		//case ChanFromDB <- msg:
-		//	fmt.Println("Sent data to ChanFromDB.")
+		//	log.Debugln("Sent data to ChanFromDB.")
 		//default:
-		//	fmt.Println("ChanFromDB is not ready for sending.")
+		//	log.Debugln("ChanFromDB is not ready for sending.")
 		//}
 
 		return
@@ -98,7 +98,7 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 	uMap, find := rdb.GetUserById(request.UserID)
 	if find {
 		// 缓存命中
-		fmt.Println("DBGetUserinfo: 从缓存查询视频author记录成功")
+		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
 		user.InitSelfFromMap(uMap)
 	} else {
 		//缓存命中失败则从数据库中查询
@@ -127,7 +127,7 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 	cMap, find := rdb.GetUserByToken(request.Token)
 	if find {
 		// 缓存命中
-		fmt.Println("DBGetUserinfo: 从缓存查询client记录成功")
+		log.Debugln("DBGetUserinfo: 从缓存查询client记录成功")
 		clientUser.InitSelfFromMap(cMap)
 	} else {
 		// 从数据库直接查询
@@ -170,7 +170,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			uMap, find := rdb.GetUserByToken(*request.Token)
 			if find {
 				// 缓存更新用户信息
-				fmt.Println("DBVideoFeed: 从缓存查询client user记录成功")
+				log.Debugln("DBVideoFeed: 从缓存查询client user记录成功")
 				clientUser.InitSelfFromMap(uMap)
 			} else {
 				// 缓存未命中。数据库查询
@@ -271,7 +271,7 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 	action := DBActionFromActionRequest(request)
 
 	err := action.ifFollow(request.ActionType, request.Token)
-	fmt.Printf("action = %+v\n", action)
+	log.Debugf("action = %+v\n", action)
 	if err == nil {
 		// 关注或取消关注成功
 		response.StatusCode = 0
@@ -551,7 +551,7 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) {
 	clientuser, _ := ValidateToken(request.Token)
 	var msgList []DBMessage
-	fmt.Println("传入的时间戳为 = ", request.PreMsgTime)
+	log.Debugln("传入的时间戳为 = ", request.PreMsgTime)
 
 	// cmp := time.Unix(request.PreMsgTime, 0)
 	var cmp time.Time
@@ -562,7 +562,7 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 		cmp = cmp.Add(time.Second * 2)
 	}
 
-	fmt.Printf("DBChatRec cmp = %v\n", cmp)
+	log.Debugf("DBChatRec cmp = %v\n", cmp)
 
 	err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) AND created_at > ?", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID, cmp).Order("ID").Find(&msgList)
 	// err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?))", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID).Order("ID desc").Find(&msgList)

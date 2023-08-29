@@ -9,6 +9,7 @@ package utils
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -49,7 +50,7 @@ func GetVideoNameAndPath() (name string, path string, DBpath string) {
 
 	DBpath = filepath.Join("videos", name)
 
-	fmt.Println(path)
+	log.Infoln("上传文件存储路径为：", path)
 
 	return
 }
@@ -69,7 +70,7 @@ func GetVideoCoverName(name string) (coverPath string, dbCover string) {
 //	// 打开文件以进行写入
 //	file, err := os.Create(savePath)
 //	if err != nil {
-//		fmt.Println("Error creating file:", err)
+//		log.Debugln("Error creating file:", err)
 //		return ErrSaveVideoFaile
 //	}
 //	defer file.Close()

@@ -28,7 +28,7 @@ func (v *Comment) ToApiComment(cUser *DBUser, clientUser *DBUser) (*api.Comment,
 		ID:         v.ID,
 		User:       nil,
 		Content:    v.Content,
-		CreateDate: v.CreatedAt.Format("mm-dd"),
+		CreateDate: v.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	// 填充评论用户信息

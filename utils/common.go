@@ -11,26 +11,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 )
 
+var TimeFormat string = "2006-01-02 15:04:05"
+
 func Realurl(s_url string) string {
 	r_url := "http://" + URLIP + ":" + PORT + "/data/" + s_url
 	return r_url
-}
-
-func I64ToTime(num int64) time.Time {
-	// 提取时间戳的秒和微秒部分
-	seconds := num / 1000
-	microseconds := (num % 1000) * 1000
-	// 将 Unix 时间戳转换为 time.Time 类型
-	timeObj := time.Unix(seconds, microseconds)
-
-	// 格式化为指定的日期时间格式
-	//formattedTime := timeObj.Format("2006-01-02 15:04:05.000000")
-
-	return timeObj
 }
 
 func TimeToI64(t time.Time) int64 {
@@ -91,5 +81,29 @@ func GetVideoCoverName(name string) (coverPath string, dbCover string) {
 //	}
 //	return nil
 //}
-
 // 从视频文件中提取指定帧作为封面图，并保存为图片文件
+
+// 将结构体转化为
+func StructToMap(data interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	value := reflect.ValueOf(data)
+
+	// 确保传入的是结构体指针
+	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+		return result
+	}
+
+	value = value.Elem()
+	typ := value.Type()
+
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if field.Name == "Deleted" {
+			continue
+		}
+		fieldValue := value.Field(i).Interface()
+		result[field.Name] = fieldValue
+	}
+
+	return result
+}

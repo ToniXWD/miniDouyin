@@ -2,6 +2,7 @@ package pg
 
 import (
 	"fmt"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -94,10 +95,26 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 	// 填充用户
 	var dbuser DBUser
 
-	res := DB.Model(&DBUser{}).First(&dbuser, "ID = ?", v.Author)
-	if res.Error != nil {
-		av.Author = nil
-		return nil, utils.ErrVideoUserNotExist
+	// 先尝试从Redis缓存获取用户
+	dbMap, find := rdb.GetUserById(v.Author)
+	if find {
+		// 如果缓存命中
+		fmt.Println("ToApiVideo: 从缓存查询视频author记录成功")
+		dbuser.InitSelfFromMap(dbMap)
+	} else {
+		// 否则需要重数据库加载用户
+		res := DB.Model(&DBUser{}).First(&dbuser, "ID = ?", v.Author)
+		if res.Error != nil {
+			av.Author = nil
+			return nil, utils.ErrVideoUserNotExist
+		}
+		// 发送消息更新缓存
+		items := utils.StructToMap(&dbuser)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
 	}
 
 	av.Author, _ = dbuser.ToApiUser(clientUser)
@@ -139,14 +156,16 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	if videoNum > 30 {
 		videoNum = 30
 	}
-	mintime := dbv.GetMinTimestamp()
+	//mintime := dbv.GetMinTimestamp()
+	//
+	//fmt.Printf("mintime = %v\n", mintime)
 
-	fmt.Printf("mintime = %v\n", mintime)
-
+	var cmp time.Time
 	if maxDate <= 0 {
-		maxDate = time.Now().Unix() * 1000
+		cmp = time.Now()
+	} else {
+		cmp = time.UnixMilli(maxDate)
 	}
-	cmp := utils.I64ToTime(maxDate)
 
 	fmt.Printf("cmp = %v\n", cmp)
 

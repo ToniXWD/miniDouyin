@@ -19,5 +19,6 @@ func main() {
 	)
 
 	router.Register(h)
+
 	h.Spin()
 }

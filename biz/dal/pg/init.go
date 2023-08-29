@@ -20,4 +20,6 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
+	ChanFromDB = make(chan RedisMsg)
+	go PGserver()
 }

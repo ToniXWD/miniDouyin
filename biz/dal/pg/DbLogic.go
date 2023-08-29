@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -32,6 +33,21 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		response.Token = user.Username + user.Passwd
 		str := "Login successfully!"
 		response.StatusMsg = &str
+		// 发送消息更新缓存
+		items := utils.StructToMap(&user)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
+		//select {
+		//case ChanFromDB <- msg:
+		//	fmt.Println("Sent data to ChanFromDB.")
+		//default:
+		//	fmt.Println("ChanFromDB is not ready for sending.")
+		//}
+
 		return
 	}
 	response.StatusCode = 2
@@ -58,6 +74,15 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 		response.Token = user.Token
 		str := "Register succesffully!"
 		response.StatusMsg = &str
+
+		// 发送消息更新缓存
+		items := utils.StructToMap(&user)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
 	} else {
 		response.StatusCode = 2
 		str := "Register failed!"
@@ -67,16 +92,55 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 
 // 获取User信息
 func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
-	user, err := DBGetUser(request)
-	if err != nil {
-		// 没有找到用户或token失败
-		response.StatusCode = 1
-		str := err.Error()
-		response.StatusMsg = &str
-		return
+	var user *DBUser
+	var err error
+	// 先尝试从缓存查找用户
+	uMap, find := rdb.GetUserById(request.UserID)
+	if find {
+		// 缓存命中
+		fmt.Println("DBGetUserinfo: 从缓存查询视频author记录成功")
+		user.InitSelfFromMap(uMap)
+	} else {
+		//缓存命中失败则从数据库中查询
+		user, err = DBGetUser(request)
+		if err != nil {
+			// 没有找到用户
+			response.StatusCode = 1
+			str := err.Error()
+			response.StatusMsg = &str
+			return
+		}
+		// 发送消息更新缓存
+		items := utils.StructToMap(user)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
 	}
+
 	// 填充结构体
-	clientUser, _ := ValidateToken(request.Token)
+
+	// 先获取client
+	// 尝试从缓存获取client
+	var clientUser *DBUser
+	cMap, find := rdb.GetUserByToken(request.Token)
+	if find {
+		// 缓存命中
+		fmt.Println("DBGetUserinfo: 从缓存查询client记录成功")
+		clientUser.InitSelfFromMap(cMap)
+	} else {
+		// 从数据库直接查询
+		clientUser, _ = ValidateToken(request.Token)
+		// 发送消息更新缓存
+		items := utils.StructToMap(clientUser)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+	}
+
 	response.User, _ = user.ToApiUser(clientUser)
 	response.StatusCode = 0
 	str := "Get user information successfully!"
@@ -97,12 +161,28 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 	response.StatusMsg = &str
 	for idx, video := range vlist {
 		if idx == len(vlist)-1 {
-			newNext := utils.TimeToI64(video.CreatedAt)
+			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
 		var clientUser *DBUser = nil
 		if request.Token != nil {
-			clientUser, _ = ValidateToken(*request.Token)
+			// 先尝试从缓存获取User
+			uMap, find := rdb.GetUserByToken(*request.Token)
+			if find {
+				// 缓存更新用户信息
+				fmt.Println("DBVideoFeed: 从缓存查询client user记录成功")
+				clientUser.InitSelfFromMap(uMap)
+			} else {
+				// 缓存未命中。数据库查询
+				clientUser, _ = ValidateToken(*request.Token)
+				// 发送消息更新缓存
+				items := utils.StructToMap(clientUser)
+				msg := RedisMsg{
+					TYPE: UserInfo,
+					DATA: items,
+				}
+				ChanFromDB <- msg
+			}
 		}
 		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
@@ -190,7 +270,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
 	action := DBActionFromActionRequest(request)
 
-	err := action.ifFollow(request.ActionType)
+	err := action.ifFollow(request.ActionType, request.Token)
 	fmt.Printf("action = %+v\n", action)
 	if err == nil {
 		// 关注或取消关注成功

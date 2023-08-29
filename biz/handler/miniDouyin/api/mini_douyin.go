@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"miniDouyin/biz/dal/pg"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -26,9 +27,12 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FeedResponse)
-
+	// 先尝试从缓存完成业务（此功能还未使用，因为缓存同步时间序列较为复杂）
+	//if rdb.RedisFeed(&req, resp) {
+	//	fmt.Println("从缓存完成用户登录")
+	//} else {
 	pg.DBVideoFeed(&req, resp)
-
+	//}
 	fmt.Printf("resp +v", resp)
 
 	c.JSON(consts.StatusOK, resp)
@@ -64,9 +68,13 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserLoginResponse)
-
-	pg.DBUserLogin(&req, resp)
-
+	// 先尝试从缓存完成业务
+	if rdb.RedisLogin(&req, resp) {
+		fmt.Println("从缓存完成用户登录")
+	} else {
+		// 从数据库读取的业务要记得更新缓存
+		pg.DBUserLogin(&req, resp)
+	}
 	// Debug
 	fmt.Printf("resp = %+v\n", resp)
 
@@ -85,9 +93,12 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserResponse)
-
-	pg.DBGetUserinfo(&req, resp)
-
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetUserInfo(&req, resp) {
+		fmt.Println("从缓存完成用户信息获取")
+	} else {
+		pg.DBGetUserinfo(&req, resp)
+	}
 	c.JSON(consts.StatusOK, resp)
 }
 

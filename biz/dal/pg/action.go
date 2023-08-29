@@ -30,8 +30,9 @@ func (u *DBAction) Insert() error {
 }
 
 // 根据请求类型进行关注或取消关注
-func (u *DBAction) ifFollow(actiontype int64) error {
+func (u *DBAction) ifFollow(actiontype int64, token string) error {
 	var err error
+	msg := RedisMsg{}
 	if actiontype == 1 {
 		// 关注
 		err = u.Insert()
@@ -39,8 +40,8 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 			user := &DBUser{}
 			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count + ?", 1))
 			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count + ?", 1))
-			return err
 		}
+		msg.TYPE = UserFollowAdd
 
 	} else if actiontype == 2 {
 		// 取消关注
@@ -49,11 +50,17 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 			user := &DBUser{}
 			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count - ?", 1))
 			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count - ?", 1))
-			return err
 		}
+		msg.TYPE = UserFollowDel
 	}
-	return err
 
+	// 发送消息更新缓存
+	msg.DATA = map[string]interface{}{
+		"Token": token,
+		"ID":    u.FollowID,
+	}
+	ChanFromDB <- msg
+	return err
 }
 
 // 从关注请求返回新的DBAction结构体

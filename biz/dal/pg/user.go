@@ -1,8 +1,12 @@
 package pg
 
 import (
+	"fmt"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -133,14 +137,51 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 	}
 
 	// 否则需要根据clientUser查询该用户是否被关注
-	match := &DBAction{}
-	e := DB.Model(&DBAction{}).Where("user_id = ? AND follow_id = ?", clientUser.ID, u.ID).First(match)
-	if e.Error == nil {
-		// 查询成功，match是有效的记录
-		apiuser.IsFollow = true
-		err = utils.ErrMathRealationFailed
+	// 先尝试从缓存查询关注记录
+	res, err := rdb.IsFollow(clientUser.Token, u.ID)
+	if err == nil {
+		// 缓存查询成功
+		fmt.Println("ToApiUser: 从缓存查询关注记录成功")
+		apiuser.IsFollow = res
+		return
+	} else {
+		// 缓存未命中则直接从数据库查询
+		match := &DBAction{}
+		e := DB.Model(&DBAction{}).Where("user_id = ? AND follow_id = ?", clientUser.ID, u.ID).First(match)
+		if e.Error == nil {
+			// 查询成功，match是有效的记录
+			apiuser.IsFollow = true
+			//更新Redis缓存
+			// 发送消息更新缓存
+			msg := RedisMsg{
+				TYPE: UserFollowAdd,
+				DATA: map[string]interface{}{
+					"Token": clientUser.Token,
+					"ID":    u.ID,
+				}}
+			ChanFromDB <- msg
+		} else {
+			err = utils.ErrMathRealationFailed
+		}
 	}
 	return
+}
+
+func (u *DBUser) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(u).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			}
+		}
+	}
 }
 
 // 从登录请求构造新用户
@@ -172,9 +213,9 @@ func DBGetUser(request *api.UserRequest) (*DBUser, error) {
 	}
 
 	// 找到后，与token进行比对
-	if user.Token != request.Token {
-		return nil, utils.ErrWrongToken
-	}
+	//if user.Token != request.Token {
+	//	return nil, utils.ErrWrongToken
+	//}
 
 	return &user, nil
 }

@@ -23,4 +23,7 @@ var (
 	// IO erros
 	ErrSaveVideoFaile   = errors.New("save video failed")
 	ErrDBSaveVideoFaile = errors.New("save video in database failed")
+
+	//	Redis erros
+	ErrRedisCacheNotFound = errors.New("not found matched record in redis")
 )

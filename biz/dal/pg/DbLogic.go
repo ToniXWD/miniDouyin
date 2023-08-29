@@ -160,6 +160,14 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 	str := "Load video list successfully"
 	response.StatusMsg = &str
 	for idx, video := range vlist {
+		// 遍历视频时，顺手发送消息更新视频缓存
+		items := utils.StructToMap(&video)
+		msg := RedisMsg{
+			TYPE: VideoInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
 		if idx == len(vlist)-1 {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
@@ -186,6 +194,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 		}
 		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
+
 	}
 }
 
@@ -240,7 +249,44 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		tx.Rollback()
 		return
 	}
-	tx.Commit()
+	tx_res := tx.Commit()
+	if tx_res.Error != nil {
+		response.StatusCode = 2
+		str := utils.ErrDBSaveVideoFaile.Error()
+		response.StatusMsg = &str
+		tx.Rollback()
+		return
+	}
+
+	// 事务成功后需要将user的work_count自增
+	user.WorkCount++
+
+	// 发送消息更新缓存
+	// 由于视频发布后user的字段发送了变化，需要更新缓存的user
+	items1 := utils.StructToMap(user)
+	msg1 := RedisMsg{
+		TYPE: UserInfo,
+		DATA: items1,
+	}
+	ChanFromDB <- msg1
+
+	// 更新视频缓存
+	items2 := utils.StructToMap(&video)
+	msg2 := RedisMsg{
+		TYPE: VideoInfo,
+		DATA: items2,
+	}
+	ChanFromDB <- msg2
+
+	// 更新用户发布视频的集合
+	msg3 := RedisMsg{
+		TYPE: Publish,
+		DATA: map[string]interface{}{
+			"ID":     video.Author,
+			"Videos": []interface{}{video.ID},
+		},
+	}
+	ChanFromDB <- msg3
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess
@@ -248,7 +294,7 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 	go utils.ExtractCover(saveName, saveCoverPath)
 }
 
-// 获取视频播放列表
+// 获取视频发布列表
 func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishListResponse) {
 	vlist, err := GetUserVideoList(request.UserID)
 	if err != nil {
@@ -257,11 +303,44 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		response.StatusMsg = &str
 		return
 	}
-	clientUser, _ := ValidateToken(request.Token)
-	for _, video := range vlist {
+
+	var clientUser *DBUser
+	// 先尝试从缓存查找用户
+	uMap, find := rdb.GetUserByToken(request.Token)
+	if find {
+		// 缓存命中
+		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
+		clientUser.InitSelfFromMap(uMap)
+	} else {
+		// 从数据库查询
+		clientUser, _ = ValidateToken(request.Token)
+	}
+	// 准备将发布列表更新到缓存
+	ids := make([]interface{}, len(vlist))
+
+	for idx, video := range vlist {
 		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
 		response.StatusCode = 0
+		ids[idx] = video.ID
+		// 更新视频缓存
+		items := utils.StructToMap(&video)
+		msgV := RedisMsg{
+			TYPE: VideoInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msgV
+	}
+	// 同时更新用户发布的集合缓存
+	if clientUser != nil {
+
+		msg := RedisMsg{
+			TYPE: Publish,
+			DATA: map[string]interface{}{
+				"ID":     clientUser.ID,
+				"Videos": ids,
+			}}
+		ChanFromDB <- msg
 	}
 }
 

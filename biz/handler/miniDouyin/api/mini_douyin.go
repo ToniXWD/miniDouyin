@@ -137,9 +137,12 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.PublishListResponse)
-
-	pg.DBVideoPublishList(&req, resp)
-
+	// 先尝试从缓存完成业务
+	if rdb.RedisPublishList(&req, resp) {
+		log.Infoln("从缓存完成用户发布列表获取")
+	} else {
+		pg.DBVideoPublishList(&req, resp)
+	}
 	// Debug
 	log.Debugf("resp = %+v\n", resp)
 

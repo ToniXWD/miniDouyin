@@ -72,6 +72,34 @@ func RedisGetUserInfo(request *api.UserRequest, response *api.UserResponse) bool
 	return true
 }
 
+// 从缓存完成业务PublishList
+func RedisPublishList(request *api.PublishListRequest, response *api.PublishListResponse) bool {
+	ids, valid := GetPublishListByUserID(request.UserID)
+	if !valid {
+		// 缓存不能处理
+		return false
+	}
+
+	for _, item := range ids {
+		vMap, valid := GetVideoById(item)
+		if !valid {
+			// 缓存不能处理
+			response.VideoList = nil
+			return false
+		}
+		apiV, valid := VMap2ApiVidio(request.Token, vMap)
+		if !valid {
+			// 缓存不能处理
+			response.VideoList = nil
+			return false
+		}
+		response.VideoList = append(response.VideoList, apiV)
+	}
+
+	response.StatusCode = 0
+	return true
+}
+
 // 缓存完成路由业务Feed
 //func RedisFeed(request *api.FeedRequest, response *api.FeedResponse) bool {
 //	var clientUser map[string]string = nil

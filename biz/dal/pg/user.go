@@ -111,14 +111,16 @@ func (u *DBUser) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
 // 表示查看当前用户的token
 func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 	err = nil
+	bg := utils.Realurl(u.BackgroundImage)
+	avt := utils.Realurl(u.Avatar)
 	apiuser = &api.User{
 		ID:              int64(u.ID),
 		Name:            u.Username,
 		FollowCount:     &u.FollowCount,
 		FollowerCount:   &u.FollowerCount,
 		IsFollow:        false,
-		Avatar:          &u.Avatar,
-		BackgroundImage: &u.BackgroundImage,
+		Avatar:          &avt,
+		BackgroundImage: &bg,
 		Signature:       &u.Signature,
 		TotalFavorited:  &u.TotalFavorited,
 		WorkCount:       &u.WorkCount,

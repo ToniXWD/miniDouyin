@@ -28,10 +28,10 @@ var (
 	REDIS_MAX_FEED = 1000
 
 	// 日志配置项
-	USE_TERMINAL = false // 使用终端作为日志输出？
-	UPDATE_DAILY = true  // 是否每天更新日志文件？
+	USE_TERMINAL = true // 使用终端作为日志输出？
+	UPDATE_DAILY = true // 是否每天更新日志文件？
 	LOG_LEVEL    = log.DebugLevel
 
 	// Gorm 配置
-	GORM_LOGGER_TERMINAL = false // 日志输出到终端？
+	GORM_LOGGER_TERMINAL = true // 日志输出到终端？
 )

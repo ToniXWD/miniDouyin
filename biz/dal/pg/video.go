@@ -108,7 +108,7 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 			av.Author = nil
 			return nil, utils.ErrVideoUserNotExist
 		}
-		// 发送消息更新缓存
+		// 发送消息更新用户缓存
 		items := utils.StructToMap(&dbuser)
 		msg := RedisMsg{
 			TYPE: UserInfo,
@@ -184,6 +184,19 @@ func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 		Order("ID desc").Find(&vlist)
 	if res.Error != nil {
 		r_err = res.Error
+		return
 	}
+	// 更新到缓存
+	ids := make([]interface{}, len(vlist))
+	for idx, item := range vlist {
+		ids[idx] = item.ID
+	}
+	msg := RedisMsg{
+		TYPE: Publish,
+		DATA: map[string]interface{}{
+			"ID":     userID,
+			"Videos": ids,
+		}}
+	ChanFromDB <- msg
 	return
 }

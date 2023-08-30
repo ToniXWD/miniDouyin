@@ -137,24 +137,30 @@ func RedisPublishList(request *api.PublishListRequest, response *api.PublishList
 
 // 缓存完成 GetCommentList
 func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentListResponse) bool {
-	videoId := request.VideoID
 	// 通过缓存查找评论列表
-	commentList, valid := ListComment(videoId)
-	if valid {
-		// 缓存不能处理
+
+	// 获取评论列表
+	clist, find := GetVideoCommentList(int(request.VideoID))
+	if !find {
 		return false
 	}
 
-	var apicommentList []*api.Comment
-	for _, item := range commentList {
-		apic, valid := CMap2ApiComment(item)
-		if !valid {
+	for _, cid := range clist {
+		cMap, find := GetCommentByID(cid)
+		if !find {
+			response.CommentList = nil
 			return false
 		}
-		apicommentList = append(apicommentList, apic)
+		apiC, find := CMap2ApiComment(cMap)
+		if !find {
+			response.CommentList = nil
+			return false
+		}
+		response.CommentList = append(response.CommentList, apiC)
 	}
 
 	response.StatusCode = 0
-	response.CommentList = apicommentList
+	str := "Get follow list successfully"
+	response.StatusMsg = &str
 	return true
 }

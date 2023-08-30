@@ -11,12 +11,12 @@ import log "github.com/sirupsen/logrus"
 
 var (
 	// 关系型数据库配置项
-	DSN    = "user=postgres password=tmdgnnwscjl dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	DSN    = "user=postgres password=tmdgnnwscjl dbname=douyin port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	DBTYPE = "pg"
 
 	// hertz配置项
 	PORT     = "8889"
-	URLIP    = "172.20.10.4"
+	URLIP    = "172.29.172.57"
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024
 

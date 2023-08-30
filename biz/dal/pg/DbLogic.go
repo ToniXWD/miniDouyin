@@ -2,13 +2,13 @@ package pg
 
 import (
 	"context"
-	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mime/multipart"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/cloudwego/hertz/pkg/app"
 )
@@ -489,7 +489,7 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 		response.Comment, err = comment.ToApiComment(cUser, clientUser)
 		// 发送消息更新缓存
 		items := utils.StructToMap(comment)
-		fmt.Printf("%T", items["CreateAt"])
+		log.Debugf("%T", items["CreateAt"])
 		msg := RedisMsg{
 			TYPE: CommentCreate,
 			DATA: items,
@@ -506,15 +506,17 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 			return
 		}
 		// 从数据库删除
-		comment, err := DeleteComment(*request.CommentID)
+		_, err := DeleteComment(*request.CommentID)
 		if err != nil {
 			return
 		}
-		items := utils.StructToMap(comment)
 		// 再从缓存中删除
 		msg := RedisMsg{
 			TYPE: CommentDel,
-			DATA: items,
+			DATA: map[string]interface{}{
+				"ID":      *request.CommentID,
+				"VideoId": request.VideoID,
+			},
 		}
 		ChanFromDB <- msg
 
@@ -627,7 +629,8 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
-		response.UserList = append(response.UserList, apiuser)
+		apiFriend := apiUser2apiFriend(apiuser, clientuser)
+		response.UserList = append(response.UserList, apiFriend)
 	}
 	response.StatusCode = 0
 	str := "Get friend list successfully"

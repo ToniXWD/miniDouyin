@@ -81,6 +81,7 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 	if token != "" {
 		// token不为空，表示客户端已经登录
 		// 校验token
+		// TODO:尝试从缓存查询用户
 		clientUser, r_err = ValidateToken(token)
 		if r_err != nil {
 			return nil, r_err
@@ -89,12 +90,15 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 
 	// 校验视频id合法性
 	v := &DBVideo{}
+	// TODO:先尝试从缓存获取视频
 	res := DB.Model(v).First(v, "ID = ?", v_id)
 	if res.Error != nil {
 		return nil, utils.ErrVideoNotExist
 	}
 
 	// 如果视频id有效再获取评论列表
+	// TODO: 先尝试从缓存查找视频评论列表
+	// TODO：如果从缓存找到了视频评论列表，再从获取到的视频id查询评论（也是先尝试缓存查，再数据库查）
 	cDBlist, err := GetDBCommentList(v_id)
 	if err != nil {
 		return nil, err

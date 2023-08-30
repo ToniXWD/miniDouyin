@@ -24,6 +24,12 @@ func PGserver() {
 		case Publish:
 			log.Infoln("更新用户发布视频列表缓存...")
 			go rdb.NewPublish(msg.DATA)
+		case CommentCreate:
+			log.Infoln("更新评论缓存")
+			go rdb.NewComment(msg.DATA)
+		case CommentDel:
+			log.Infoln("删除评论缓存")
+			go rdb.DelComment(msg.DATA)
 		}
 	}
 }

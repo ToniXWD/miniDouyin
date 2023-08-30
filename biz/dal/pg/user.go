@@ -153,7 +153,7 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 		if e.Error == nil {
 			// 查询成功，match是有效的记录
 			apiuser.IsFollow = true
-			//更新Redis缓存
+			// 更新Redis缓存
 			// 发送消息更新缓存
 			msg := RedisMsg{
 				TYPE: UserFollowAdd,
@@ -162,8 +162,10 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 					"ID":    u.ID,
 				}}
 			ChanFromDB <- msg
+			return apiuser, nil
 		} else {
-			err = utils.ErrMathRealationFailed
+			apiuser.IsFollow = false
+			return apiuser, nil
 		}
 	}
 	return
@@ -215,9 +217,9 @@ func DBGetUser(request *api.UserRequest) (*DBUser, error) {
 	}
 
 	// 找到后，与token进行比对
-	//if user.Token != request.Token {
+	// if user.Token != request.Token {
 	//	return nil, utils.ErrWrongToken
-	//}
+	// }
 
 	return &user, nil
 }

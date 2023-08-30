@@ -13,4 +13,6 @@ const (
 	UserFollowDel
 	VideoInfo
 	Publish // 用户上传视频的集合
+	CommentCreate
+	CommentDel
 )

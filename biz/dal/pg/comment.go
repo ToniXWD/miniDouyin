@@ -1,8 +1,6 @@
 package pg
 
 import (
-	"context"
-	"errors"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -20,33 +18,9 @@ type Comment struct {
 	Deleted   gorm.DeletedAt `gorm:"default:NULL"`
 }
 
-// type DBVideo struct {
-// 	ID            int64 `gorm:"primaryKey"`
-// 	Title         string
-// 	Author        int64 // 外键关联到DBUser结构体的主键
-// 	PlayUrl       string
-// 	CoverUrl      string `gorm:"default:'defaults/douyin.jpg'"`
-// 	FavoriteCount int64  `gorm:"default:0"`
-// 	CommentCount  int64  `gorm:"default:0"`
-// 	CreatedAt     time.Time
-// 	Deleted       gorm.DeletedAt `gorm:"default:NULL"`
-// }
-
-func (Comment) TableName() string {
+func (v *Comment) TableName() string {
 	return "comments"
 }
-
-// api.Comment
-// type Comment struct {
-//	// 视频评论id
-//	ID int64 `thrift:"id,1,required" form:"id,required" json:"id,required" query:"id,required"`
-//	// 评论用户信息
-//	User *User `thrift:"user,2,required" form:"user,required" json:"user,required" query:"user,required"`
-//	// 评论内容
-//	Content string `thrift:"content,3,required" form:"content,required" json:"content,required" query:"content,required"`
-//	// 评论发布日期，格式 mm-dd
-//	CreateDate string `thrift:"create_date,4,required" form:"create_date,required" json:"create_date,required" query:"create_date,required"`
-// }
 
 // 数据库模型转换为api的结构体
 func (v *Comment) ToApiComment(cUser *DBUser, clientUser *DBUser) (*api.Comment, error) {
@@ -54,7 +28,7 @@ func (v *Comment) ToApiComment(cUser *DBUser, clientUser *DBUser) (*api.Comment,
 		ID:         v.ID,
 		User:       nil,
 		Content:    v.Content,
-		CreateDate: v.CreatedAt.Format("mm-dd"),
+		CreateDate: v.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	// 填充评论用户信息
@@ -67,53 +41,38 @@ func (v *Comment) ToApiComment(cUser *DBUser, clientUser *DBUser) (*api.Comment,
 	return ac, nil
 }
 
-func CreateComment(comment *Comment, ctx context.Context) (int64, error) {
-	result := DB.Create(comment)
-	return int64(comment.ID), result.Error
+// 发布评论
+func (v *Comment) CreateComment() (int64, error) {
+	result := DB.Create(v)
+	return v.ID, result.Error
 }
 
-func DeleteComment(commentId int64, ctx context.Context) error {
+// 删除评论
+func DeleteComment(commentId int64) (*Comment, error) {
 	comment := Comment{}
 	// 先查询是否有此评论
 	result := DB.Where("id = ?", commentId).First(&comment)
 	if result.Error != nil {
-		return errors.New("del comment is not exist")
+		return nil, utils.ErrDelCommentNotExist
 	}
+
+	// 如果评论存在则删除此条评论
 	result = DB.Where("id = ?", commentId).Delete(&Comment{})
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
-	return nil
+	return &comment, nil
 }
 
-type ActionCommentService struct {
-	ctx context.Context
-}
-
-func NewActionCommentService(ctx context.Context) *ActionCommentService {
-	return &ActionCommentService{
-		ctx: ctx,
+// 根据 video_id获取评论列表
+func GetDBCommentList(v_id int64) (clist []Comment, err error) {
+	err = nil
+	res := DB.Model(&Comment{}).Where("video_id = ?", v_id).
+		Order("ID").Find(&clist)
+	if res.Error != nil {
+		err = utils.ErrGetCommentListFailed
 	}
-}
-func (s *ActionCommentService) CreateComment(req *api.CommentActionRequest, userId int64) (*Comment, error) {
-	comm := &Comment{
-		VideoId: req.VideoID,
-		UserId:  userId,
-		Content: *req.CommentText,
-	}
-	_, err := CreateComment(comm, s.ctx)
-	if err != nil {
-		return nil, err
-	}
-	return comm, nil
-}
-
-func (s *ActionCommentService) DeleteComment(req *api.CommentActionRequest) error {
-	err := DeleteComment(*req.CommentID, s.ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
@@ -140,8 +99,16 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 	if err != nil {
 		return nil, err
 	}
-	// 将视频列表格式进行转换
+	// 将评论列表格式进行转换
 	for _, dbcomment := range cDBlist {
+		// 更新缓存
+		items := utils.StructToMap(&dbcomment)
+		msg := RedisMsg{
+			TYPE: CommentCreate,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
 		cUser := &DBUser{ID: dbcomment.UserId}
 		if !cUser.QueryUserByID() {
 			return nil, utils.ErrUserNotFound
@@ -155,12 +122,16 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 	return
 }
 
-func GetDBCommentList(v_id int64) (clist []Comment, err error) {
-	err = nil
-	res := DB.Model(&Comment{}).Where("video_id = ?", v_id).
-		Order("ID").Find(&clist)
-	if res.Error != nil {
-		err = utils.ErrGetCommentListFailed
+// 根据评论请求封装发布评论
+func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, error) {
+	comm := &Comment{
+		VideoId: req.VideoID,
+		UserId:  userId,
+		Content: *req.CommentText,
 	}
-	return
+	_, err := comm.CreateComment()
+	if err != nil {
+		return nil, err
+	}
+	return comm, nil
 }

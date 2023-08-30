@@ -2,6 +2,7 @@ package pg
 
 import (
 	"context"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mime/multipart"
 	"miniDouyin/biz/dal/rdb"
@@ -41,12 +42,12 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		}
 		ChanFromDB <- msg
 
-		//select {
-		//case ChanFromDB <- msg:
+		// select {
+		// case ChanFromDB <- msg:
 		//	log.Debugln("Sent data to ChanFromDB.")
-		//default:
+		// default:
 		//	log.Debugln("ChanFromDB is not ready for sending.")
-		//}
+		// }
 
 		return
 	}
@@ -101,7 +102,7 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
 		user.InitSelfFromMap(uMap)
 	} else {
-		//缓存命中失败则从数据库中查询
+		// 缓存命中失败则从数据库中查询
 		user, err = DBGetUser(request)
 		if err != nil {
 			// 没有找到用户
@@ -457,7 +458,8 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 }
 
 // 添加评论和删除评论
-func DBCommentAction(request *api.CommentActionRequest, response *api.CommentActionResponse, ctx context.Context) {
+func DBCommentAction(request *api.CommentActionRequest, response *api.CommentActionResponse) {
+	// 如果VideoID不合法，直接返回
 	if request.VideoID <= 0 {
 		response.Comment = nil
 		response.StatusCode = 2
@@ -466,45 +468,63 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 		return
 	}
 
+	// 验证 token
 	clientUser, err := ValidateToken(request.Token)
-	apiUser, _ := clientUser.ToApiUser(clientUser)
 	if err != nil {
 		return
 	}
 
-	commentService := NewActionCommentService(ctx)
 	if request.ActionType == 1 {
+		// 发布评论
+		// 判断评论内容是否是否为空，为空则直接返回
 		if len(*request.CommentText) == 0 {
 			response.StatusCode = 2
 			str := utils.ErrWrongParam.Error()
 			response.StatusMsg = &str
 			return
 		}
-		comment, _ := commentService.CreateComment(request, clientUser.ID)
+		comment, _ := dbCreateComment(request, clientUser.ID)
 		response.StatusCode = 0
-		response.Comment = &api.Comment{
-			ID:         int64(comment.ID),
-			User:       apiUser,
-			Content:    *request.CommentText,
-			CreateDate: comment.CreatedAt.Format("2006-01-02 15:04:05"),
+		cUser := &DBUser{ID: comment.UserId}
+		response.Comment, err = comment.ToApiComment(cUser, clientUser)
+		// 发送消息更新缓存
+		items := utils.StructToMap(comment)
+		fmt.Printf("%T", items["CreateAt"])
+		msg := RedisMsg{
+			TYPE: CommentCreate,
+			DATA: items,
 		}
+		ChanFromDB <- msg
+
 	} else if request.ActionType == 2 {
+		// 删除评论
+		// 校验CommentID 是否合法
 		if *request.CommentID <= 0 {
 			response.StatusCode = 2
 			str := utils.ErrWrongParam.Error()
 			response.StatusMsg = &str
 			return
 		}
-		if err = commentService.DeleteComment(request); err != nil {
+		// 从数据库删除
+		comment, err := DeleteComment(*request.CommentID)
+		if err != nil {
 			return
 		}
+		items := utils.StructToMap(comment)
+		// 再从缓存中删除
+		msg := RedisMsg{
+			TYPE: CommentDel,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
 		response.StatusCode = 0
-		str := "Delete comment successfully!"
-		response.StatusMsg = &str
+		response.StatusMsg = &utils.DeleteCommentSuccess
 	} else {
 		err = utils.ErrTypeNotSupport
 	}
 
+	// 评论计数
 	dbv := &DBVideo{ID: request.VideoID}
 	txn := DB.Begin()
 	dbv.increaseComment(txn)

@@ -2,12 +2,13 @@ package pg
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"mime/multipart"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/cloudwego/hertz/pkg/app"
 )
@@ -607,7 +608,8 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
-		response.UserList = append(response.UserList, apiuser)
+		apiFriend := apiUser2apiFriend(apiuser, clientuser)
+		response.UserList = append(response.UserList, apiFriend)
 	}
 	response.StatusCode = 0
 	str := "Get friend list successfully"

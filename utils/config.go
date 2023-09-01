@@ -16,7 +16,7 @@ var (
 
 	// hertz配置项
 	PORT     = "8889"
-	URLIP    = "192.168.1.113"
+	URLIP    = "172.20.10.4"
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024
 

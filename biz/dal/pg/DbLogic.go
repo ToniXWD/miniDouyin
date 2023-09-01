@@ -560,6 +560,7 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 	response.CommentList = comments
 }
 
+// 用户关注列表
 func DBFollowList(request *api.RelationFollowListRequest, response *api.RelationFollowListResponse) {
 	clientuser, _ := ValidateToken(request.Token)
 	var followlist []DBAction
@@ -590,6 +591,7 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 	response.StatusMsg = &str
 }
 
+// 用户粉丝列表
 func DBFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) {
 	clientuser, _ := ValidateToken(request.Token)
 	var followerList []DBAction
@@ -620,6 +622,7 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 	response.StatusMsg = &str
 }
 
+// 用户好友列表
 func DBFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) {
 	clientuser, _ := ValidateToken(request.Token)
 	var friendList []DBfriend

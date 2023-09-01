@@ -161,7 +161,7 @@ func FavoriteAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteActionResponse)
-	pg.DBFavoriteAction(&req, resp, ctx)
+	pg.DBFavoriteAction(&req, resp)
 	c.JSON(consts.StatusOK, resp)
 }
 

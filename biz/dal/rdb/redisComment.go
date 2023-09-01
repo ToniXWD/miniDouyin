@@ -49,7 +49,7 @@ func GetVideoCommentList(VideoID int) ([]string, bool) {
 	clist_key := "video_comment_" + vid
 
 	clist, err := Rdb.ZRange(ctx, clist_key, 0, -1).Result()
-	if err != nil {
+	if err != nil || len(clist) == 0 {
 		return nil, false
 	}
 	return clist, true

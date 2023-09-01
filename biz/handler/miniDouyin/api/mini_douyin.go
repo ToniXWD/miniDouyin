@@ -28,11 +28,11 @@ func Feed(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.FeedResponse)
 	// 先尝试从缓存完成业务（此功能还未使用，因为缓存同步时间序列较为复杂）
-	//if rdb.RedisFeed(&req, resp) {
+	// if rdb.RedisFeed(&req, resp) {
 	//	log.Debugln("从缓存完成用户登录")
-	//} else {
+	// } else {
 	pg.DBVideoFeed(&req, resp)
-	//}
+	// }
 	log.Debugf("resp +v", resp)
 
 	c.JSON(consts.StatusOK, resp)
@@ -194,7 +194,7 @@ func CommentAction(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.CommentActionResponse)
 
-	pg.DBCommentAction(&req, resp, ctx)
+	pg.DBCommentAction(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -211,8 +211,15 @@ func CommentList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.CommentListResponse)
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetCommentList(&req, resp) {
+		log.Infoln("从缓存完成获取评论列表")
+	} else {
+		pg.DBCommentList(&req, resp)
+	}
 
-	pg.DBCommentList(&req, resp)
+	// Debug
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

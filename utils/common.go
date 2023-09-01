@@ -66,7 +66,7 @@ func GetVideoCoverName(name string) (coverPath string, dbCover string) {
 }
 
 // 从字节切片存储视频，弃用
-//func SaveVideo(data []byte, savePath string) error {
+// func SaveVideo(data []byte, savePath string) error {
 //	// 打开文件以进行写入
 //	file, err := os.Create(savePath)
 //	if err != nil {
@@ -81,7 +81,7 @@ func GetVideoCoverName(name string) (coverPath string, dbCover string) {
 //		return ErrSaveVideoFaile
 //	}
 //	return nil
-//}
+// }
 // 从视频文件中提取指定帧作为封面图，并保存为图片文件
 
 // 将结构体转化为
@@ -103,8 +103,27 @@ func StructToMap(data interface{}) map[string]interface{} {
 			continue
 		}
 		fieldValue := value.Field(i).Interface()
-		result[field.Name] = fieldValue
+
+		if field.Name == "CreatedAt" {
+			// 将时间字段转换为指定格式的字符串
+			if createdAt, ok := fieldValue.(time.Time); ok {
+				result[field.Name] = createdAt.Format("2006-01-02 15:04:05")
+			} else {
+				result[field.Name] = fieldValue
+			}
+		} else {
+			result[field.Name] = fieldValue
+		}
 	}
 
 	return result
+}
+
+func StringToFloat64(s string) (float64, error) {
+	t, err := time.Parse("2006-01-02 15:04:05", s)
+	if err != nil {
+		return 0, err
+	}
+	unixTimestamp := float64(t.Unix())
+	return unixTimestamp, nil
 }

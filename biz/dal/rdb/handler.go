@@ -101,7 +101,7 @@ func RedisPublishList(request *api.PublishListRequest, response *api.PublishList
 }
 
 // 缓存完成路由业务Feed
-//func RedisFeed(request *api.FeedRequest, response *api.FeedResponse) bool {
+// func RedisFeed(request *api.FeedRequest, response *api.FeedResponse) bool {
 //	var clientUser map[string]string = nil
 //	var find bool
 //	if request.Token != nil {
@@ -133,4 +133,34 @@ func RedisPublishList(request *api.PublishListRequest, response *api.PublishList
 //	str := "Load video list successfully"
 //	response.StatusMsg = &str
 //	return true
-//}
+// }
+
+// 缓存完成 GetCommentList
+func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentListResponse) bool {
+	// 通过缓存查找评论列表
+
+	// 获取评论列表
+	clist, find := GetVideoCommentList(int(request.VideoID))
+	if !find {
+		return false
+	}
+
+	for _, cid := range clist {
+		cMap, find := GetCommentByID(cid)
+		if !find {
+			response.CommentList = nil
+			return false
+		}
+		apiC, find := CMap2ApiComment(cMap)
+		if !find {
+			response.CommentList = nil
+			return false
+		}
+		response.CommentList = append(response.CommentList, apiC)
+	}
+
+	response.StatusCode = 0
+	str := "Get follow list successfully"
+	response.StatusMsg = &str
+	return true
+}

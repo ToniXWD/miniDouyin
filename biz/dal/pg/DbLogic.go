@@ -293,6 +293,7 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 		if sendMsg(request.Token, request.ToUserID, request.Content) {
 			response.StatusCode = int32(request.ToUserID)
 			response.StatusMsg = 0
+			return
 		}
 	}
 	response.StatusMsg = 1

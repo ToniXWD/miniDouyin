@@ -56,7 +56,7 @@ CREATE TABLE messages
     from_id bigint,                   -- 发送者id，外键
     to_id   bigint,                   -- 接受者id，外键
     content VARCHAR(255) NOT NULL, -- 内容
-    date    DATE         NOT NULL, -- 日期
+    creat    DATE         NOT NULL, -- 日期
     deleted date DEFAULT null,     -- 软删除
     FOREIGN KEY (from_id) REFERENCES users (id),
     FOREIGN KEY (to_id) REFERENCES users (id)

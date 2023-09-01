@@ -1,8 +1,12 @@
 package pg
 
 import (
+	log "github.com/sirupsen/logrus"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -45,6 +49,20 @@ func (u *DBUser) QueryUser() bool {
 	return result.RowsAffected > 0
 }
 
+// 根据User的ID字段在数据库中查询
+// 找到结果就填充整个结构体并返回T True
+// 否则返回 False
+func (u *DBUser) QueryUserByID() bool {
+	result := DB.First(u, "ID = ?", u.ID)
+
+	if result.Error != nil {
+		return false
+	}
+
+	// 检查是否找到了记录
+	return result.RowsAffected > 0
+}
+
 // 将当前结构体插入数据库，返回是否成功
 func (u *DBUser) insert() bool {
 	if u.Username == "" || u.Passwd == "" {
@@ -64,14 +82,28 @@ func (u *DBUser) insert() bool {
 
 // 将当前结构体插入数据库，返回是否成功
 // 需要提前保证该结构体有效
-func (u *DBUser) increaseWork(db *gorm.DB) bool {
+func (u *DBUser) increaseWork(db *gorm.DB, num int64) bool {
 
 	if u.Username == "" || u.Passwd == "" || u.ID == 0 {
 		// 密码盒用户名不能为空
 		return false
 	}
-	res := db.Model(u).Where("ID = ?", u.ID).Update("work_count", gorm.Expr("work_count + ?", 1))
+	res := db.Model(u).Where("ID = ?", u.ID).Update("work_count", gorm.Expr("work_count + ?", num))
 	return res.Error == nil
+}
+
+// 点赞数自增
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (u *DBUser) increaseFavorite(db *gorm.DB, num int64) *gorm.DB {
+	return db.Model(u).Where("ID = ?", u.ID).Update("favorite_count", gorm.Expr("favorite_count + ?", num))
+}
+
+// 获赞数自增
+// 将当前结构体插入数据库，返回是否成功
+// 需要提前保证该结构体有效
+func (u *DBUser) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
+	return db.Model(u).Where("ID = ?", u.ID).Update("total_favorited", gorm.Expr("total_favorited + ?", num))
 }
 
 // 从数据库结构体转化为api的结构体
@@ -79,14 +111,16 @@ func (u *DBUser) increaseWork(db *gorm.DB) bool {
 // 表示查看当前用户的token
 func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 	err = nil
+	bg := utils.Realurl(u.BackgroundImage)
+	avt := utils.Realurl(u.Avatar)
 	apiuser = &api.User{
 		ID:              int64(u.ID),
 		Name:            u.Username,
 		FollowCount:     &u.FollowCount,
 		FollowerCount:   &u.FollowerCount,
 		IsFollow:        false,
-		Avatar:          &u.Avatar,
-		BackgroundImage: &u.BackgroundImage,
+		Avatar:          &avt,
+		BackgroundImage: &bg,
 		Signature:       &u.Signature,
 		TotalFavorited:  &u.TotalFavorited,
 		WorkCount:       &u.WorkCount,
@@ -105,14 +139,53 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 	}
 
 	// 否则需要根据clientUser查询该用户是否被关注
-	match := &DBAction{}
-	e := DB.Model(&DBAction{}).Where("user_id = ? AND follow_id = ?", clientUser.ID, u.ID).First(match)
-	if e.Error == nil {
-		// 查询成功，match是有效的记录
-		apiuser.IsFollow = true
-		err = utils.ErrMathRealationFailed
+	// 先尝试从缓存查询关注记录
+	res, err := rdb.IsFollow(clientUser.Token, u.ID)
+	if err == nil {
+		// 缓存查询成功
+		log.Debugln("ToApiUser: 从缓存查询关注记录成功")
+		apiuser.IsFollow = res
+		return
+	} else {
+		// 缓存未命中则直接从数据库查询
+		match := &DBAction{}
+		e := DB.Model(&DBAction{}).Where("user_id = ? AND follow_id = ?", clientUser.ID, u.ID).First(match)
+		if e.Error == nil {
+			// 查询成功，match是有效的记录
+			apiuser.IsFollow = true
+			// 更新Redis缓存
+			// 发送消息更新缓存
+			msg := RedisMsg{
+				TYPE: UserFollowAdd,
+				DATA: map[string]interface{}{
+					"Token": clientUser.Token,
+					"ID":    u.ID,
+				}}
+			ChanFromDB <- msg
+			return apiuser, nil
+		} else {
+			apiuser.IsFollow = false
+			return apiuser, nil
+		}
 	}
 	return
+}
+
+func (u *DBUser) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(u).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			}
+		}
+	}
 }
 
 // 从登录请求构造新用户
@@ -144,9 +217,9 @@ func DBGetUser(request *api.UserRequest) (*DBUser, error) {
 	}
 
 	// 找到后，与token进行比对
-	if user.Token != request.Token {
-		return nil, utils.ErrWrongToken
-	}
+	// if user.Token != request.Token {
+	//	return nil, utils.ErrWrongToken
+	// }
 
 	return &user, nil
 }

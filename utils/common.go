@@ -9,28 +9,19 @@ package utils
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
-
+	"reflect"
+	"strings"
 	"time"
 )
+
+var TimeFormat string = "2006-01-02 15:04:05"
 
 func Realurl(s_url string) string {
 	r_url := "http://" + URLIP + ":" + PORT + "/data/" + s_url
 	return r_url
-}
-
-func I64ToTime(num int64) time.Time {
-	// 提取时间戳的秒和微秒部分
-	seconds := num / 1000
-	microseconds := (num % 1000) * 1000
-	// 将 Unix 时间戳转换为 time.Time 类型
-	timeObj := time.Unix(seconds, microseconds)
-
-	// 格式化为指定的日期时间格式
-	//formattedTime := timeObj.Format("2006-01-02 15:04:05.000000")
-
-	return timeObj
 }
 
 func TimeToI64(t time.Time) int64 {
@@ -59,17 +50,27 @@ func GetVideoNameAndPath() (name string, path string, DBpath string) {
 
 	DBpath = filepath.Join("videos", name)
 
-	fmt.Println(path)
+	log.Infoln("上传文件存储路径为：", path)
 
 	return
 }
 
+// 返回视频封面存储名和db名
+func GetVideoCoverName(name string) (coverPath string, dbCover string) {
+	coverPath = strings.TrimSuffix(name, ".mp4")
+	coverPath = coverPath + ".png"
+	coverPath = strings.Replace(coverPath, "videos", "bgs", 1)
+	index := strings.Index(coverPath, "bgs")
+	dbCover = coverPath[index:]
+	return
+}
+
 // 从字节切片存储视频，弃用
-//func SaveVideo(data []byte, savePath string) error {
+// func SaveVideo(data []byte, savePath string) error {
 //	// 打开文件以进行写入
 //	file, err := os.Create(savePath)
 //	if err != nil {
-//		fmt.Println("Error creating file:", err)
+//		log.Debugln("Error creating file:", err)
 //		return ErrSaveVideoFaile
 //	}
 //	defer file.Close()
@@ -80,6 +81,49 @@ func GetVideoNameAndPath() (name string, path string, DBpath string) {
 //		return ErrSaveVideoFaile
 //	}
 //	return nil
-//}
-
+// }
 // 从视频文件中提取指定帧作为封面图，并保存为图片文件
+
+// 将结构体转化为
+func StructToMap(data interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	value := reflect.ValueOf(data)
+
+	// 确保传入的是结构体指针
+	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+		return result
+	}
+
+	value = value.Elem()
+	typ := value.Type()
+
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if field.Name == "Deleted" {
+			continue
+		}
+		fieldValue := value.Field(i).Interface()
+
+		if field.Name == "CreatedAt" {
+			// 将时间字段转换为指定格式的字符串
+			if createdAt, ok := fieldValue.(time.Time); ok {
+				result[field.Name] = createdAt.Format("2006-01-02 15:04:05")
+			} else {
+				result[field.Name] = fieldValue
+			}
+		} else {
+			result[field.Name] = fieldValue
+		}
+	}
+
+	return result
+}
+
+func StringToFloat64(s string) (float64, error) {
+	t, err := time.Parse("2006-01-02 15:04:05", s)
+	if err != nil {
+		return 0, err
+	}
+	unixTimestamp := float64(t.Unix())
+	return unixTimestamp, nil
+}

@@ -4,8 +4,9 @@ package api
 
 import (
 	"context"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/pg"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -15,21 +16,24 @@ import (
 // Feed .
 // @router /douyin/feed/ [GET]
 func Feed(ctx context.Context, c *app.RequestContext) {
-	fmt.Println("Feed 被调用")
+	log.Debugln("Feed 被调用")
 	var err error
 	var req api.FeedRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		fmt.Println("参数绑定失败")
+		log.Debugln("参数绑定失败")
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
 
 	resp := new(api.FeedResponse)
-
+	// 先尝试从缓存完成业务（此功能还未使用，因为缓存同步时间序列较为复杂）
+	// if rdb.RedisFeed(&req, resp) {
+	//	log.Debugln("从缓存完成用户登录")
+	// } else {
 	pg.DBVideoFeed(&req, resp)
-
-	fmt.Printf("resp +v", resp)
+	// }
+	log.Debugf("resp +v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -64,11 +68,15 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserLoginResponse)
-
-	pg.DBUserLogin(&req, resp)
-
+	// 先尝试从缓存完成业务
+	if rdb.RedisLogin(&req, resp) {
+		log.Debugln("从缓存完成用户登录")
+	} else {
+		// 从数据库读取的业务要记得更新缓存
+		pg.DBUserLogin(&req, resp)
+	}
 	// Debug
-	fmt.Printf("resp = %+v\n", resp)
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -85,27 +93,34 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserResponse)
-
-	pg.DBGetUserinfo(&req, resp)
-
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetUserInfo(&req, resp) {
+		log.Infoln("从缓存完成用户信息获取")
+	} else {
+		pg.DBGetUserinfo(&req, resp)
+	}
 	c.JSON(consts.StatusOK, resp)
 }
 
 // VideoPublishAction .
 // @router /douyin/publish/action/ [POST]
 func VideoPublishAction(ctx context.Context, c *app.RequestContext) {
+	log.Debugln("VideoPublishAction 被调用")
 	var err error
 	var req api.PublishActionRequest
 	resp := new(api.PublishActionResponse)
 
 	form, err := c.MultipartForm()
 
-	//err = c.BindAndValidate(&req)
+	// err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 	}
 
 	pg.DBReceiveVideo(&req, resp, form, c)
+
+	// Debug
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -122,8 +137,14 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.PublishListResponse)
-
-	pg.DBVideoPublishList(&req, resp)
+	// 先尝试从缓存完成业务
+	if rdb.RedisPublishList(&req, resp) {
+		log.Infoln("从缓存完成用户发布列表获取")
+	} else {
+		pg.DBVideoPublishList(&req, resp)
+	}
+	// Debug
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -132,7 +153,7 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/favorite/action/ [POST]
 func FavoriteAction(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.FavoriteActionResponse
+	var req api.FavoriteActionRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -140,7 +161,7 @@ func FavoriteAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteActionResponse)
-
+	pg.DBFavoriteAction(&req, resp, ctx)
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -156,7 +177,7 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteListResponse)
-
+	pg.DBFavoriteList(&req, resp)
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -164,7 +185,7 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 // @router /douyin/comment/action/ [POST]
 func CommentAction(ctx context.Context, c *app.RequestContext) {
 	var err error
-	var req api.CommentActionResponse
+	var req api.CommentActionRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
@@ -172,6 +193,8 @@ func CommentAction(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.CommentActionResponse)
+
+	pg.DBCommentAction(&req, resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -188,6 +211,15 @@ func CommentList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.CommentListResponse)
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetCommentList(&req, resp) {
+		log.Infoln("从缓存完成获取评论列表")
+	} else {
+		pg.DBCommentList(&req, resp)
+	}
+
+	// Debug
+	log.Debugf("resp = %+v\n", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -212,7 +244,7 @@ func RelationAction(ctx context.Context, c *app.RequestContext) {
 // FollowList .
 // @router /douyin/relation/follow/list/ [GET]
 func FollowList(ctx context.Context, c *app.RequestContext) {
-	fmt.Println("FollowList 被调用")
+	log.Debugln("FollowList 被调用")
 
 	var err error
 	var req api.RelationFollowListRequest
@@ -279,6 +311,8 @@ func ChatRec(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.ChatRecordResponse)
 
 	pg.DBChatRec(&req, resp)
+
+	log.Debugf("CgatRec: %+v", resp)
 
 	c.JSON(consts.StatusOK, resp)
 }

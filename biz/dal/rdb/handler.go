@@ -151,8 +151,37 @@ func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentL
 			response.CommentList = nil
 			return false
 		}
-		apiC, find := CMap2ApiComment(cMap)
+		apiC, conv := CMap2ApiComment(cMap)
+		if !conv {
+			response.CommentList = nil
+			return false
+		}
+		response.CommentList = append(response.CommentList, apiC)
+	}
+
+	response.StatusCode = 0
+	str := "Get follow list successfully"
+	response.StatusMsg = &str
+	return true
+}
+
+// 缓存完成 FavoriteList
+func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse) bool {
+	// 通过缓存查找点赞列表
+	// 获取点赞列表
+	clist, find := GetFavoriteList(int(request.VideoID))
+	if !find {
+		return false
+	}
+
+	for _, cid := range clist {
+		cMap, find := GetCommentByID(cid)
 		if !find {
+			response.CommentList = nil
+			return false
+		}
+		apiC, conv := CMap2ApiComment(cMap)
+		if !conv {
 			response.CommentList = nil
 			return false
 		}

@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -81,24 +82,60 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 	if token != "" {
 		// token不为空，表示客户端已经登录
 		// 校验token
-		// TODO:尝试从缓存查询用户
-		clientUser, r_err = ValidateToken(token)
-		if r_err != nil {
-			return nil, r_err
+		// 尝试从缓存查询用户
+		uMap, find := rdb.GetUserByToken(token)
+		if find {
+			// 缓存命中
+			clientUser.InitSelfFromMap(uMap)
+		} else {
+			// 缓存未命中，从数据库查
+			clientUser, r_err = ValidateToken(token)
+			if r_err != nil {
+				return nil, r_err
+			}
 		}
 	}
 
 	// 校验视频id合法性
 	v := &DBVideo{}
-	// TODO:先尝试从缓存获取视频
+	// TODO:先尝试从缓存获取视频ID
 	res := DB.Model(v).First(v, "ID = ?", v_id)
 	if res.Error != nil {
 		return nil, utils.ErrVideoNotExist
 	}
 
 	// 如果视频id有效再获取评论列表
-	// TODO: 先尝试从缓存查找视频评论列表
-	// TODO：如果从缓存找到了视频评论列表，再从获取到的视频id查询评论（也是先尝试缓存查，再数据库查）
+	// TODO：先尝试从缓存查找视频评论列表
+	// TODO：如果从缓存找到了视频评论ID列表，再从获取到的视频评论id查询评论（也是先尝试缓存查，再数据库查）
+	/*
+		// 缓存未命中，从数据库查
+		cDBlist, err := GetDBCommentList(v_id)
+		if err != nil {
+			return nil, err
+		}
+		// 将评论列表格式进行转换
+		for _, dbcomment := range cDBlist {
+			// 更新缓存
+			items := utils.StructToMap(&dbcomment)
+			msg := RedisMsg{
+				TYPE: CommentCreate,
+				DATA: items,
+			}
+			ChanFromDB <- msg
+
+			cUser := &DBUser{ID: dbcomment.UserId}
+			if !cUser.QueryUserByID() {
+				return nil, utils.ErrUserNotFound
+			}
+			ac, err := dbcomment.ToApiComment(cUser, clientUser)
+			if err != nil {
+				return nil, utils.ErrGetCommentListFailed
+			}
+			clist = append(clist, ac)
+		}
+		return
+	*/
+	// 缓存未命中，从数据库查
 	cDBlist, err := GetDBCommentList(v_id)
 	if err != nil {
 		return nil, err

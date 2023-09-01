@@ -1,7 +1,6 @@
 package pg
 
 import (
-	"context"
 	"mime/multipart"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
@@ -365,7 +364,7 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 }
 
 // 喜欢操作
-func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse, ctx context.Context) {
+func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse) {
 	// 校验 VideoID
 	if request.VideoID <= 0 {
 		response.StatusCode = 2
@@ -397,10 +396,25 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 	if request.ActionType == 1 {
 		// 点赞
 		ans = newRecord.insert(DB, clientUser, curVideo)
+		// 发送消息更新缓存
+		items := utils.StructToMap(newRecord)
+		log.Debugf("%T", items["CreateAt"])
+		msg := RedisMsg{
+			TYPE: LikeCreate,
+			DATA: items,
+		}
+		ChanFromDB <- msg
 
 	} else if request.ActionType == 2 {
 		// 取消点赞
 		ans = newRecord.delete(DB, clientUser, curVideo)
+		items := utils.StructToMap(newRecord)
+		log.Debugf("%T", items["CreateAt"])
+		msg := RedisMsg{
+			TYPE: LikeDel,
+			DATA: items,
+		}
+		ChanFromDB <- msg
 	} else {
 		ans = false
 	}
@@ -541,7 +555,7 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 		response.StatusMsg = &str
 		return
 	}
-
+	// TODO:先从缓存取
 	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
 	response.CommentList = comments
 }

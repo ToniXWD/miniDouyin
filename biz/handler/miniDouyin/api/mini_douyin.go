@@ -177,7 +177,11 @@ func FavoriteList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.FavoriteListResponse)
-	pg.DBFavoriteList(&req, resp)
+	if rdb.RedisGetFavoriteList(&req, resp) {
+		log.Infoln("从缓存完成获取点赞列表")
+	} else {
+		pg.DBFavoriteList(&req, resp)
+	}
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -274,7 +278,11 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFollowerListResponse)
 
-	pg.DBFollowerList(&req, resp)
+	if rdb.RedisGetFollowerList(&req, resp) {
+		log.Infoln("从缓存获取粉丝列表")
+	} else {
+		pg.DBFollowerList(&req, resp)
+	}
 
 	c.JSON(consts.StatusOK, resp)
 }

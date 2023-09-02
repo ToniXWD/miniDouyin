@@ -165,31 +165,58 @@ func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentL
 	return true
 }
 
-// // 缓存完成 FavoriteList
-// func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse) bool {
-// 	// 通过缓存查找点赞列表
-// 	// 获取点赞列表
-// 	clist, find := GetFavoriteList(int(request.VideoID))
-// 	if !find {
-// 		return false
-// 	}
-//
-// 	for _, cid := range clist {
-// 		cMap, find := GetCommentByID(cid)
-// 		if !find {
-// 			response.CommentList = nil
-// 			return false
-// 		}
-// 		apiC, conv := CMap2ApiComment(cMap)
-// 		if !conv {
-// 			response.CommentList = nil
-// 			return false
-// 		}
-// 		response.CommentList = append(response.CommentList, apiC)
-// 	}
-//
-// 	response.StatusCode = 0
-// 	str := "Get follow list successfully"
-// 	response.StatusMsg = &str
-// 	return true
-// }
+// 缓存完成 FavoriteList
+func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteListResponse) bool {
+	// 获取点赞 ID 列表
+	ids, valid := GetFavoriteListByUserID(request.UserID)
+	if !valid {
+		// 缓存不能处理
+		return false
+	}
+
+	for _, item := range ids {
+		// 通过点赞ID获取点赞(cMap)
+		lMap, valid := GetLikeByID(item)
+		if !valid {
+			// 缓存不能处理
+			return false
+		}
+		videoId := lMap["VideoId"]
+		vMap, valid := GetVideoById(videoId)
+		if !valid {
+			// 缓存不能处理
+			response.VideoList = nil
+			return false
+		}
+		apiV, valid := VMap2ApiVidio(request.Token, vMap)
+		if !valid {
+			// 缓存不能处理
+			response.VideoList = nil
+			return false
+		}
+		response.VideoList = append(response.VideoList, apiV)
+	}
+	response.StatusCode = 0
+	return true
+}
+
+// 缓存完成粉丝列表
+func RedisGetFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) bool {
+	// 获取粉丝列表
+	tokenlist, find := GetFollowersTokenList(request.UserID)
+	if !find {
+		return false
+	}
+
+	for _, token := range tokenlist {
+		tMap, find := GetUserByToken(token)
+		if !find {
+			response.UserList = nil
+			return false
+		}
+		apiU := GetApiUserFromMap(tMap)
+		response.UserList = append(response.UserList, apiU)
+	}
+	response.StatusCode = 0
+	return true
+}

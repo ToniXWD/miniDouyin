@@ -32,10 +32,10 @@ func PGserver() {
 			go rdb.DelComment(msg.DATA)
 		case LikeCreate:
 			log.Infoln("更新点赞缓存")
-			go rdb.NewLike(msg.DATA)
+			go rdb.NewLikeVideo(msg.DATA)
 		case LikeDel:
 			log.Infoln("删除评论缓存")
-			go rdb.DelLike(msg.DATA)
+			go rdb.DelLikeVideo(msg.DATA)
 
 		}
 	}

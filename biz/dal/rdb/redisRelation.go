@@ -21,6 +21,16 @@ func NewFollowRelation(data map[string]interface{}) {
 
 	// 设置过期时间
 	Rdb.Expire(ctx, relation_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+
+	// 设置粉丝关系 key
+	uid := data["ID"].(int64)
+	follower_key := "followers_" + strconv.Itoa(int(uid))
+	val := data["Token"].(string)
+	err = Rdb.SAdd(ctx, follower_key, val).Err()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+	Rdb.Expire(ctx, follower_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 }
 
 // 删除Follow关系缓存项
@@ -34,6 +44,14 @@ func DelFollowRelation(data map[string]interface{}) {
 	}
 	// 删除后重设设置过期时间
 	Rdb.Expire(ctx, relation_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+
+	// 设置粉丝关系 key
+	follower_key := "followers_" + data["ID"].(string)
+	err = Rdb.SRem(ctx, follower_key, data["Token"]).Err()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+	Rdb.Expire(ctx, follower_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 }
 
 // 通过缓存判断token用户是否关注了ID用户
@@ -58,4 +76,23 @@ func IsFollow(token string, ID int64) (bool, error) {
 	}
 	log.Debugf("缓存查找关注关系成功, %s 关注了 %s\n", token, id)
 	return true, nil
+}
+
+// 获取缓存粉丝列表
+func GetFollowersTokenList(UserID int64) ([]string, bool) {
+	ctx := context.Background()
+	uid := strconv.Itoa(int(UserID))
+	follower_key := "followers_" + uid
+
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, follower_key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return nil, false
+	}
+	tokenlist, err := Rdb.SMembers(ctx, follower_key).Result()
+	if err != nil {
+		return nil, false
+	}
+	return tokenlist, true
 }

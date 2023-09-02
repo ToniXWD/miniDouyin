@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"miniDouyin/utils"
 	"time"
 
 	"gorm.io/gorm"
@@ -145,6 +146,14 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 	// 检查是否找到了记录
 	if res.RowsAffected > 0 {
 		for _, item := range likelist {
+			// 加入到缓存中
+			items := utils.StructToMap(&item)
+			msg := RedisMsg{
+				TYPE: LikeCreate,
+				DATA: items,
+			}
+			ChanFromDB <- msg
+
 			dbv, _ := item.ToDBVideo(db)
 			dblist = append(dblist, dbv)
 		}

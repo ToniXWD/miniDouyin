@@ -398,7 +398,6 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		ans = newRecord.insert(DB, clientUser, curVideo)
 		// 发送消息更新缓存
 		items := utils.StructToMap(newRecord)
-		log.Debugf("%T", items["CreateAt"])
 		msg := RedisMsg{
 			TYPE: LikeCreate,
 			DATA: items,

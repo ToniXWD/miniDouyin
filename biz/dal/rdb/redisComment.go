@@ -48,8 +48,15 @@ func GetVideoCommentList(VideoID int) ([]string, bool) {
 	vid := strconv.Itoa(int(VideoID))
 	clist_key := "video_comment_" + vid
 
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, clist_key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return nil, false
+	}
+
 	clist, err := Rdb.ZRange(ctx, clist_key, 0, -1).Result()
-	if err != nil || len(clist) == 0 {
+	if err != nil {
 		return nil, false
 	}
 	return clist, true

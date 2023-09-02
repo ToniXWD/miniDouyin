@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-02 20:38:32
- * @LastEditTime: 2023-09-02 22:35:09
+ * @LastEditTime: 2023-09-02 23:40:28
  * @version: 1.0
  */
 package rdb
@@ -28,7 +28,7 @@ func UpdateChatRec(data map[string]interface{}) {
 	}
 	chatrec_key := "chatrec_" + strconv.Itoa(int(fid)) + "_" + strconv.Itoa(int(tid))
 	item := redis.Z{
-		Member: data["Content"].(string),
+		Member: data["ID"].(int64),
 		Score:  float64(data["Time"].(int64)),
 	}
 	_, err := Rdb.ZAdd(ctx, chatrec_key, item).Result()
@@ -37,6 +37,20 @@ func UpdateChatRec(data map[string]interface{}) {
 	}
 	// 设置过期时间
 	Rdb.Expire(ctx, chatrec_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+
+	content := map[string]interface{}{
+		"ID":      data["ID"].(int64),
+		"Content": data["Content"].(string),
+	}
+	// 设置key
+	content_key := "content_" + strconv.Itoa(int(data["ID"].(int64)))
+	_, err = Rdb.HMSet(ctx, content_key, content).Result()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+	// 设置过期时间
+	Rdb.Expire(ctx, content_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+
 }
 
 func GetChatRec(fid int64, tid int64) ([]string, string, bool) {
@@ -61,10 +75,12 @@ func GetChatRec(fid int64, tid int64) ([]string, string, bool) {
 }
 
 func CMap2ApiChat(cMap map[string]interface{}) (apiChat *api.Message) {
+	id, _ := strconv.ParseInt(cMap["ID"].(string), 10, 64)
 	toUserID, _ := strconv.ParseInt(cMap["ToID"].(string), 10, 64)
 	fromUserID, _ := strconv.ParseInt(cMap["FromID"].(string), 10, 64)
 	createTime, _ := strconv.ParseInt(cMap["CreateTime"].(string), 10, 64)
 	apiChat = &api.Message{
+		ID:         id,
 		ToUserID:   toUserID,
 		FromUserID: fromUserID,
 		Content:    cMap["Content"].(string),

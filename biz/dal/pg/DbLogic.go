@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-01 18:42:48
- * @LastEditTime: 2023-09-02 22:45:39
+ * @LastEditTime: 2023-09-02 23:42:18
  * @version: 1.0
  */
 package pg
@@ -673,6 +673,7 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 
 			apiMsg := msg.ToApiMessage()
 			item := map[string]interface{}{
+				"ID":         apiMsg.ID,
 				"TID":        apiMsg.ToUserID,
 				"FID":        apiMsg.FromUserID,
 				"Content":    msg.Content,
@@ -735,6 +736,7 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 		apimsg := msg.ToApiMessage()
 		response.MessageList = append(response.MessageList, apimsg)
 		item := map[string]interface{}{
+			"ID":         apimsg.ID,
 			"TID":        apimsg.ToUserID,
 			"FID":        apimsg.FromUserID,
 			"Content":    apimsg.Content,

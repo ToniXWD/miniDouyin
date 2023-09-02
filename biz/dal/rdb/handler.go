@@ -208,13 +208,16 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 		return false
 	}
 
-	for _, msg := range chatList {
-		score, _ := Rdb.ZScore(ctx, chatRec_key, msg).Result()
+	for _, msg_id := range chatList {
+		score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
+		content_key := "content_" + msg_id
+		content, _ := Rdb.HGetAll(ctx, content_key).Result()
 		createTime := int64(score)
 		cMap := map[string]interface{}{
+			"ID":         msg_id,
 			"FromUserID": fromUserID,
 			"ToUserID":   request.ToUserID,
-			"Content":    msg,
+			"Content":    content,
 			"Time":       createTime,
 		}
 		apiC := CMap2ApiChat(cMap)

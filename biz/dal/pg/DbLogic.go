@@ -1,3 +1,10 @@
+/*
+ * @Description:
+ * @Author: Zjy
+ * @Date: 2023-09-01 18:42:48
+ * @LastEditTime: 2023-09-02 22:45:39
+ * @version: 1.0
+ */
 package pg
 
 import (
@@ -569,6 +576,7 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
+
 		response.UserList = append(response.UserList, apiuser)
 	}
 	response.StatusCode = 0
@@ -631,6 +639,28 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 		apiuser, _ := user.ToApiUser(clientuser)
 		apiFriend := apiUser2apiFriend(apiuser, clientuser)
 		response.UserList = append(response.UserList, apiFriend)
+		item := map[string]interface{}{
+			"FID":     clientuser.ID,
+			"TID":     friend.FriendID,
+			"Message": *apiFriend.Message,
+			"MsgType": apiFriend.MsgType,
+		}
+		msg := RedisMsg{
+			TYPE: Friend,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
+		item = map[string]interface{}{
+			"ID":     clientuser.ID,
+			"Friend": friend.FriendID,
+		}
+		msg = RedisMsg{
+			TYPE: FriendList,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
 	}
 	response.StatusCode = 0
 	str := "Get friend list successfully"
@@ -639,15 +669,32 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 
 func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	if request.ActionType == 1 {
-		if sendMsg(request.Token, request.ToUserID, request.Content) {
-<<<<<<< HEAD
-			response.StatusCode = int32(request.ToUserID)
-			response.StatusMsg = 0
-			return
-		}
-	}
-	response.StatusMsg = 1
-=======
+		if msg, send := sendMsg(request.Token, request.ToUserID, request.Content); send {
+
+			apiMsg := msg.ToApiMessage()
+			item := map[string]interface{}{
+				"TID":        apiMsg.ToUserID,
+				"FID":        apiMsg.FromUserID,
+				"Content":    msg.Content,
+				"CreateTime": *apiMsg.CreateTime,
+			}
+			msg := RedisMsg{
+				TYPE: ChatRecord,
+				DATA: item,
+			}
+			ChanFromDB <- msg
+
+			item = map[string]interface{}{
+				"FID":     apiMsg.FromUserID,
+				"TID":     apiMsg.ToUserID,
+				"Content": apiMsg.Content,
+				"MsgType": 1,
+			}
+			msg = RedisMsg{
+				TYPE: Friend,
+				DATA: item,
+			}
+			ChanFromDB <- msg
 			response.StatusCode = 0
 			str := utils.SendMessageSuccess
 			response.StatusMsg = &str
@@ -656,7 +703,6 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	}
 
 	response.StatusCode = 1
->>>>>>> 1cace3b1080748204d1185c494bda93157479866
 }
 
 func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) {
@@ -688,6 +734,17 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 	for _, msg := range msgList {
 		apimsg := msg.ToApiMessage()
 		response.MessageList = append(response.MessageList, apimsg)
+		item := map[string]interface{}{
+			"TID":        apimsg.ToUserID,
+			"FID":        apimsg.FromUserID,
+			"Content":    apimsg.Content,
+			"CreateTime": *apimsg.CreateTime,
+		}
+		msg := RedisMsg{
+			TYPE: ChatRecord,
+			DATA: item,
+		}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get chat record successfully"

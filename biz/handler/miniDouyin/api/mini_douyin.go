@@ -4,10 +4,11 @@ package api
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/pg"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -292,7 +293,12 @@ func FriendList(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.RelationFriendListResponse)
 
-	pg.DBFriendList(&req, resp)
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetFriendList(&req, resp) {
+		log.Infoln("从缓存完成获取好友列表")
+	} else {
+		pg.DBFriendList(&req, resp)
+	}
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -310,7 +316,12 @@ func ChatRec(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(api.ChatRecordResponse)
 
-	pg.DBChatRec(&req, resp)
+	// 先尝试从缓存完成业务
+	if rdb.RedisGetChatRec(&req, resp) {
+		log.Infoln("从缓存完成获取聊天记录")
+	} else {
+		pg.DBChatRec(&req, resp)
+	}
 
 	log.Debugf("CgatRec: %+v", resp)
 

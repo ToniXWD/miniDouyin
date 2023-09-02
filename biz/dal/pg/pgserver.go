@@ -1,8 +1,16 @@
+/*
+ * @Description:a
+ * @Author: Zjy
+ * @Date: 2023-09-01 18:42:48
+ * @LastEditTime: 2023-09-02 18:58:37
+ * @version: 1.0
+ */
 package pg
 
 import (
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func PGserver() {
@@ -30,6 +38,15 @@ func PGserver() {
 		case CommentDel:
 			log.Infoln("删除评论缓存")
 			go rdb.DelComment(msg.DATA)
+		case Friend:
+			log.Infoln("更新好友缓存")
+			go rdb.NewFriend(msg.DATA)
+		case FriendList:
+			log.Infoln("更新好友列表缓存")
+			go rdb.UpdateFriendList(msg.DATA)
+		case ChatRecord:
+			log.Infoln("更新聊天记录缓存")
+			go rdb.UpdateChatRec(msg.DATA)
 		}
 	}
 }

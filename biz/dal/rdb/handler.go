@@ -1,9 +1,11 @@
 package rdb
 
 import (
-	log "github.com/sirupsen/logrus"
+	"context"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // 缓存完成路由业务Login
@@ -161,6 +163,67 @@ func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentL
 
 	response.StatusCode = 0
 	str := "Get follow list successfully"
+	response.StatusMsg = &str
+	return true
+}
+
+func RedisGetFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) bool {
+	// 通过缓存查找好友列表
+	flist, find := GetFriendList(request.UserID)
+	if !find {
+		return false
+	}
+
+	for _, fid := range flist {
+		fMap, find := GetFriendByID(fid, strconv.Itoa(int(request.UserID)))
+		if !find {
+			response.UserList = nil
+			return false
+		}
+
+		user_id, _ := strconv.ParseInt(fid, 10, 64)
+		user, find := GetUserById(user_id)
+		if !find {
+			response.UserList = nil
+			return false
+		}
+
+		apiF := FMap2ApiFriend(fMap, user)
+		response.UserList = append(response.UserList, apiF)
+	}
+
+	response.StatusCode = 0
+	str := "Get friend list successfully"
+	response.StatusMsg = &str
+	return true
+}
+
+func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) bool {
+	ctx := context.Background()
+	// 通过缓存查找聊天记录
+	user, _ := GetUserByToken(request.Token)
+	fromUserID, _ := strconv.ParseInt(user["ID"], 10, 64)
+	chatList, chatRec_key, find := GetChatRec(fromUserID, request.ToUserID)
+	if !find {
+		return false
+	}
+
+	for _, msg := range chatList {
+		score, _ := Rdb.ZScore(ctx, chatRec_key, msg).Result()
+		createTime := int64(score)
+		cMap := map[string]interface{}{
+			"FromUserID": fromUserID,
+			"ToUserID":   request.ToUserID,
+			"Content":    msg,
+			"Time":       createTime,
+		}
+		apiC := CMap2ApiChat(cMap)
+
+		response.MessageList = append(response.MessageList, apiC)
+	}
+
+	response.StatusCode = 0
+	str := "Get chat record successfully"
 	response.StatusMsg = &str
 	return true
 }

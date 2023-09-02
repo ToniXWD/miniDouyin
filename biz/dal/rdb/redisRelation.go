@@ -37,6 +37,7 @@ func NewFollowRelation(data map[string]interface{}) {
 func DelFollowRelation(data map[string]interface{}) {
 	ctx := context.Background()
 	// 设置key
+
 	relation_key := "follows_" + data["Token"].(string)
 	err := Rdb.SRem(ctx, relation_key, data["ID"]).Err()
 	if err != nil {
@@ -46,7 +47,8 @@ func DelFollowRelation(data map[string]interface{}) {
 	Rdb.Expire(ctx, relation_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 
 	// 设置粉丝关系 key
-	follower_key := "followers_" + data["ID"].(string)
+	uid := data["ID"].(int64)
+	follower_key := "followers_" + strconv.Itoa(int(uid))
 	err = Rdb.SRem(ctx, follower_key, data["Token"]).Err()
 	if err != nil {
 		log.Debugln(err.Error())

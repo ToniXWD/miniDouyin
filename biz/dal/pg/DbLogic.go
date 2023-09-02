@@ -613,6 +613,15 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 			response.UserList = nil
 			return
 		}
+		// 更新粉丝缓存
+		msg := RedisMsg{
+			TYPE: FollowerCreate,
+			DATA: map[string]interface{}{
+				"Token": follower.UserID, // 粉丝
+				"ID":    follower.FollowID,
+			}}
+		ChanFromDB <- msg
+
 		apiuser, _ := user.ToApiUser(clientuser)
 		response.UserList = append(response.UserList, apiuser)
 	}

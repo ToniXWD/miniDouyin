@@ -98,3 +98,16 @@ func GetFollowersTokenList(UserID int64) ([]string, bool) {
 	}
 	return tokenlist, true
 }
+
+func NewFollower(data map[string]interface{}) {
+	ctx := context.Background()
+	// 设置粉丝关系 key
+	uid := data["ID"].(int64)
+	follower_key := "followers_" + strconv.Itoa(int(uid))
+	val := data["Token"].(int64)
+	err := Rdb.SAdd(ctx, follower_key, val).Err()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+	Rdb.Expire(ctx, follower_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+}

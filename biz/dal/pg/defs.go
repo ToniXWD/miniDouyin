@@ -17,4 +17,5 @@ const (
 	CommentDel
 	LikeCreate
 	LikeDel
+	FollowerCreate
 )

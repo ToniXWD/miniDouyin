@@ -1,3 +1,10 @@
+/*
+ * @Description:
+ * @Author: Zjy
+ * @Date: 2023-09-01 18:42:48
+ * @LastEditTime: 2023-09-02 23:42:18
+ * @version: 1.0
+ */
 package pg
 
 import (
@@ -172,7 +179,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
-		var clientUser *DBUser = nil
+		var clientUser *DBUser = &DBUser{}
 		if request.Token != nil {
 			// 先尝试从缓存获取User
 			uMap, find := rdb.GetUserByToken(*request.Token)
@@ -304,7 +311,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		return
 	}
 
-	var clientUser *DBUser
+	var clientUser *DBUser = &DBUser{}
 	// 先尝试从缓存查找用户
 	uMap, find := rdb.GetUserByToken(request.Token)
 	if find {
@@ -591,6 +598,7 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
+
 		response.UserList = append(response.UserList, apiuser)
 		// 更新缓存
 		msg := RedisMsg{
@@ -672,6 +680,28 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 		apiuser, _ := user.ToApiUser(clientuser)
 		apiFriend := apiUser2apiFriend(apiuser, clientuser)
 		response.UserList = append(response.UserList, apiFriend)
+		item := map[string]interface{}{
+			"FID":     clientuser.ID,
+			"TID":     friend.FriendID,
+			"Message": *apiFriend.Message,
+			"MsgType": apiFriend.MsgType,
+		}
+		msg := RedisMsg{
+			TYPE: Friend,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
+		item = map[string]interface{}{
+			"ID":     clientuser.ID,
+			"Friend": friend.FriendID,
+		}
+		msg = RedisMsg{
+			TYPE: FriendList,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
 	}
 	response.StatusCode = 0
 	str := "Get friend list successfully"
@@ -680,7 +710,33 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 
 func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	if request.ActionType == 1 {
-		if sendMsg(request.Token, request.ToUserID, request.Content) {
+		if msg, send := sendMsg(request.Token, request.ToUserID, request.Content); send {
+
+			apiMsg := msg.ToApiMessage()
+			item := map[string]interface{}{
+				"ID":         apiMsg.ID,
+				"TID":        apiMsg.ToUserID,
+				"FID":        apiMsg.FromUserID,
+				"Content":    msg.Content,
+				"CreateTime": *apiMsg.CreateTime,
+			}
+			msg := RedisMsg{
+				TYPE: ChatRecord,
+				DATA: item,
+			}
+			ChanFromDB <- msg
+
+			item = map[string]interface{}{
+				"FID":     apiMsg.FromUserID,
+				"TID":     apiMsg.ToUserID,
+				"Content": apiMsg.Content,
+				"MsgType": 1,
+			}
+			msg = RedisMsg{
+				TYPE: Friend,
+				DATA: item,
+			}
+			ChanFromDB <- msg
 			response.StatusCode = 0
 			str := utils.SendMessageSuccess
 			response.StatusMsg = &str
@@ -720,6 +776,18 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 	for _, msg := range msgList {
 		apimsg := msg.ToApiMessage()
 		response.MessageList = append(response.MessageList, apimsg)
+		item := map[string]interface{}{
+			"ID":         apimsg.ID,
+			"TID":        apimsg.ToUserID,
+			"FID":        apimsg.FromUserID,
+			"Content":    apimsg.Content,
+			"CreateTime": *apimsg.CreateTime,
+		}
+		msg := RedisMsg{
+			TYPE: ChatRecord,
+			DATA: item,
+		}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get chat record successfully"

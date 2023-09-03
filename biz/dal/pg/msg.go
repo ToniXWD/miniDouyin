@@ -1,9 +1,10 @@
 package pg
 
 import (
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -43,7 +44,7 @@ func (u *DBMessage) ToApiMessage() (apimsg *api.Message) {
 	return
 }
 
-func sendMsg(token string, toUerID int64, content string) bool {
+func sendMsg(token string, toUerID int64, content string) (*DBMessage, bool) {
 	clientuser, _ := ValidateToken(token)
 	msg := &DBMessage{
 		FromID:    clientuser.ID,
@@ -51,5 +52,6 @@ func sendMsg(token string, toUerID int64, content string) bool {
 		Content:   content,
 		CreatedAt: time.Now(),
 	}
-	return msg.insert()
+
+	return msg, msg.insert()
 }

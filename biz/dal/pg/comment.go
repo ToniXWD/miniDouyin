@@ -112,6 +112,8 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 
 	// 如果视频id有效再获取评论列表
 	// 缓存未命中，从数据库查
+	// TODO: 先尝试从缓存查找视频评论列表
+	// TODO：如果从缓存找到了视频评论列表，再从获取到的视频id查询评论（也是先尝试缓存查，再数据库查）
 	cDBlist, err := GetDBCommentList(v_id)
 	if err != nil {
 		return nil, err

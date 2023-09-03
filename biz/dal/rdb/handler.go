@@ -1,6 +1,7 @@
 package rdb
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
@@ -250,5 +251,69 @@ func RedisGetFollowerList(request *api.RelationFollowerListRequest, response *ap
 		response.UserList = append(response.UserList, apiU)
 	}
 	response.StatusCode = 0
+	return true
+}
+
+func RedisGetFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) bool {
+	// 通过缓存查找好友列表
+	flist, find := GetFriendList(request.UserID)
+	if !find {
+		return false
+	}
+
+	for _, fid := range flist {
+		fMap, find := GetFriendByID(fid, strconv.Itoa(int(request.UserID)))
+		if !find {
+			response.UserList = nil
+			return false
+		}
+
+		user_id, _ := strconv.ParseInt(fid, 10, 64)
+		user, find := GetUserById(user_id)
+		if !find {
+			response.UserList = nil
+			return false
+		}
+
+		apiF := FMap2ApiFriend(fMap, user)
+		response.UserList = append(response.UserList, apiF)
+	}
+
+	response.StatusCode = 0
+	str := "Get friend list successfully"
+	response.StatusMsg = &str
+	return true
+}
+
+func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) bool {
+	ctx := context.Background()
+	// 通过缓存查找聊天记录
+	user, _ := GetUserByToken(request.Token)
+	fromUserID, _ := strconv.ParseInt(user["ID"], 10, 64)
+	chatList, chatRec_key, find := GetChatRec(fromUserID, request.ToUserID)
+	if !find {
+		return false
+	}
+
+	for _, msg_id := range chatList {
+		score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
+		content_key := "content_" + msg_id
+		content, _ := Rdb.HGetAll(ctx, content_key).Result()
+		createTime := int64(score)
+		cMap := map[string]interface{}{
+			"ID":         msg_id,
+			"FromUserID": fromUserID,
+			"ToUserID":   request.ToUserID,
+			"Content":    content,
+			"Time":       createTime,
+		}
+		apiC := CMap2ApiChat(cMap)
+
+		response.MessageList = append(response.MessageList, apiC)
+	}
+
+	response.StatusCode = 0
+	str := "Get chat record successfully"
+	response.StatusMsg = &str
 	return true
 }

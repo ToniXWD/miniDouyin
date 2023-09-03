@@ -86,7 +86,6 @@ func DelComment(data map[string]interface{}) {
 	Rdb.Expire(ctx, vid_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 }
 
-// 通过评论 ID 获取 评论（cMap类型）
 func GetCommentByID(id string) (map[string]string, bool) {
 	ctx := context.Background()
 
@@ -98,6 +97,7 @@ func GetCommentByID(id string) (map[string]string, bool) {
 		log.Debugln("Error:", err)
 		return nil, false
 	}
+
 	comment, err := Rdb.HGetAll(ctx, key).Result()
 	if err != nil {
 		return nil, false

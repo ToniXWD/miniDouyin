@@ -45,9 +45,9 @@ func GetUserByToken(token string) (map[string]string, bool) {
 
 	user, err := Rdb.HGetAll(ctx, token).Result()
 	if err != nil {
-		return user, true
+		return nil, false
 	}
-	return nil, false
+	return user, true
 }
 
 // 通过id获取缓存中的记录

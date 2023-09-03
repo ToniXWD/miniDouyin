@@ -1,0 +1,129 @@
+<mxfile host="Electron" modified="2023-09-03T11:41:11.357Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.5 Chrome/114.0.5735.243 Electron/25.3.1 Safari/537.36" etag="GGl1eldRJ2L1QZSAaX_i" version="21.6.5" type="device">
+  <diagram name="第 1 页" id="uYlzrY_VV0zjaj6NHgCT">
+    <mxGraphModel dx="2060" dy="1182" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="J5vowUfo9G24ND0dTiEW-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-2" target="J5vowUfo9G24ND0dTiEW-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="390" y="150" width="180" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-3" value="" style="rounded=0;html=1;jettySize=auto;orthogonalLoop=1;fontSize=11;endArrow=block;endFill=0;endSize=8;strokeWidth=1;shadow=0;labelBackgroundColor=none;edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-4" target="J5vowUfo9G24ND0dTiEW-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-4" value="&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;视频投稿&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;&lt;/b&gt;&lt;b&gt;路由函数&lt;br&gt;&lt;/b&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;VideoPublishAction&lt;/b&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;glass=0;strokeWidth=1;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="420" y="50" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-8" target="J5vowUfo9G24ND0dTiEW-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-8" target="J5vowUfo9G24ND0dTiEW-34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-7" value="视频抽帧" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="J5vowUfo9G24ND0dTiEW-6">
+          <mxGeometry x="0.001" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-8" value="&lt;b&gt;接收视频并存储&lt;br&gt;以时间戳命名&lt;br&gt;&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;shadow=0;fontFamily=Helvetica;fontSize=12;align=center;strokeWidth=1;spacing=6;spacingTop=-4;" vertex="1" parent="1">
+          <mxGeometry x="425" y="180" width="130" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-12" target="J5vowUfo9G24ND0dTiEW-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-12" target="J5vowUfo9G24ND0dTiEW-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-11" value="更新视频缓存" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="J5vowUfo9G24ND0dTiEW-10">
+          <mxGeometry x="0.1208" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-12" value="&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;插入视频&lt;br&gt;到数据库&lt;br&gt;&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;shadow=0;fontFamily=Helvetica;fontSize=12;align=center;strokeWidth=1;spacing=6;spacingTop=-4;" vertex="1" parent="1">
+          <mxGeometry x="425" y="280" width="130" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-13" value="查询成功" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="390" y="250" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-14" value="&lt;b&gt;&lt;font color=&quot;#0000ff&quot;&gt;DB&lt;br&gt;(Postgresql)&lt;/font&gt;&lt;br&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="380" y="350" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-15" value="&lt;b&gt;DBReceiveVideo&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="450" y="150" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-20" target="J5vowUfo9G24ND0dTiEW-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-17" value="更新统计&lt;br&gt;信息缓存" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="J5vowUfo9G24ND0dTiEW-16">
+          <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
+            <mxPoint x="4" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="J5vowUfo9G24ND0dTiEW-20" target="J5vowUfo9G24ND0dTiEW-30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-19" value="更新&lt;br&gt;用户缓存" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="J5vowUfo9G24ND0dTiEW-18">
+          <mxGeometry x="-0.1746" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-20" value="&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;更新作者User&lt;br&gt;及相关统计信息&lt;br&gt;&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;shadow=0;fontFamily=Helvetica;fontSize=12;align=center;strokeWidth=1;spacing=6;spacingTop=-4;" vertex="1" parent="1">
+          <mxGeometry x="425" y="380" width="130" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-21" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="200" y="285" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-22" value="新增视频信息缓存" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-21">
+          <mxGeometry width="116.31578947368422" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-23" value="&lt;b&gt;&lt;font color=&quot;#ff0000&quot;&gt;Redis&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-21">
+          <mxGeometry y="40" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-24" value="NewVideo" style="text;whiteSpace=wrap;fontStyle=1" vertex="1" parent="J5vowUfo9G24ND0dTiEW-21">
+          <mxGeometry x="54.741052631578945" width="61.578947368421055" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-25" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="200" y="385" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-26" value="更新用户发布视频列表缓存" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-25">
+          <mxGeometry width="116.31578947368422" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-27" value="&lt;b&gt;&lt;font color=&quot;#ff0000&quot;&gt;Redis&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-25">
+          <mxGeometry y="40" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-28" value="NewPublish" style="text;whiteSpace=wrap;fontStyle=1" vertex="1" parent="J5vowUfo9G24ND0dTiEW-25">
+          <mxGeometry x="40.00105263157894" width="61.578947368421055" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-29" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="626.32" y="385" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-30" value="更新用户缓存" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-29">
+          <mxGeometry width="116.31578947368422" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-31" value="&lt;b&gt;&lt;font color=&quot;#ff0000&quot;&gt;Redis&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-29">
+          <mxGeometry y="40" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-32" value="NewUser" style="text;whiteSpace=wrap;fontStyle=1" vertex="1" parent="J5vowUfo9G24ND0dTiEW-29">
+          <mxGeometry x="40.00105263157894" width="61.578947368421055" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-33" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="626.32" y="180" width="116.32" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-34" value="利用ffmpeg抽取视频封面" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-33">
+          <mxGeometry width="116.32" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-35" value="&lt;b&gt;&lt;font color=&quot;#cc6600&quot;&gt;异步IO&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="J5vowUfo9G24ND0dTiEW-33">
+          <mxGeometry x="-3" y="44" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-36" value="ExtractCover" style="text;whiteSpace=wrap;fontStyle=1" vertex="1" parent="J5vowUfo9G24ND0dTiEW-33">
+          <mxGeometry x="27.37" width="61.58" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J5vowUfo9G24ND0dTiEW-37" value="&lt;b&gt;视频投稿业务完成&lt;/b&gt;" style="whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="510" width="100" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

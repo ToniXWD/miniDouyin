@@ -2,11 +2,12 @@ package rdb
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // 新建User缓存项
@@ -45,9 +46,9 @@ func GetUserByToken(token string) (map[string]string, bool) {
 
 	user, err := Rdb.HGetAll(ctx, token).Result()
 	if err != nil {
-		return user, true
+		return nil, true
 	}
-	return nil, false
+	return user, false
 }
 
 // 通过id获取缓存中的记录

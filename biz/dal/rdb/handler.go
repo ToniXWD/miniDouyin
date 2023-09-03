@@ -5,6 +5,7 @@ import (
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
 
+	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -201,26 +202,39 @@ func RedisGetFriendList(request *api.RelationFriendListRequest, response *api.Re
 func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) bool {
 	ctx := context.Background()
 	// 通过缓存查找聊天记录
+	log.Debugln("传入的时间戳为 = ", request.PreMsgTime)
 	user, _ := GetUserByToken(request.Token)
-	fromUserID, _ := strconv.ParseInt(user["ID"], 10, 64)
-	chatList, chatRec_key, find := GetChatRec(fromUserID, request.ToUserID)
-	if !find {
+	cmp := float64(request.PreMsgTime + 1)
+	fid := user["ID"]
+	tid := strconv.Itoa(int(request.ToUserID))
+
+	if v, _ := strconv.ParseInt(fid, 10, 64); v > request.ToUserID {
+		fid, tid = tid, fid
+	}
+
+	chatRec_key := "chatrec_" + fid + "_" + tid
+	res, err := Rdb.ZRangeByScore(ctx, chatRec_key, &redis.ZRangeBy{
+		Min:    strconv.Itoa(int(cmp)),
+		Max:    "+inf",
+		Offset: 0,
+		Count:  -1,
+	}).Result()
+	if err != nil {
+		response.MessageList = nil
+		log.Debugln(err.Error())
 		return false
 	}
 
-	for _, msg_id := range chatList {
-		score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
+	// fromUserID, _ := strconv.ParseInt(user["ID"], 10, 64)
+	// chatList, _, find := GetChatRec(fromUserID, request.ToUserID)
+	// if !find {
+	// 	return false
+	// }
+
+	for _, msg_id := range res {
 		content_key := "content_" + msg_id
 		content, _ := Rdb.HGetAll(ctx, content_key).Result()
-		createTime := int64(score)
-		cMap := map[string]interface{}{
-			"ID":        msg_id,
-			"FromID":    fromUserID,
-			"ToID":      request.ToUserID,
-			"Content":   content,
-			"CreatedAt": createTime,
-		}
-		apiC := CMap2ApiChat(cMap)
+		apiC := CMap2ApiChat(content)
 
 		response.MessageList = append(response.MessageList, apiC)
 	}

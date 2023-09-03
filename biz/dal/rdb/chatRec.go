@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-02 20:38:32
- * @LastEditTime: 2023-09-03 14:45:45
+ * @LastEditTime: 2023-09-03 15:36:11
  * @version: 1.0
  */
 package rdb
@@ -79,16 +79,16 @@ func GetChatRec(fid int64, tid int64) ([]string, string, bool) {
 	return chatrec, chatrec_key, true
 }
 
-func CMap2ApiChat(cMap map[string]interface{}) (apiChat *api.Message) {
-	id, _ := strconv.ParseInt(cMap["ID"].(string), 10, 64)
-	toUserID, _ := strconv.ParseInt(cMap["ToID"].(string), 10, 64)
-	fromUserID, _ := strconv.ParseInt(cMap["FromID"].(string), 10, 64)
-	createTime, _ := strconv.ParseInt(cMap["CreatedAt"].(string), 10, 64)
+func CMap2ApiChat(cMap map[string]string) (apiChat *api.Message) {
+	id, _ := strconv.ParseInt(cMap["ID"], 10, 64)
+	toUserID, _ := strconv.ParseInt(cMap["ToID"], 10, 64)
+	fromUserID, _ := strconv.ParseInt(cMap["FromID"], 10, 64)
+	createTime, _ := strconv.ParseInt(cMap["CreatedAt"], 10, 64)
 	apiChat = &api.Message{
 		ID:         id,
 		ToUserID:   toUserID,
 		FromUserID: fromUserID,
-		Content:    cMap["Content"].(string),
+		Content:    cMap["Content"],
 		CreateTime: &createTime,
 	}
 	return apiChat

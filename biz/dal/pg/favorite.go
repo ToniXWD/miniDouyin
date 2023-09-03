@@ -1,7 +1,9 @@
 package pg
 
 import (
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/utils"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -164,6 +166,15 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 
 // 获取记录项中的视频
 func (l *Like) ToDBVideo(db *gorm.DB) (dbv DBVideo, ans bool) {
-	res := db.Model(&DBVideo{}).First(&dbv, "ID = ?", l.VideoId)
-	return dbv, res.Error == nil
+	var find bool
+	// 先尝试从缓存找到video
+	vMap, find := rdb.GetVideoById(strconv.Itoa(int(l.VideoId)))
+	if find {
+		//	缓存命中
+		dbv.InitSelfFromMap(vMap)
+	} else {
+		dbv.ID = l.VideoId
+		find = dbv.QueryVideoByID()
+	}
+	return dbv, find
 }

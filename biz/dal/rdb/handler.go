@@ -54,7 +54,7 @@ func RedisGetUserInfo(request *api.UserRequest, response *api.UserResponse) bool
 		response.User.IsFollow = true
 	} else {
 		// 否则要查看关注关系
-		isFollow, err := IsFollow(request.Token, request.UserID)
+		isFollow, err := IsFollow(request.UserID, request.UserID)
 		if err != nil {
 			// 缓存中没有token用户的记录，该业务无法通过缓存完成
 			return false
@@ -87,7 +87,7 @@ func RedisPublishList(request *api.PublishListRequest, response *api.PublishList
 			response.VideoList = nil
 			return false
 		}
-		apiV, valid := VMap2ApiVidio(request.Token, vMap)
+		apiV, valid := VMap2ApiVidio(request.UserID, vMap)
 		if !valid {
 			// 缓存不能处理
 			response.VideoList = nil
@@ -188,7 +188,7 @@ func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.Favori
 			response.VideoList = nil
 			return false
 		}
-		apiV, valid := VMap2ApiVidio(request.Token, vMap)
+		apiV, valid := VMap2ApiVidio(request.UserID, vMap)
 		if !valid {
 			// 缓存不能处理
 			response.VideoList = nil
@@ -200,21 +200,53 @@ func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.Favori
 	return true
 }
 
-// 缓存完成粉丝列表
-func RedisGetFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) bool {
-	// 获取粉丝列表
-	tokenlist, find := GetFollowersTokenList(request.UserID)
+// 缓存完成关注列表
+func RedisGetFollowList(request *api.RelationFollowListRequest, response *api.RelationFollowListResponse) bool {
+	// 获取关注列表
+	idlist, find := GetFollowsIDList(request.UserID)
 	if !find {
 		return false
 	}
 
-	for _, token := range tokenlist {
-		tMap, find := GetUserByToken(token)
+	for _, id := range idlist {
+		ID, _ := strconv.Atoi(id)
+		tMap, find := GetUserById(int64(ID))
 		if !find {
 			response.UserList = nil
 			return false
 		}
 		apiU := GetApiUserFromMap(tMap)
+		// 自己一定关注了该用户
+		apiU.IsFollow = true
+		response.UserList = append(response.UserList, apiU)
+	}
+	response.StatusCode = 0
+	return true
+}
+
+// 缓存完成粉丝列表
+func RedisGetFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) bool {
+	// 获取粉丝列表
+	idlist, find := GetFollowersIDList(request.UserID)
+	if !find {
+		return false
+	}
+
+	for _, id := range idlist {
+		ID, _ := strconv.Atoi(id)
+		tMap, find := GetUserById(int64(ID))
+		if !find {
+			response.UserList = nil
+			return false
+		}
+		apiU := GetApiUserFromMap(tMap)
+		// 判断自己是否也关注了该粉丝
+		isfollow, err := IsFollow(request.UserID, apiU.ID)
+		if err != nil {
+			response.UserList = nil
+			return false
+		}
+		apiU.IsFollow = isfollow
 		response.UserList = append(response.UserList, apiU)
 	}
 	response.StatusCode = 0

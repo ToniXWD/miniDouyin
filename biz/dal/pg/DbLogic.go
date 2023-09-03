@@ -349,7 +349,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
 	action := DBActionFromActionRequest(request)
 
-	err := action.ifFollow(request.ActionType, request.Token)
+	err := action.ifFollow(request.ActionType)
 	log.Debugf("action = %+v\n", action)
 	if err == nil {
 		// 关注或取消关注成功
@@ -461,9 +461,17 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 		return
 	}
 
-	for _, item := range dbvlist {
+	for _, video := range dbvlist {
+		// 更新视频缓存
+		items := utils.StructToMap(&video)
+		msgV := RedisMsg{
+			TYPE: VideoInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msgV
+
 		// true 表示确信当前的视频被喜欢
-		apiVideo, _ := item.ToApiVideo(DB, clientUser, true)
+		apiVideo, _ := video.ToApiVideo(DB, clientUser, true)
 		response.VideoList = append(response.VideoList, apiVideo)
 	}
 	response.StatusCode = 0
@@ -554,7 +562,7 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 		response.StatusMsg = &str
 		return
 	}
-	// TODO:先从缓存取
+	// ToDo:先从缓存取
 	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
 	response.CommentList = comments
 }
@@ -584,6 +592,14 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
 		response.UserList = append(response.UserList, apiuser)
+		// 更新缓存
+		msg := RedisMsg{
+			TYPE: UserFollowAdd,
+			DATA: map[string]interface{}{
+				"UserID":   follow.UserID, // 粉丝
+				"FollowID": follow.FollowID,
+			}}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get follow list successfully"
@@ -613,12 +629,12 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 			response.UserList = nil
 			return
 		}
-		// 更新粉丝缓存
+		// 更新关注缓存
 		msg := RedisMsg{
-			TYPE: FollowerCreate,
+			TYPE: UserFollowAdd,
 			DATA: map[string]interface{}{
-				"Token": follower.UserID, // 粉丝
-				"ID":    follower.FollowID,
+				"UserID":   follower.UserID, // 粉丝
+				"FollowID": follower.FollowID,
 			}}
 		ChanFromDB <- msg
 

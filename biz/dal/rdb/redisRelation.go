@@ -11,10 +11,13 @@ import (
 // 新建Follow关系缓存项
 func NewFollowRelation(data map[string]interface{}) {
 	ctx := context.Background()
+
+	UserID := data["UserID"].(int64)
+	FollowID := data["FollowID"].(int64)
+
 	// 设置key
-	relation_key := "follows_" + data["Token"].(string)
-	value := data["ID"].(int64)
-	err := Rdb.SAdd(ctx, relation_key, value).Err()
+	relation_key := "follows_" + strconv.Itoa(int(UserID))
+	err := Rdb.SAdd(ctx, relation_key, FollowID).Err()
 	if err != nil {
 		log.Debugln(err.Error())
 	}
@@ -23,10 +26,8 @@ func NewFollowRelation(data map[string]interface{}) {
 	Rdb.Expire(ctx, relation_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 
 	// 设置粉丝关系 key
-	uid := data["ID"].(int64)
-	follower_key := "followers_" + strconv.Itoa(int(uid))
-	val := data["Token"].(string)
-	err = Rdb.SAdd(ctx, follower_key, val).Err()
+	follower_key := "followers_" + strconv.Itoa(int(FollowID))
+	err = Rdb.SAdd(ctx, follower_key, UserID).Err()
 	if err != nil {
 		log.Debugln(err.Error())
 	}
@@ -36,10 +37,13 @@ func NewFollowRelation(data map[string]interface{}) {
 // 删除Follow关系缓存项
 func DelFollowRelation(data map[string]interface{}) {
 	ctx := context.Background()
-	// 设置key
 
-	relation_key := "follows_" + data["Token"].(string)
-	err := Rdb.SRem(ctx, relation_key, data["ID"]).Err()
+	UserID := data["UserID"].(int64)
+	FollowID := data["FollowID"].(int64)
+
+	// 设置key
+	relation_key := "follows_" + strconv.Itoa(int(UserID))
+	err := Rdb.SRem(ctx, relation_key, FollowID).Err()
 	if err != nil {
 		log.Debugln(err.Error())
 	}
@@ -47,9 +51,8 @@ func DelFollowRelation(data map[string]interface{}) {
 	Rdb.Expire(ctx, relation_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 
 	// 设置粉丝关系 key
-	uid := data["ID"].(int64)
-	follower_key := "followers_" + strconv.Itoa(int(uid))
-	err = Rdb.SRem(ctx, follower_key, data["Token"]).Err()
+	follower_key := "followers_" + strconv.Itoa(int(FollowID))
+	err = Rdb.SRem(ctx, follower_key, UserID).Err()
 	if err != nil {
 		log.Debugln(err.Error())
 	}
@@ -57,11 +60,12 @@ func DelFollowRelation(data map[string]interface{}) {
 }
 
 // 通过缓存判断token用户是否关注了ID用户
-func IsFollow(token string, ID int64) (bool, error) {
-	id := strconv.Itoa(int(ID))
+func IsFollow(UserID int64, FollowID int64) (bool, error) {
+	userID := int(UserID)
+	followId := int(FollowID)
 	ctx := context.Background()
 
-	relation_key := "follows_" + token
+	relation_key := "follows_" + strconv.Itoa(userID)
 	// 使用 Exists 方法判断键是否存在
 	exists, err := Rdb.Exists(ctx, relation_key).Result()
 	if err != nil || exists != 1 {
@@ -71,17 +75,35 @@ func IsFollow(token string, ID int64) (bool, error) {
 	}
 
 	// 判断元素是否在 Set 中
-	exi, err := Rdb.SIsMember(ctx, relation_key, id).Result()
+	exi, err := Rdb.SIsMember(ctx, relation_key, followId).Result()
 	if err != nil || !exi {
-		log.Debugf("缓存查找关注关系成功，%s 没有关注 %s\n", token, id)
+		log.Debugf("缓存查找关注关系成功，%s 没有关注 %s\n", userID, followId)
 		return false, nil
 	}
-	log.Debugf("缓存查找关注关系成功, %s 关注了 %s\n", token, id)
+	log.Debugf("缓存查找关注关系成功, %s 关注了 %s\n", userID, followId)
 	return true, nil
 }
 
+// 获取缓存关注列表
+func GetFollowsIDList(UserID int64) ([]string, bool) {
+	ctx := context.Background()
+	follow_key := "follows_" + strconv.Itoa(int(UserID))
+
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, follow_key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return nil, false
+	}
+	idList, err := Rdb.SMembers(ctx, follow_key).Result()
+	if err != nil {
+		return nil, false
+	}
+	return idList, true
+}
+
 // 获取缓存粉丝列表
-func GetFollowersTokenList(UserID int64) ([]string, bool) {
+func GetFollowersIDList(UserID int64) ([]string, bool) {
 	ctx := context.Background()
 	uid := strconv.Itoa(int(UserID))
 	follower_key := "followers_" + uid
@@ -92,22 +114,9 @@ func GetFollowersTokenList(UserID int64) ([]string, bool) {
 		log.Debugln("Error:", err)
 		return nil, false
 	}
-	tokenlist, err := Rdb.SMembers(ctx, follower_key).Result()
+	idlist, err := Rdb.SMembers(ctx, follower_key).Result()
 	if err != nil {
 		return nil, false
 	}
-	return tokenlist, true
-}
-
-func NewFollower(data map[string]interface{}) {
-	ctx := context.Background()
-	// 设置粉丝关系 key
-	uid := data["ID"].(int64)
-	follower_key := "followers_" + strconv.Itoa(int(uid))
-	val := data["Token"].(int64)
-	err := Rdb.SAdd(ctx, follower_key, val).Err()
-	if err != nil {
-		log.Debugln(err.Error())
-	}
-	Rdb.Expire(ctx, follower_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+	return idlist, true
 }

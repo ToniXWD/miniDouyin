@@ -259,9 +259,11 @@ func FollowList(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.RelationFollowListResponse)
-
-	pg.DBFollowList(&req, resp)
-
+	if rdb.RedisGetFollowList(&req, resp) {
+		log.Infoln("从缓存完成获取关注列表")
+	} else {
+		pg.DBFollowList(&req, resp)
+	}
 	c.JSON(consts.StatusOK, resp)
 }
 
@@ -279,7 +281,7 @@ func FollowerList(ctx context.Context, c *app.RequestContext) {
 	resp := new(api.RelationFollowerListResponse)
 
 	if rdb.RedisGetFollowerList(&req, resp) {
-		log.Infoln("从缓存获取粉丝列表")
+		log.Infoln("从缓存完成获取粉丝列表")
 	} else {
 		pg.DBFollowerList(&req, resp)
 	}

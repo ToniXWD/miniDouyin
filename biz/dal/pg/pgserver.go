@@ -36,9 +36,6 @@ func PGserver() {
 		case LikeDel:
 			log.Infoln("删除评论缓存")
 			go rdb.DelLikeVideo(msg.DATA)
-		case FollowerCreate:
-			log.Infoln("更新粉丝缓存")
-			go rdb.NewFollower(msg.DATA)
 		}
 	}
 }

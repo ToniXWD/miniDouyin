@@ -5,6 +5,8 @@ import (
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -145,6 +147,31 @@ func (v *DBVideo) GetMinTimestamp() time.Time {
 	var minViews time.Time
 	DB.Model(v).Select("MIN(created_at)").Scan(&minViews)
 	return minViews
+}
+
+func (v *DBVideo) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(v).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			case reflect.Struct:
+				if field.Type() == reflect.TypeOf(time.Time{}) {
+					// 如果字段类型是time.Time，尝试将字符串解析为时间
+					t, err := time.Parse(time.RFC3339, fieldValue)
+					if err == nil {
+						field.Set(reflect.ValueOf(t))
+					}
+				}
+			}
+		}
+	}
 }
 
 // 返回至多30条视频列表

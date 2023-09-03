@@ -30,7 +30,7 @@ func (u *DBAction) Insert() error {
 }
 
 // 根据请求类型进行关注或取消关注
-func (u *DBAction) ifFollow(actiontype int64, token string) error {
+func (u *DBAction) ifFollow(actiontype int64) error {
 	var err error
 	msg := RedisMsg{}
 	if actiontype == 1 {
@@ -56,10 +56,11 @@ func (u *DBAction) ifFollow(actiontype int64, token string) error {
 
 	// 发送消息更新缓存
 	msg.DATA = map[string]interface{}{
-		"Token": token,
-		"ID":    u.FollowID,
+		"UserID":   u.UserID,
+		"FollowID": u.FollowID,
 	}
 	ChanFromDB <- msg
+
 	return err
 }
 

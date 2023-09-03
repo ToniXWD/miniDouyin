@@ -170,7 +170,7 @@ func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentL
 func RedisGetFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) bool {
 	// 通过缓存查找好友列表
 	flist, find := GetFriendList(request.UserID)
-	if !find {
+	if !find || len(flist) == 0 {
 		return false
 	}
 
@@ -214,11 +214,11 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 		content, _ := Rdb.HGetAll(ctx, content_key).Result()
 		createTime := int64(score)
 		cMap := map[string]interface{}{
-			"ID":         msg_id,
-			"FromUserID": fromUserID,
-			"ToUserID":   request.ToUserID,
-			"Content":    content,
-			"Time":       createTime,
+			"ID":        msg_id,
+			"FromID":    fromUserID,
+			"ToID":      request.ToUserID,
+			"Content":   content,
+			"CreatedAt": createTime,
 		}
 		apiC := CMap2ApiChat(cMap)
 

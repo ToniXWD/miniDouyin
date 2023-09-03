@@ -78,7 +78,7 @@ func GetDBCommentList(v_id int64) (clist []Comment, err error) {
 
 func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
 	r_err = nil
-	var clientUser *DBUser = nil
+	var clientUser = &DBUser{}
 	if token != "" {
 		// token不为空，表示客户端已经登录
 		// 校验token

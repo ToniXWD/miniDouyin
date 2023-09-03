@@ -130,7 +130,7 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 
 	// 先获取client
 	// 尝试从缓存获取client
-	var clientUser *DBUser
+	var clientUser = &DBUser{}
 	cMap, find := rdb.GetUserByToken(request.Token)
 	if find {
 		// 缓存命中
@@ -179,7 +179,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
-		var clientUser *DBUser = &DBUser{}
+		var clientUser = &DBUser{}
 		if request.Token != nil {
 			// 先尝试从缓存获取User
 			uMap, find := rdb.GetUserByToken(*request.Token)
@@ -311,7 +311,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		return
 	}
 
-	var clientUser *DBUser = &DBUser{}
+	var clientUser = &DBUser{}
 	// 先尝试从缓存查找用户
 	uMap, find := rdb.GetUserByToken(request.Token)
 	if find {

@@ -17,7 +17,9 @@ import (
 	"time"
 )
 
-var TimeFormat string = "2006-01-02 15:04:05"
+var TimeFormat_S string = "2006-01-02 15:04:05"
+var TimeFormat_MS string = "2006-01-02 15:04:05.000"
+var TimeFormat_MCS string = "2006-01-02 15:04:05.000000"
 
 func Realurl(s_url string) string {
 	r_url := "http://" + URLIP + ":" + PORT + "/data/" + s_url
@@ -32,6 +34,27 @@ func TimeToI64(t time.Time) int64 {
 	milliseconds := seconds*1000 + int64(t.Nanosecond())/int64(time.Millisecond)
 
 	return milliseconds
+}
+
+func Str2Time(fieldValue string) (time.Time, error) {
+	s_len := len(TimeFormat_S)
+	ms_len := len(TimeFormat_MS)
+	mcs_len := len(TimeFormat_MCS)
+
+	time_len := len(fieldValue)
+	var t time.Time
+	var err error = nil
+	if time_len == s_len {
+		//精度为秒
+		t, err = time.Parse(TimeFormat_S, fieldValue)
+	} else if time_len == ms_len {
+		//精度为毫秒
+		t, err = time.Parse(TimeFormat_MS, fieldValue)
+	} else if time_len == mcs_len {
+		//精度为微秒
+		t, err = time.Parse(TimeFormat_MCS, fieldValue)
+	}
+	return t, err
 }
 
 // 返回以时间戳命名的 视频名, 路径, 数据库中的路径
@@ -107,7 +130,7 @@ func StructToMap(data interface{}) map[string]interface{} {
 		if field.Name == "CreatedAt" {
 			// 将时间字段转换为指定格式的字符串
 			if createdAt, ok := fieldValue.(time.Time); ok {
-				result[field.Name] = createdAt.Format("2006-01-02 15:04:05")
+				result[field.Name] = createdAt.Format("2006-01-02 15:04:05.000")
 			} else {
 				result[field.Name] = fieldValue
 			}

@@ -17,5 +17,7 @@ const (
 	CommentDel
 	LikeCreate
 	LikeDel
-	FollowerCreate
+	Friend
+	FriendList // 用户好友列表
+	ChatRecord
 )

@@ -1,3 +1,10 @@
+/*
+ * @Description:
+ * @Author: Zjy
+ * @Date: 2023-09-01 18:42:48
+ * @LastEditTime: 2023-09-03 14:49:45
+ * @version: 1.0
+ */
 package pg
 
 import (
@@ -172,7 +179,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
-		var clientUser *DBUser = nil
+		var clientUser *DBUser = &DBUser{}
 		if request.Token != nil {
 			// 先尝试从缓存获取User
 			uMap, find := rdb.GetUserByToken(*request.Token)
@@ -304,7 +311,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		return
 	}
 
-	var clientUser *DBUser
+	var clientUser *DBUser = &DBUser{}
 	// 先尝试从缓存查找用户
 	uMap, find := rdb.GetUserByToken(request.Token)
 	if find {
@@ -349,7 +356,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
 	action := DBActionFromActionRequest(request)
 
-	err := action.ifFollow(request.ActionType, request.Token)
+	err := action.ifFollow(request.ActionType)
 	log.Debugf("action = %+v\n", action)
 	if err == nil {
 		// 关注或取消关注成功
@@ -461,9 +468,17 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 		return
 	}
 
-	for _, item := range dbvlist {
+	for _, video := range dbvlist {
+		// 更新视频缓存
+		items := utils.StructToMap(&video)
+		msgV := RedisMsg{
+			TYPE: VideoInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msgV
+
 		// true 表示确信当前的视频被喜欢
-		apiVideo, _ := item.ToApiVideo(DB, clientUser, true)
+		apiVideo, _ := video.ToApiVideo(DB, clientUser, true)
 		response.VideoList = append(response.VideoList, apiVideo)
 	}
 	response.StatusCode = 0
@@ -554,7 +569,7 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 		response.StatusMsg = &str
 		return
 	}
-	// TODO:先从缓存取
+	// ToDo:先从缓存取
 	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
 	response.CommentList = comments
 }
@@ -583,7 +598,16 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
+
 		response.UserList = append(response.UserList, apiuser)
+		// 更新缓存
+		msg := RedisMsg{
+			TYPE: UserFollowAdd,
+			DATA: map[string]interface{}{
+				"UserID":   follow.UserID, // 粉丝
+				"FollowID": follow.FollowID,
+			}}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get follow list successfully"
@@ -613,12 +637,12 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 			response.UserList = nil
 			return
 		}
-		// 更新粉丝缓存
+		// 更新关注缓存
 		msg := RedisMsg{
-			TYPE: FollowerCreate,
+			TYPE: UserFollowAdd,
 			DATA: map[string]interface{}{
-				"Token": follower.UserID, // 粉丝
-				"ID":    follower.FollowID,
+				"UserID":   follower.UserID, // 粉丝
+				"FollowID": follower.FollowID,
 			}}
 		ChanFromDB <- msg
 
@@ -654,8 +678,31 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
-		apiFriend := apiUser2apiFriend(apiuser, clientuser)
+		apiFriend, content := apiUser2apiFriend(apiuser, clientuser)
 		response.UserList = append(response.UserList, apiFriend)
+
+		item := map[string]interface{}{
+			"FromID":  clientuser.ID,
+			"ToID":    friend.FriendID,
+			"Message": content.Content,
+			"MsgType": apiFriend.MsgType,
+		}
+		msg := RedisMsg{
+			TYPE: Friend,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
+		item = map[string]interface{}{
+			"ID":     clientuser.ID,
+			"Friend": friend.FriendID,
+		}
+		msg = RedisMsg{
+			TYPE: FriendList,
+			DATA: item,
+		}
+		ChanFromDB <- msg
+
 	}
 	response.StatusCode = 0
 	str := "Get friend list successfully"
@@ -664,7 +711,32 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 
 func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	if request.ActionType == 1 {
-		if sendMsg(request.Token, request.ToUserID, request.Content) {
+		if content, send := sendMsg(request.Token, request.ToUserID, request.Content); send {
+
+			item := map[string]interface{}{
+				"ID":        content.ID,
+				"FromID":    content.FromID,
+				"ToID":      content.ToID,
+				"Content":   content.Content,
+				"CreatedAt": content.CreatedAt.UnixMilli(),
+			}
+			msg := RedisMsg{
+				TYPE: ChatRecord,
+				DATA: item,
+			}
+			ChanFromDB <- msg
+
+			item = map[string]interface{}{
+				"FromID":  content.FromID,
+				"ToID":    content.ToID,
+				"Message": content.Content,
+				"MsgType": 1,
+			}
+			msg = RedisMsg{
+				TYPE: Friend,
+				DATA: item,
+			}
+			ChanFromDB <- msg
 			response.StatusCode = 0
 			str := utils.SendMessageSuccess
 			response.StatusMsg = &str
@@ -704,6 +776,18 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 	for _, msg := range msgList {
 		apimsg := msg.ToApiMessage()
 		response.MessageList = append(response.MessageList, apimsg)
+		item := map[string]interface{}{
+			"ID":        msg.ID,
+			"FromID":    msg.FromID,
+			"ToID":      msg.ToID,
+			"Content":   msg.Content,
+			"CreatedAt": msg.CreatedAt.UnixMilli(),
+		}
+		msg := RedisMsg{
+			TYPE: ChatRecord,
+			DATA: item,
+		}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get chat record successfully"

@@ -140,7 +140,7 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 
 	// 否则需要根据clientUser查询该用户是否被关注
 	// 先尝试从缓存查询关注记录
-	res, err := rdb.IsFollow(clientUser.Token, u.ID)
+	res, err := rdb.IsFollow(clientUser.ID, u.ID)
 	if err == nil {
 		// 缓存查询成功
 		log.Debugln("ToApiUser: 从缓存查询关注记录成功")
@@ -158,8 +158,8 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 			msg := RedisMsg{
 				TYPE: UserFollowAdd,
 				DATA: map[string]interface{}{
-					"Token": clientUser.Token,
-					"ID":    u.ID,
+					"UserID":   clientUser.ID,
+					"FollowID": u.ID,
 				}}
 			ChanFromDB <- msg
 			return apiuser, nil

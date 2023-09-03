@@ -8,8 +8,9 @@
 package pg
 
 import (
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
+
+	"gorm.io/gorm"
 )
 
 type DBfriend struct {
@@ -24,7 +25,7 @@ func (u *DBfriend) TableName() string {
 }
 
 // 将user转化为friend
-func apiUser2apiFriend(user *api.User, client *DBUser) (friend *api.FriendUser) {
+func apiUser2apiFriend(user *api.User, client *DBUser) (friend *api.FriendUser, msg DBMessage) {
 	friend = new(api.FriendUser)
 	// 先进行公共部分赋值转化
 	friend.IsFollow = user.IsFollow
@@ -40,7 +41,7 @@ func apiUser2apiFriend(user *api.User, client *DBUser) (friend *api.FriendUser) 
 	friend.Name = user.Name
 
 	// 查询二人最新的消息记录
-	var msg DBMessage
+
 	err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?))", client.ID, user.ID, user.ID, client.ID).Order("ID desc").Limit(1).First(&msg)
 	if err.Error != nil {
 		return

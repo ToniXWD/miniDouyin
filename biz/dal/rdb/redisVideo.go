@@ -79,7 +79,7 @@ func GetPublishListByUserID(ID int64) ([]string, bool) {
 }
 
 // 从VMap转化为api.Video
-func VMap2ApiVidio(clientToken string, vMap map[string]string) (*api.Video, bool) {
+func VMap2ApiVidio(UserID int64, vMap map[string]string) (*api.Video, bool) {
 	tmp, _ := strconv.Atoi(vMap["ID"])
 	ID := int64(tmp)
 	tmp, _ = strconv.Atoi(vMap["Author"])
@@ -96,7 +96,7 @@ func VMap2ApiVidio(clientToken string, vMap map[string]string) (*api.Video, bool
 	}
 
 	// 查询是否关注
-	follow, err := IsFollow(clientToken, ID)
+	follow, err := IsFollow(UserID, Author)
 	if err != nil {
 		return nil, false
 	}
@@ -121,7 +121,7 @@ func VMap2ApiVidio(clientToken string, vMap map[string]string) (*api.Video, bool
 //		ctx := context.Background()
 //
 //		stamp := time.UnixMilli(timestamp)
-//		cmp_time := stamp.Format(utils.TimeFormat)
+//		cmp_time := stamp.Format(utils.TimeFormat_S)
 //
 //		first, err := Rdb.LIndex(ctx, "feed", 0).Result()
 //		if err != nil {

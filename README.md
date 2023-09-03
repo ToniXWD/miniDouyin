@@ -51,6 +51,24 @@
 ```
 
 # 2 组织架构
+## 2.1 评论模块架构
+### 流程设计
+![5811693722349_.pic.jpg](..%2F..%2FLibrary%2FContainers%2Fcom.tencent.xinWeChat%2FData%2FLibrary%2FApplication%20Support%2Fcom.tencent.xinWeChat%2F2.0b4.0.9%2F7d32d4a9d624dc8ba7da5f7cd88edfa1%2FMessage%2FMessageTemp%2F7d32d4a9d624dc8ba7da5f7cd88edfa1%2FImage%2F5811693722349_.pic.jpg)
+### 发布评论
+当接收到用户发送评论的请求时，会在数据库中执行操作后，再更新到缓存。注意这里`comment`是一个结构体，需要将结构体序列化为 `map` 存储到 Redis 中。
+### 删除评论
+删除评论的逻辑是，先删除数据库中的记录，再从缓存中找到以 `VIdeoID` 为 key 对应的`CommentID` ，根据 `CommentID` 更新缓存，移除对应的 `Comment` 信息。
+### 评论列表
+先根据VideoID尝试从缓存中获取评论列表，如果缓存中不存在，则去数据库查询，然后更新VideoID对应的CommentID集合缓存;如果缓存中存在，则通过 `VideoID` 获取到 CommentID 集合，再通过 `CommentID` 得到 Comment 信息，组成 list 返回。
+
+## 2.1 点赞模块架构
+### 流程设计
+![img.png](img.png)
+### 赞操作
+当接收到赞操作请求时，首先校验 Token 对用户身份进行权限识别，通过鉴权后再继续判断点赞操作类型`action_type`，`action_type=1`为点赞，`action_type=2`为取消点赞。点赞或者取消点赞操作会先将赞操作信息写入数据库，后更新缓存。
+### 点赞列表
+
+
 
 # 3 Redis缓存设计
 ## 3.1 Redis缓存设计思路

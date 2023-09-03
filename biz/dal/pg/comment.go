@@ -152,3 +152,9 @@ func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, err
 	}
 	return comm, nil
 }
+
+/*
+	评论模块架构设计
+		发送评论
+		当接收用户
+*/

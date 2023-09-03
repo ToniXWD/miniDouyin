@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-01 18:42:48
- * @LastEditTime: 2023-09-02 23:42:18
+ * @LastEditTime: 2023-09-03 14:49:45
  * @version: 1.0
  */
 package pg
@@ -678,12 +678,13 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 			return
 		}
 		apiuser, _ := user.ToApiUser(clientuser)
-		apiFriend := apiUser2apiFriend(apiuser, clientuser)
+		apiFriend, content := apiUser2apiFriend(apiuser, clientuser)
 		response.UserList = append(response.UserList, apiFriend)
+
 		item := map[string]interface{}{
-			"FID":     clientuser.ID,
-			"TID":     friend.FriendID,
-			"Message": *apiFriend.Message,
+			"FromID":  clientuser.ID,
+			"ToID":    friend.FriendID,
+			"Message": content.Content,
 			"MsgType": apiFriend.MsgType,
 		}
 		msg := RedisMsg{
@@ -710,15 +711,14 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 
 func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 	if request.ActionType == 1 {
-		if msg, send := sendMsg(request.Token, request.ToUserID, request.Content); send {
+		if content, send := sendMsg(request.Token, request.ToUserID, request.Content); send {
 
-			apiMsg := msg.ToApiMessage()
 			item := map[string]interface{}{
-				"ID":         apiMsg.ID,
-				"TID":        apiMsg.ToUserID,
-				"FID":        apiMsg.FromUserID,
-				"Content":    msg.Content,
-				"CreateTime": *apiMsg.CreateTime,
+				"ID":        content.ID,
+				"FromID":    content.FromID,
+				"ToID":      content.ToID,
+				"Content":   content.Content,
+				"CreatedAt": content.CreatedAt.UnixMilli(),
 			}
 			msg := RedisMsg{
 				TYPE: ChatRecord,
@@ -727,9 +727,9 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 			ChanFromDB <- msg
 
 			item = map[string]interface{}{
-				"FID":     apiMsg.FromUserID,
-				"TID":     apiMsg.ToUserID,
-				"Content": apiMsg.Content,
+				"FromID":  content.FromID,
+				"ToID":    content.ToID,
+				"Message": content.Content,
 				"MsgType": 1,
 			}
 			msg = RedisMsg{
@@ -777,11 +777,11 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 		apimsg := msg.ToApiMessage()
 		response.MessageList = append(response.MessageList, apimsg)
 		item := map[string]interface{}{
-			"ID":         apimsg.ID,
-			"TID":        apimsg.ToUserID,
-			"FID":        apimsg.FromUserID,
-			"Content":    apimsg.Content,
-			"CreateTime": *apimsg.CreateTime,
+			"ID":        msg.ID,
+			"FromID":    msg.FromID,
+			"ToID":      msg.ToID,
+			"Content":   msg.Content,
+			"CreatedAt": msg.CreatedAt.UnixMilli(),
 		}
 		msg := RedisMsg{
 			TYPE: ChatRecord,

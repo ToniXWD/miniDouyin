@@ -164,7 +164,7 @@ func (v *DBVideo) InitSelfFromMap(uMap map[string]string) {
 			case reflect.Struct:
 				if field.Type() == reflect.TypeOf(time.Time{}) {
 					// 如果字段类型是time.Time，尝试将字符串解析为时间
-					t, err := time.Parse(time.RFC3339, fieldValue)
+					t, err := utils.Str2Time(fieldValue)
 					if err == nil {
 						field.Set(reflect.ValueOf(t))
 					}

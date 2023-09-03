@@ -257,7 +257,7 @@ func RedisGetFollowerList(request *api.RelationFollowerListRequest, response *ap
 func RedisGetFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) bool {
 	// 通过缓存查找好友列表
 	flist, find := GetFriendList(request.UserID)
-	if !find {
+	if !find || len(flist) == 0 {
 		return false
 	}
 
@@ -290,24 +290,17 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 	// 通过缓存查找聊天记录
 	user, _ := GetUserByToken(request.Token)
 	fromUserID, _ := strconv.ParseInt(user["ID"], 10, 64)
-	chatList, chatRec_key, find := GetChatRec(fromUserID, request.ToUserID)
+	chatList, _, find := GetChatRec(fromUserID, request.ToUserID)
 	if !find {
 		return false
 	}
 
 	for _, msg_id := range chatList {
-		score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
+		//score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
 		content_key := "content_" + msg_id
 		content, _ := Rdb.HGetAll(ctx, content_key).Result()
-		createTime := int64(score)
-		cMap := map[string]interface{}{
-			"ID":         msg_id,
-			"FromUserID": fromUserID,
-			"ToUserID":   request.ToUserID,
-			"Content":    content,
-			"Time":       createTime,
-		}
-		apiC := CMap2ApiChat(cMap)
+
+		apiC := CMap2ApiChat(content)
 
 		response.MessageList = append(response.MessageList, apiC)
 	}

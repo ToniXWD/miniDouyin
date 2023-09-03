@@ -121,7 +121,7 @@ func VMap2ApiVidio(UserID int64, vMap map[string]string) (*api.Video, bool) {
 //		ctx := context.Background()
 //
 //		stamp := time.UnixMilli(timestamp)
-//		cmp_time := stamp.Format(utils.TimeFormat)
+//		cmp_time := stamp.Format(utils.TimeFormat_S)
 //
 //		first, err := Rdb.LIndex(ctx, "feed", 0).Result()
 //		if err != nil {

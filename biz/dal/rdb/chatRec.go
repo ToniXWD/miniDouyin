@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-02 20:38:32
- * @LastEditTime: 2023-09-02 23:40:28
+ * @LastEditTime: 2023-09-03 14:45:45
  * @version: 1.0
  */
 package rdb
@@ -21,15 +21,17 @@ import (
 func UpdateChatRec(data map[string]interface{}) {
 	ctx := context.Background()
 	// 设置key
-	fid := data["FID"].(int64)
-	tid := data["TID"].(int64)
+	fid, _ := data["FromID"].(int64)
+	tid, _ := data["ToID"].(int64)
+	createAt, _ := data["CreatedAt"].(int64)
 	if fid > tid {
 		fid, tid = tid, fid
 	}
 	chatrec_key := "chatrec_" + strconv.Itoa(int(fid)) + "_" + strconv.Itoa(int(tid))
+
 	item := redis.Z{
 		Member: data["ID"].(int64),
-		Score:  float64(data["Time"].(int64)),
+		Score:  float64(createAt),
 	}
 	_, err := Rdb.ZAdd(ctx, chatrec_key, item).Result()
 	if err != nil {
@@ -39,8 +41,11 @@ func UpdateChatRec(data map[string]interface{}) {
 	Rdb.Expire(ctx, chatrec_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 
 	content := map[string]interface{}{
-		"ID":      data["ID"].(int64),
-		"Content": data["Content"].(string),
+		"ID":        data["ID"].(int64),
+		"FromID":    data["FromID"].(int64),
+		"ToID":      data["ToID"].(int64),
+		"CreatedAt": createAt,
+		"Content":   data["Content"].(string),
 	}
 	// 设置key
 	content_key := "content_" + strconv.Itoa(int(data["ID"].(int64)))
@@ -74,16 +79,16 @@ func GetChatRec(fid int64, tid int64) ([]string, string, bool) {
 	return chatrec, chatrec_key, true
 }
 
-func CMap2ApiChat(cMap map[string]interface{}) (apiChat *api.Message) {
-	id, _ := strconv.ParseInt(cMap["ID"].(string), 10, 64)
-	toUserID, _ := strconv.ParseInt(cMap["ToID"].(string), 10, 64)
-	fromUserID, _ := strconv.ParseInt(cMap["FromID"].(string), 10, 64)
-	createTime, _ := strconv.ParseInt(cMap["CreateTime"].(string), 10, 64)
+func CMap2ApiChat(cMap map[string]string) (apiChat *api.Message) {
+	id, _ := strconv.ParseInt(cMap["ID"], 10, 64)
+	createTime, _ := strconv.ParseInt(cMap["CreatedAt"], 10, 64)
+	//FromUserID, _ := strconv.ParseInt(cMap["FromUserID"], 10, 64)
+	//ToUserID, _ := strconv.ParseInt(cMap["ToUserID"], 10, 64)
 	apiChat = &api.Message{
-		ID:         id,
-		ToUserID:   toUserID,
-		FromUserID: fromUserID,
-		Content:    cMap["Content"].(string),
+		ID: id,
+		//ToUserID:   cMap["ToID"].(int64),
+		//FromUserID: cMap["FromID"].(int64),
+		//Content:    cMap["Content"].(string),
 		CreateTime: &createTime,
 	}
 	return apiChat

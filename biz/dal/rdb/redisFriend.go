@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-09-02 15:22:38
- * @LastEditTime: 2023-09-02 22:35:46
+ * @LastEditTime: 2023-09-03 13:50:05
  * @version: 1.0
  */
 package rdb
@@ -21,8 +21,8 @@ import (
 
 func NewFriend(data map[string]interface{}) {
 	ctx := context.Background()
-	fid := strconv.Itoa(int(data["FID"].(int64)))
-	tid := strconv.Itoa(int(data["TID"].(int64)))
+	fid := strconv.Itoa(int(data["FromID"].(int64)))
+	tid := strconv.Itoa(int(data["ToID"].(int64)))
 	if fid > tid {
 		fid, tid = tid, fid
 	}

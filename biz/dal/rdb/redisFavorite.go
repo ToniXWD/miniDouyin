@@ -104,3 +104,18 @@ func GetLikeByID(id string) (map[string]string, bool) {
 	}
 	return comment, true
 }
+
+//func IsVideoLikedById(videoID int64, user_ID int64) (bool, error) {
+//	ctx := context.Background()
+//
+//	user_id := strconv.Itoa(int(ID))
+//
+//	key := "user_like_" + id
+//
+//	item := redis.Z{
+//		Member: id,
+//		Score:  float64(videoID),
+//	}
+//
+//	Rdb.ZCount(ctx, key)
+//}

@@ -172,20 +172,37 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 		return nil, false
 	}
 	var likelist []Like
-	res := db.Model(&Like{}).Where("user_id = ?", l.UserId).
-		Order("ID desc").Find(&likelist)
-
-	// 检查是否找到了记录
-	if res.RowsAffected > 0 {
-		for _, item := range likelist {
-			// 加入到缓存中
-			item.UpdateRedis(LikeCreate)
-
-			dbv, _ := item.ToDBVideo(db)
-			dblist = append(dblist, dbv)
+	// 先尝试从缓存获取喜欢列表
+	str_ids, redisFind := rdb.GetFavoriteListByUserID(l.UserId)
+	if redisFind {
+		// 缓存命中
+		for _, id := range str_ids {
+			ID, _ := strconv.Atoi(id)
+			dbv, err := ID2VideoBy(int64(ID))
+			if err != nil {
+				return nil, false
+			}
+			dblist = append(dblist, *dbv)
 		}
+		log.Infoln("QueryVideoByUser: 从缓存完成视频列表获取")
 		return dblist, true
+	} else {
+		// 从数据库中查找
+		res := db.Model(&Like{}).Where("user_id = ?", l.UserId).
+			Order("ID desc").Find(&likelist)
+		// 检查是否找到了记录
+		if res.RowsAffected > 0 {
+			for _, item := range likelist {
+				// 加入到缓存中
+				item.UpdateRedis(LikeCreate)
+
+				dbv, _ := item.ToDBVideo(db)
+				dblist = append(dblist, dbv)
+			}
+			return dblist, true
+		}
 	}
+
 	return nil, false
 }
 
@@ -195,7 +212,6 @@ func (l *Like) ToDBVideo(db *gorm.DB) (dbv DBVideo, ans bool) {
 	var err error
 	dbvPtr := &DBVideo{}
 
-	// 先尝试从缓存找到video
 	vMap, find := rdb.GetVideoById(strconv.Itoa(int(l.VideoId)))
 	if find {
 		//	缓存命中

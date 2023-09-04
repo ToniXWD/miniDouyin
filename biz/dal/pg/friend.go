@@ -8,9 +8,8 @@
 package pg
 
 import (
-	"miniDouyin/biz/model/miniDouyin/api"
-
 	"gorm.io/gorm"
+	"miniDouyin/biz/model/miniDouyin/api"
 )
 
 type DBfriend struct {
@@ -57,3 +56,31 @@ func apiUser2apiFriend(user *api.User, client *DBUser) (friend *api.FriendUser, 
 	}
 	return
 }
+
+//// 从Redis获取粉丝列表
+//func GetFriendListFromRedis(response *api.RelationFriendListResponse, clientUser *DBUser) bool {
+//	str_ids, redisFind := rdb.GetFriendList(clientUser.ID)
+//	if redisFind {
+//		// 缓存命中
+//		for _, id := range str_ids {
+//			ID, _ := strconv.Atoi(id)
+//			user, err := ID2DBUser(int64(ID))
+//			if err != nil {
+//				response.StatusCode = 1
+//				str := "Get follower list failed"
+//				response.StatusMsg = &str
+//				response.UserList = nil
+//				return false
+//			}
+//
+//			apiUser, _ := user.ToApiUser(clientUser)
+//			response.UserList = append(response.UserList, apiUser)
+//		}
+//		log.Infoln("GetFollowerListFromRedis: 从缓存完成粉丝列表获取")
+//		response.StatusCode = 0
+//		str := "Get follow list successfully"
+//		response.StatusMsg = &str
+//		return true
+//	}
+//	return false
+//}

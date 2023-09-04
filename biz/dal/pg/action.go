@@ -1,7 +1,10 @@
 package pg
 
 import (
+	log "github.com/sirupsen/logrus"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -81,4 +84,59 @@ func DBActionFromActionRequest(request *api.RelationActionRequest) *DBAction {
 		UserID:   int64(clientUser.ID),
 		FollowID: request.ToUserID,
 	}
+}
+
+// 从Redis获取关注列表
+func GetFollowListFromRedis(response *api.RelationFollowListResponse, clientUser *DBUser) bool {
+	str_ids, redisFind := rdb.GetFollowsIDList(clientUser.ID)
+	if redisFind {
+		// 缓存命中
+		for _, id := range str_ids {
+			ID, _ := strconv.Atoi(id)
+			user, err := ID2DBUser(int64(ID))
+			if err != nil {
+				response.StatusCode = 1
+				str := "Get follow list failed"
+				response.StatusMsg = &str
+				response.UserList = nil
+				return false
+			}
+			apiUser, _ := user.ToApiUser(clientUser)
+			response.UserList = append(response.UserList, apiUser)
+		}
+		log.Infoln("GetFollowListFromRedis: 从缓存完成关注列表获取")
+		response.StatusCode = 0
+		str := "Get follow list successfully"
+		response.StatusMsg = &str
+		return true
+	}
+	return false
+}
+
+// 从Redis获取粉丝列表
+func GetFollowerListFromRedis(response *api.RelationFollowerListResponse, clientUser *DBUser) bool {
+	str_ids, redisFind := rdb.GetFollowersIDList(clientUser.ID)
+	if redisFind {
+		// 缓存命中
+		for _, id := range str_ids {
+			ID, _ := strconv.Atoi(id)
+			user, err := ID2DBUser(int64(ID))
+			if err != nil {
+				response.StatusCode = 1
+				str := "Get follower list failed"
+				response.StatusMsg = &str
+				response.UserList = nil
+				return false
+			}
+
+			apiUser, _ := user.ToApiUser(clientUser)
+			response.UserList = append(response.UserList, apiUser)
+		}
+		log.Infoln("GetFollowerListFromRedis: 从缓存完成粉丝列表获取")
+		response.StatusCode = 0
+		str := "Get follow list successfully"
+		response.StatusMsg = &str
+		return true
+	}
+	return false
 }

@@ -474,7 +474,6 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 		response.StatusMsg = &str
 		return
 	}
-	// ToDo:先从缓存取
 	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
 	response.CommentList = comments
 }
@@ -491,6 +490,13 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 		return
 	}
 
+	// 从Redis完成业务
+	res := GetFollowListFromRedis(response, clientUser)
+	if res {
+		return
+	}
+
+	// 缓存未命中则需要数据库再次查询
 	var followlist []DBAction
 	err := DB.Where("user_id = ?", clientUser.ID).Find(&followlist)
 	if err.Error != nil {
@@ -538,6 +544,13 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 		response.StatusMsg = &str
 		return
 	}
+
+	// 从Redis完成业务
+	res := GetFollowerListFromRedis(response, clientUser)
+	if res {
+		return
+	}
+
 	var followerList []DBAction
 	err := DB.Where("follow_id = ?", clientUser.ID).Find(&followerList)
 	if err.Error != nil {
@@ -549,8 +562,7 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 	}
 
 	for _, follower := range followerList {
-		user := &DBUser{}
-		err := DB.Where("id = ?", follower.UserID).First(user)
+		user, err := ID2DBUser(follower.UserID)
 		if err.Error != nil {
 			response.StatusCode = 1
 			str := "Get follower list failed"
@@ -584,6 +596,7 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 		response.StatusMsg = &str
 		return
 	}
+
 	var friendList []DBfriend
 	err := DB.Where("user_id = ?", clientUser.ID).Find(&friendList)
 	if err.Error != nil {

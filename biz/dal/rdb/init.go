@@ -1,7 +1,6 @@
 package rdb
 
 import (
-	"context"
 	"miniDouyin/utils"
 
 	"github.com/redis/go-redis/v9"
@@ -10,7 +9,7 @@ import (
 var Rdb *redis.Client
 
 func Init() {
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	Rdb = redis.NewClient(&redis.Options{
 		Addr:     utils.REDIS_ADDR,
@@ -19,5 +18,5 @@ func Init() {
 	})
 
 	// 清空数据库
-	Rdb.FlushAll(ctx)
+	//Rdb.FlushAll(ctx)
 }

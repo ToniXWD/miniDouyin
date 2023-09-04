@@ -79,6 +79,7 @@ func GetDBCommentList(v_id int64) (clist []Comment, err error) {
 	return
 }
 
+// 获取评论列表
 func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
 	r_err = nil
 	var clientUser = &DBUser{}
@@ -168,8 +169,8 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 		}
 		return
 	}
-
 }
+
 
 // 根据评论请求封装发布评论
 func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, error) {
@@ -184,6 +185,7 @@ func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, err
 	}
 	return comm, nil
 }
+
 
 func (u *Comment) InitSelfFromMap(uMap map[string]string) {
 	reflectVal := reflect.ValueOf(u).Elem()

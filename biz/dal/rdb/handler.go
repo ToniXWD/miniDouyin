@@ -2,11 +2,11 @@ package rdb
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 )
 
 // 缓存完成路由业务Login

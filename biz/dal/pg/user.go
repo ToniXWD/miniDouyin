@@ -260,12 +260,7 @@ func Token2DBUser(token string) (*DBUser, error) {
 			return nil, utils.ErrTokenVerifiedFailed
 		}
 		// 发送消息更新缓存
-		items := utils.StructToMap(user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 		log.Infoln("Token2DBUser：更新user缓存")
 	}
@@ -287,12 +282,7 @@ func ID2DBUser(ID int64) (*DBUser, error) {
 			return nil, utils.ErrUserNotFound
 		}
 		// 发送消息更新缓存
-		items := utils.StructToMap(user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 		log.Infoln("ID2DBUser：更新user缓存")
 	}

@@ -52,10 +52,10 @@ func (v *Comment) CreateComment() (int64, error) {
 }
 
 // 更新缓存
-func (u *Comment) UpdateRedis() {
+func (u *Comment) UpdateRedis(Type int) {
 	items := utils.StructToMap(u)
 	msg := RedisMsg{
-		TYPE: CommentCreate,
+		TYPE: Type,
 		DATA: items,
 	}
 	ChanFromDB <- msg
@@ -120,7 +120,7 @@ func ID2Comment(cID int64) (*Comment, error) {
 			return nil, utils.ErrCommentNotExist
 		}
 		// 发送消息更新缓存
-		cDB.UpdateRedis()
+		cDB.UpdateRedis(CommentCreate)
 		log.Infoln("ID2Comment：更新comment缓存")
 	}
 	return cDB, nil
@@ -172,7 +172,7 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 		// 将评论列表格式进行转换
 		for _, dbcomment := range cDBlist {
 			// 更新缓存
-			dbcomment.UpdateRedis()
+			dbcomment.UpdateRedis(CommentCreate)
 
 			cUser, err := ID2DBUser(dbcomment.UserId)
 			if err != nil {

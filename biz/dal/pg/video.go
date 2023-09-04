@@ -208,6 +208,7 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	return
 }
 
+// 查询用户发布的视频列表，并更新到缓存集合
 func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 	r_err = nil
 
@@ -232,7 +233,7 @@ func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 	return
 }
 
-func GetVideoByID(ID int64) (*DBVideo, error) {
+func ID2VideoBy(ID int64) (*DBVideo, error) {
 	dbv := &DBVideo{}
 	// 先尝试缓存获取
 	vMap, find := rdb.GetVideoById(strconv.FormatInt(ID, 10))
@@ -245,6 +246,7 @@ func GetVideoByID(ID int64) (*DBVideo, error) {
 		if !find {
 			return nil, utils.ErrVideoNotExist
 		}
+		dbv.UpdateRedis(0)
 	}
 	return dbv, nil
 }

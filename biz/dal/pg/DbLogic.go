@@ -40,12 +40,7 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		str := "Login successfully!"
 		response.StatusMsg = &str
 		// 发送消息更新缓存
-		items := utils.StructToMap(&user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 		// select {
 		// case ChanFromDB <- msg:
@@ -82,12 +77,7 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 		response.StatusMsg = &str
 
 		// 发送消息更新缓存
-		items := utils.StructToMap(&user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 	} else {
 		response.StatusCode = 2
@@ -151,12 +141,7 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 	}
 	for idx, video := range vlist {
 		// 遍历视频时，顺手发送消息更新视频缓存
-		items := utils.StructToMap(&video)
-		msg := RedisMsg{
-			TYPE: VideoInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		video.UpdateRedis(0)
 
 		if idx == len(vlist)-1 {
 			newNext := video.CreatedAt.UnixMilli()
@@ -276,12 +261,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		response.StatusCode = 0
 		ids[idx] = video.ID
 		// 更新视频缓存
-		items := utils.StructToMap(&video)
-		msgV := RedisMsg{
-			TYPE: VideoInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msgV
+		video.UpdateRedis(0)
 	}
 	// 同时更新用户发布的集合缓存
 	if clientUser != nil {
@@ -350,23 +330,12 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		// 点赞
 		ans = newRecord.insert(DB, clientUser, curVideo)
 		// 发送消息更新缓存
-		items := utils.StructToMap(newRecord)
-		msg := RedisMsg{
-			TYPE: LikeCreate,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		newRecord.UpdateRedis(LikeCreate)
 
 	} else if request.ActionType == 2 {
 		// 取消点赞
 		ans = newRecord.delete(DB, clientUser, curVideo)
-		items := utils.StructToMap(newRecord)
-		log.Debugf("%T", items["CreateAt"])
-		msg := RedisMsg{
-			TYPE: LikeDel,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		newRecord.UpdateRedis(LikeDel)
 	} else {
 		ans = false
 	}
@@ -416,12 +385,7 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 
 	for _, video := range dbvlist {
 		// 更新视频缓存
-		items := utils.StructToMap(&video)
-		msgV := RedisMsg{
-			TYPE: VideoInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msgV
+		video.UpdateRedis(0)
 
 		// true 表示确信当前的视频被喜欢
 		apiVideo, _ := video.ToApiVideo(DB, clientUser, true)
@@ -465,14 +429,7 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 		cUser := &DBUser{ID: comment.UserId}
 		response.Comment, err = comment.ToApiComment(cUser, clientUser)
 		// 发送消息更新缓存
-		items := utils.StructToMap(comment)
-		log.Debugf("%T", items["CreateAt"])
-		msg := RedisMsg{
-			TYPE: CommentCreate,
-			DATA: items,
-		}
-		ChanFromDB <- msg
-
+		comment.UpdateRedis(CommentCreate)
 	} else if request.ActionType == 2 {
 		// 删除评论
 		// 校验CommentID 是否合法
@@ -483,19 +440,12 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 			return
 		}
 		// 从数据库删除
-		_, err := DeleteComment(*request.CommentID)
+		comment, err := DeleteComment(*request.CommentID)
 		if err != nil {
 			return
 		}
 		// 再从缓存中删除
-		msg := RedisMsg{
-			TYPE: CommentDel,
-			DATA: map[string]interface{}{
-				"ID":      *request.CommentID,
-				"VideoId": request.VideoID,
-			},
-		}
-		ChanFromDB <- msg
+		comment.UpdateRedis(CommentDel)
 
 		response.StatusCode = 0
 		response.StatusMsg = &utils.DeleteCommentSuccess
@@ -505,7 +455,7 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 
 	// 评论计数
 	// 视频是一定存在的
-	dbv, _ := GetVideoByID(request.VideoID)
+	dbv, _ := ID2VideoBy(request.VideoID)
 
 	txn := DB.Begin()
 	dbv.increaseComment(txn)

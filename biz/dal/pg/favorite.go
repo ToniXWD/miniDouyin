@@ -179,12 +179,7 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 	if res.RowsAffected > 0 {
 		for _, item := range likelist {
 			// 加入到缓存中
-			items := utils.StructToMap(&item)
-			msg := RedisMsg{
-				TYPE: LikeCreate,
-				DATA: items,
-			}
-			ChanFromDB <- msg
+			item.UpdateRedis(LikeCreate)
 
 			dbv, _ := item.ToDBVideo(db)
 			dblist = append(dblist, dbv)
@@ -228,14 +223,18 @@ func IsVideoLikedByUser(userID int64, videoID int64) bool {
 			UserId:  userID,
 			VideoId: videoID,
 		}
-		items := utils.StructToMap(newRecord)
-		msg := RedisMsg{
-			TYPE: LikeCreate,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		newRecord.UpdateRedis(LikeCreate)
 		log.Infoln("IsVideoLikedByUser：更新Like缓存")
 		return true
 	}
 	return false
+}
+
+func (u *Like) UpdateRedis(Type int) {
+	items := utils.StructToMap(u)
+	msg := RedisMsg{
+		TYPE: Type,
+		DATA: items,
+	}
+	ChanFromDB <- msg
 }

@@ -17,7 +17,7 @@ var (
 	ErrDelCommentNotExist     = errors.New("failed to delete comment")
 	ErrVideoNotExist          = errors.New("failed to get a video of a given id from database")
 	ErrGetVideoFromUSer       = errors.New("failed to get a favorite video list of a user")
-	ErrLikeFaile              = errors.New("Like failed")
+	ErrLikeFailed              = errors.New("Like failed")
 	// NetWork errors
 	ErrIpInitFailed = errors.New("failed to init IP")
 

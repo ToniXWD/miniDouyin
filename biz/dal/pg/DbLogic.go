@@ -426,7 +426,7 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 	}
 	if !ans {
 		response.StatusCode = 2
-		str := utils.ErrLikeFaile.Error()
+		str := utils.ErrLikeFailed.Error()
 		response.StatusMsg = &str
 		return
 	}

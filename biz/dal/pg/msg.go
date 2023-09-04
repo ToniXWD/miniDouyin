@@ -45,7 +45,10 @@ func (u *DBMessage) ToApiMessage() (apimsg *api.Message) {
 }
 
 func sendMsg(token string, toUerID int64, content string) (*DBMessage, bool) {
-	clientuser, _ := ValidateToken(token)
+	clientuser, err := Token2DBUser(token)
+	if err != nil {
+		return nil, false
+	}
 	msg := &DBMessage{
 		FromID:    clientuser.ID,
 		ToID:      toUerID,

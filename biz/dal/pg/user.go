@@ -234,3 +234,30 @@ func ValidateToken(token string) (*DBUser, error) {
 	}
 	return &user, nil
 }
+
+// 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
+func Token2DBUser(token string) (*DBUser, error) {
+	var tokenErr error
+	var clientUser = &DBUser{}
+	uMap, find := rdb.GetUserByToken(token)
+	if find {
+		// 缓存命中
+		clientUser.InitSelfFromMap(uMap)
+	} else {
+		// 否则数据库读取
+		clientUser, tokenErr = ValidateToken(token)
+		if tokenErr != nil {
+			return nil, utils.ErrTokenVerifiedFailed
+		}
+		// 发送消息更新缓存
+		items := utils.StructToMap(clientUser)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
+		log.Infoln("Token2DBUser：更新user缓存")
+	}
+	return clientUser, nil
+}

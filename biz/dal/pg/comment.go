@@ -81,30 +81,9 @@ func GetDBCommentList(v_id int64) (clist []Comment, err error) {
 
 // 获取评论列表
 func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
-	r_err = nil
-	var clientUser = &DBUser{}
-	if token != "" {
-		// token不为空，表示客户端已经登录
-		// 校验token
-		// 尝试从缓存查询用户
-		uMap, find := rdb.GetUserByToken(token)
-		if find {
-			// 缓存命中
-			clientUser.InitSelfFromMap(uMap)
-		} else {
-			// 缓存未命中，从数据库查
-			clientUser, r_err = ValidateToken(token)
-			if r_err != nil {
-				return nil, r_err
-			}
-			// 更新缓存
-			items := utils.StructToMap(clientUser)
-			msg := RedisMsg{
-				TYPE: UserInfo,
-				DATA: items,
-			}
-			ChanFromDB <- msg
-		}
+	clientUser, err := Token2DBUser(token)
+	if err != nil {
+		return nil, err
 	}
 
 	// 校验视频id合法性
@@ -171,7 +150,6 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 	}
 }
 
-
 // 根据评论请求封装发布评论
 func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, error) {
 	comm := &Comment{
@@ -185,7 +163,6 @@ func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, err
 	}
 	return comm, nil
 }
-
 
 func (u *Comment) InitSelfFromMap(uMap map[string]string) {
 	reflectVal := reflect.ValueOf(u).Elem()

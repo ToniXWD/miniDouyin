@@ -65,9 +65,12 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 
 // 从关注请求返回新的DBAction结构体
 func DBActionFromActionRequest(request *api.RelationActionRequest) *DBAction {
-	user, _ := ValidateToken(request.Token)
+	clientUser, Terr := Token2DBUser(request.Token)
+	if Terr != nil {
+		return nil
+	}
 	return &DBAction{
-		UserID:   int64(user.ID),
+		UserID:   int64(clientUser.ID),
 		FollowID: request.ToUserID,
 	}
 }

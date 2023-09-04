@@ -292,7 +292,7 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 	// 通过缓存查找聊天记录
 	log.Debugln("传入的时间戳为 = ", request.PreMsgTime)
 	user, _ := GetUserByToken(request.Token)
-	cmp := float64(request.PreMsgTime + 1)
+	cmp := float64(request.PreMsgTime + 2000)
 	fid := user["ID"]
 	tid := strconv.Itoa(int(request.ToUserID))
 
@@ -301,6 +301,12 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 	}
 
 	chatRec_key := "chatrec_" + fid + "_" + tid
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, chatRec_key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return false
+	}
 	res, err := Rdb.ZRangeByScore(ctx, chatRec_key, &redis.ZRangeBy{
 		Min:    strconv.Itoa(int(cmp)),
 		Max:    "+inf",

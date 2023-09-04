@@ -113,6 +113,13 @@ func IsVideoLikedById(videoID int64, user_ID int64) (bool, error) {
 
 	key := "user_like_" + user_id
 
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return false, utils.ErrRedisCacheNotFound
+	}
+
 	member, err := Rdb.ZRangeByScore(ctx, key, &redis.ZRangeBy{
 		Min: strconv.FormatInt(videoID, 10),
 		Max: strconv.FormatInt(videoID, 10),
@@ -123,5 +130,5 @@ func IsVideoLikedById(videoID int64, user_ID int64) (bool, error) {
 	if len(member) == 1 {
 		return true, nil
 	}
-	return false, utils.ErrRedisCacheNotFound
+	return false, nil
 }

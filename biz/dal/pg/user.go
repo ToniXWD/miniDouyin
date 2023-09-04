@@ -207,9 +207,9 @@ func DBUserFromRegisterRequest(request *api.UserRegisterRequest) DBUser {
 }
 
 // 从获取用户信息请求请求构造新用户
-func DBGetUser(request *api.UserRequest) (*DBUser, error) {
+func DBGetUserByID(UserID int64) (*DBUser, error) {
 	var user DBUser
-	res := DB.First(&user, "ID = ?", request.UserID)
+	res := DB.First(&user, "ID = ?", UserID)
 
 	if res.Error != nil {
 		// 没有找到记录
@@ -238,19 +238,19 @@ func ValidateToken(token string) (*DBUser, error) {
 // 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
 func Token2DBUser(token string) (*DBUser, error) {
 	var tokenErr error
-	var clientUser = &DBUser{}
+	var user = &DBUser{}
 	uMap, find := rdb.GetUserByToken(token)
 	if find {
 		// 缓存命中
-		clientUser.InitSelfFromMap(uMap)
+		user.InitSelfFromMap(uMap)
 	} else {
 		// 否则数据库读取
-		clientUser, tokenErr = ValidateToken(token)
+		user, tokenErr = ValidateToken(token)
 		if tokenErr != nil {
 			return nil, utils.ErrTokenVerifiedFailed
 		}
 		// 发送消息更新缓存
-		items := utils.StructToMap(clientUser)
+		items := utils.StructToMap(user)
 		msg := RedisMsg{
 			TYPE: UserInfo,
 			DATA: items,
@@ -259,5 +259,32 @@ func Token2DBUser(token string) (*DBUser, error) {
 
 		log.Infoln("Token2DBUser：更新user缓存")
 	}
-	return clientUser, nil
+	return user, nil
+}
+
+// 通过ID读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
+func ID2DBUser(ID int64) (*DBUser, error) {
+	var IdErr error
+	var user = &DBUser{}
+	uMap, find := rdb.GetUserById(ID)
+	if find {
+		// 缓存命中
+		user.InitSelfFromMap(uMap)
+	} else {
+		// 否则数据库读取
+		user, IdErr = DBGetUserByID(ID)
+		if IdErr != nil {
+			return nil, utils.ErrUserNotFound
+		}
+		// 发送消息更新缓存
+		items := utils.StructToMap(user)
+		msg := RedisMsg{
+			TYPE: UserInfo,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+
+		log.Infoln("ID2DBUser：更新user缓存")
+	}
+	return user, nil
 }

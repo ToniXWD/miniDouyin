@@ -1,6 +1,7 @@
 package pg
 
 import (
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/utils"
 	"strconv"
@@ -177,4 +178,35 @@ func (l *Like) ToDBVideo(db *gorm.DB) (dbv DBVideo, ans bool) {
 		find = dbv.QueryVideoByID()
 	}
 	return dbv, find
+}
+
+// 判断视频是否被用户点赞，先尝试查缓存，并更新缓存
+func IsVideoLikedByUser(userID int64, videoID int64) bool {
+	// 先从缓存判断
+	islike, err := rdb.IsVideoLikedById(videoID, userID)
+	if err == nil {
+		//	缓存命中
+		log.Infof("IsVideoLikedByUser：缓存命中：用户%v 与是否点赞了视频 %v? %t", userID, videoID, islike)
+		return islike
+	}
+	// 否则查询数据库
+	findres := &Like{}
+	r := DB.Model(&Like{}).First(findres, "user_id = ? AND video_id = ?", userID, videoID)
+	if r.RowsAffected != 0 {
+		// 如果找到了记录，返回true
+		// 更新缓存
+		newRecord := &Like{
+			UserId:  userID,
+			VideoId: videoID,
+		}
+		items := utils.StructToMap(newRecord)
+		msg := RedisMsg{
+			TYPE: LikeCreate,
+			DATA: items,
+		}
+		ChanFromDB <- msg
+		log.Infoln("IsVideoLikedByUser：更新Like缓存")
+		return true
+	}
+	return false
 }

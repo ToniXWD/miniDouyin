@@ -2,7 +2,6 @@ package pg
 
 import (
 	log "github.com/sirupsen/logrus"
-	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"reflect"
@@ -95,28 +94,10 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 	}
 
 	// 填充用户
-	var dbuser DBUser
-
-	// 先尝试从Redis缓存获取用户
-	dbMap, find := rdb.GetUserById(v.Author)
-	if find {
-		// 如果缓存命中
-		log.Debugln("ToApiVideo: 从缓存查询视频author记录成功")
-		dbuser.InitSelfFromMap(dbMap)
-	} else {
-		// 否则需要重数据库加载用户
-		res := DB.Model(&DBUser{}).First(&dbuser, "ID = ?", v.Author)
-		if res.Error != nil {
-			av.Author = nil
-			return nil, utils.ErrVideoUserNotExist
-		}
-		// 发送消息更新用户缓存
-		items := utils.StructToMap(&dbuser)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	// 先尝试从Redis缓存获取作者
+	dbuser, err := ID2DBUser(v.Author)
+	if err != nil {
+		return nil, err
 	}
 
 	av.Author, _ = dbuser.ToApiUser(clientUser)
@@ -133,13 +114,8 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 		return av, nil
 	}
 
-	// 否则需要进行查询以判断前端用户是否喜欢该视频
-	findres := &Like{}
-	r := db.Model(&Like{}).First(findres, "user_id = ? AND video_id = ?", clientUser.ID, v.ID)
-	if r.RowsAffected != 0 {
-		// 如果找到了记录，设置IsFavorite为true
-		av.IsFavorite = true
-	}
+	// 判断用户是否对视频点过赞
+	av.IsFavorite = IsVideoLikedByUser(clientUser.ID, v.ID)
 	return av, nil
 }
 

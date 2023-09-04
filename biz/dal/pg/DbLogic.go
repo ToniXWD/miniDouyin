@@ -9,7 +9,6 @@ package pg
 
 import (
 	"mime/multipart"
-	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -99,35 +98,16 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 
 // 获取User信息
 func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
-	var user *DBUser
-	var err error
 	// 先尝试从缓存查找用户
-	uMap, find := rdb.GetUserById(request.UserID)
-	if find {
-		// 缓存命中
-		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
-		user.InitSelfFromMap(uMap)
-	} else {
-		// 缓存命中失败则从数据库中查询
-		user, err = DBGetUser(request)
-		if err != nil {
-			// 没有找到用户
-			response.StatusCode = 1
-			str := err.Error()
-			response.StatusMsg = &str
-			return
-		}
-		// 发送消息更新缓存
-		items := utils.StructToMap(user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	user, err := ID2DBUser(request.UserID)
+	if err != nil {
+		response.StatusCode = 3
+		str := err.Error()
+		response.StatusMsg = &str
+		return
 	}
 
 	// 填充结构体
-
 	// 先获取client
 	// 尝试从缓存获取client
 	clientUser, err := Token2DBUser(request.Token)

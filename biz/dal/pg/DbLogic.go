@@ -563,7 +563,7 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 
 	for _, follower := range followerList {
 		user, err := ID2DBUser(follower.UserID)
-		if err.Error != nil {
+		if err != nil {
 			response.StatusCode = 1
 			str := "Get follower list failed"
 			response.StatusMsg = &str

@@ -2,6 +2,7 @@ package pg
 
 import (
 	log "github.com/sirupsen/logrus"
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"reflect"
@@ -151,6 +152,7 @@ func (v *DBVideo) InitSelfFromMap(uMap map[string]string) {
 }
 
 // 更新视频缓存 和 用户发布视频的集合
+// authorID 不为0表示新发布了视频
 func (v *DBVideo) UpdateRedis(authorID int64) {
 	// 更新视频缓存
 	items1 := utils.StructToMap(v)
@@ -228,4 +230,21 @@ func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 		}}
 	ChanFromDB <- msg
 	return
+}
+
+func GetVideoByID(ID int64) (*DBVideo, error) {
+	dbv := &DBVideo{}
+	// 先尝试缓存获取
+	vMap, find := rdb.GetVideoById(strconv.FormatInt(ID, 10))
+	if find {
+		//	缓存命中
+		dbv.InitSelfFromMap(vMap)
+	} else {
+		dbv.ID = ID
+		find := dbv.QueryVideoByID()
+		if !find {
+			return nil, utils.ErrVideoNotExist
+		}
+	}
+	return dbv, nil
 }

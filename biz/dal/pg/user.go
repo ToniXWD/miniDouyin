@@ -243,7 +243,6 @@ func (u *DBUser) UpdateRedis() {
 		DATA: items1,
 	}
 	ChanFromDB <- msg1
-
 }
 
 // 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存

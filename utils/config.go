@@ -33,5 +33,5 @@ var (
 	LOG_LEVEL    = log.DebugLevel
 
 	// Gorm 配置
-	GORM_LOGGER_TERMINAL = true // 日志输出到终端？
+	GORM_LOGGER_TERMINAL = false // 日志输出到终端？
 )

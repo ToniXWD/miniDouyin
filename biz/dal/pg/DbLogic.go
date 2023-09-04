@@ -504,10 +504,16 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 	}
 
 	// 评论计数
-	dbv := &DBVideo{ID: request.VideoID}
+	// 视频是一定存在的
+	dbv, _ := GetVideoByID(request.VideoID)
+
 	txn := DB.Begin()
 	dbv.increaseComment(txn)
 	txn.Commit()
+
+	// 更新视频缓存
+	dbv.CommentCount++
+	dbv.UpdateRedis(0)
 }
 
 // 获取评论列表

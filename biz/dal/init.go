@@ -6,6 +6,6 @@ import (
 )
 
 func Init() {
-	pg.Init()
 	rdb.Init()
+	pg.Init()
 }

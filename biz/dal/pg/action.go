@@ -37,9 +37,17 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 		// 关注
 		err = u.Insert()
 		if err == nil {
-			user := &DBUser{}
-			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count + ?", 1))
-			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count + ?", 1))
+			// 粉丝用户数据更新
+			fanUser, _ := ID2DBUser(u.UserID)
+			DB.Model(&DBUser{}).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count + ?", 1))
+			fanUser.FollowCount++
+			fanUser.UpdateRedis()
+
+			// 被关注者用户数据更新
+			Followed, _ := ID2DBUser(u.FollowID)
+			DB.Model(&DBUser{}).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count + ?", 1))
+			Followed.FollowerCount++
+			Followed.UpdateRedis()
 		}
 		msg.TYPE = UserFollowAdd
 

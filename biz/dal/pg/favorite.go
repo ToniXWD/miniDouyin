@@ -50,8 +50,8 @@ func (l *Like) insert(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 	clientUser.UpdateRedis()
 
 	//  创建一条喜欢的记录后，还需要将被点赞者的获赞数+1
-	find := curVideo.QueryVideoByID()
-	if !find {
+	curVideo, err := ID2VideoBy(curVideo.ID)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
@@ -117,8 +117,8 @@ func (l *Like) delete(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		return false
 	}
 	//  创建一条喜欢的记录后，还需要将被点赞者的获赞数-1
-	find := curVideo.QueryVideoByID()
-	if !find {
+	curVideo, err := ID2VideoBy(curVideo.ID)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
@@ -192,16 +192,22 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 // 获取记录项中的视频
 func (l *Like) ToDBVideo(db *gorm.DB) (dbv DBVideo, ans bool) {
 	var find bool
+	var err error
+	dbvPtr := &DBVideo{}
+
 	// 先尝试从缓存找到video
 	vMap, find := rdb.GetVideoById(strconv.Itoa(int(l.VideoId)))
 	if find {
 		//	缓存命中
 		dbv.InitSelfFromMap(vMap)
 	} else {
-		dbv.ID = l.VideoId
-		find = dbv.QueryVideoByID()
+		dbvPtr, err = ID2VideoBy(l.VideoId)
+		if err != nil {
+			return dbv, false
+		}
+		dbv = *dbvPtr
 	}
-	return dbv, find
+	return dbv, true
 }
 
 // 判断视频是否被用户点赞，先尝试查缓存，并更新缓存

@@ -53,10 +53,10 @@ func DelLikeVideo(data map[string]interface{}) {
 	Rdb.Del(ctx, key)
 
 	// 获取点赞列表的key
-	UID := data["uId"].(int64)
+	UID := data["UserId"].(int64)
 	uid := strconv.Itoa(int(UID))
 	uid_key := "user_like_" + uid
-	// 从视频评论列表里面删除对应的comment的id
+	// 从点赞列表里面删除对应的like的id
 	_, err := Rdb.ZRem(ctx, uid_key, data["ID"]).Result()
 	if err != nil {
 		log.Debugln("删除点赞列表中的元素错误", err.Error())

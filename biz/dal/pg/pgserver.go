@@ -34,7 +34,7 @@ func PGserver() {
 			log.Infoln("更新点赞缓存")
 			go rdb.NewLikeVideo(msg.DATA)
 		case LikeDel:
-			log.Infoln("删除评论缓存")
+			log.Infoln("删除点赞缓存")
 			go rdb.DelLikeVideo(msg.DATA)
 		case Friend:
 			log.Infoln("更新好友缓存")

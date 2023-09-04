@@ -45,13 +45,13 @@ func Str2Time(fieldValue string) (time.Time, error) {
 	var t time.Time
 	var err error = nil
 	if time_len == s_len {
-		//精度为秒
+		// 精度为秒
 		t, err = time.Parse(TimeFormat_S, fieldValue)
 	} else if time_len == ms_len {
-		//精度为毫秒
+		// 精度为毫秒
 		t, err = time.Parse(TimeFormat_MS, fieldValue)
 	} else if time_len == mcs_len {
-		//精度为微秒
+		// 精度为微秒
 		t, err = time.Parse(TimeFormat_MCS, fieldValue)
 	}
 	return t, err
@@ -140,13 +140,4 @@ func StructToMap(data interface{}) map[string]interface{} {
 	}
 
 	return result
-}
-
-func StringToFloat64(s string) (float64, error) {
-	t, err := time.Parse("2006-01-02 15:04:05", s)
-	if err != nil {
-		return 0, err
-	}
-	unixTimestamp := float64(t.Unix())
-	return unixTimestamp, nil
 }

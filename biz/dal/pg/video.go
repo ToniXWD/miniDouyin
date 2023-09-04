@@ -150,6 +150,32 @@ func (v *DBVideo) InitSelfFromMap(uMap map[string]string) {
 	}
 }
 
+// 更新视频缓存 和 用户发布视频的集合
+func (v *DBVideo) UpdateRedis(authorID int64) {
+	// 更新视频缓存
+	items1 := utils.StructToMap(v)
+	msg1 := RedisMsg{
+		TYPE: VideoInfo,
+		DATA: items1,
+	}
+	ChanFromDB <- msg1
+
+	if authorID == 0 {
+		// authorID =0 表示视频被点赞或评论了，不需要更新用户发布视频的集合
+		return
+	}
+
+	// 更新用户发布视频的集合
+	msg2 := RedisMsg{
+		TYPE: Publish,
+		DATA: map[string]interface{}{
+			"ID":     authorID,
+			"Videos": []interface{}{v.ID},
+		},
+	}
+	ChanFromDB <- msg2
+}
+
 // 返回至多30条视频列表
 func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	r_err = nil

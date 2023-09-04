@@ -100,7 +100,7 @@ func (u *DBUser) increaseFavorite(db *gorm.DB, num int64) *gorm.DB {
 }
 
 // 获赞数自增
-// 将当前结构体插入数据库，返回是否成功
+// 将当前结构体插入数据库，返回*gorm.DB查询结果
 // 需要提前保证该结构体有效
 func (u *DBUser) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
 	return db.Model(u).Where("ID = ?", u.ID).Update("total_favorited", gorm.Expr("total_favorited + ?", num))
@@ -233,6 +233,17 @@ func ValidateToken(token string) (*DBUser, error) {
 		return nil, utils.ErrTokenVerifiedFailed
 	}
 	return &user, nil
+}
+
+// 更新用户缓存
+func (u *DBUser) UpdateRedis() {
+	items1 := utils.StructToMap(u)
+	msg1 := RedisMsg{
+		TYPE: UserInfo,
+		DATA: items1,
+	}
+	ChanFromDB <- msg1
+
 }
 
 // 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存

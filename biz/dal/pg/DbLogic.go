@@ -237,30 +237,10 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 
 	// 发送消息更新缓存
 	// 由于视频发布后user的字段发送了变化，需要更新缓存的user
-	items1 := utils.StructToMap(clientUser)
-	msg1 := RedisMsg{
-		TYPE: UserInfo,
-		DATA: items1,
-	}
-	ChanFromDB <- msg1
+	clientUser.UpdateRedis()
 
-	// 更新视频缓存
-	items2 := utils.StructToMap(&video)
-	msg2 := RedisMsg{
-		TYPE: VideoInfo,
-		DATA: items2,
-	}
-	ChanFromDB <- msg2
-
-	// 更新用户发布视频的集合
-	msg3 := RedisMsg{
-		TYPE: Publish,
-		DATA: map[string]interface{}{
-			"ID":     video.Author,
-			"Videos": []interface{}{video.ID},
-		},
-	}
-	ChanFromDB <- msg3
+	// 更新视频缓存、用户发布视频的集合
+	video.UpdateRedis(video.Author)
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess

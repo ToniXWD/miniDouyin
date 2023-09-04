@@ -16,7 +16,7 @@ type Like struct {
 	VideoId   int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Deleted   gorm.DeletedAt `gorm:"default:NULL"`
+	//Deleted   gorm.DeletedAt `gorm:"default:NULL"` // 没有必要软删除
 }
 
 func (l *Like) TableName() string {
@@ -44,23 +44,34 @@ func (l *Like) insert(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新点赞者缓存
+	clientUser.FavoriteCount++
+	clientUser.UpdateRedis()
+
 	//  创建一条喜欢的记录后，还需要将被点赞者的获赞数+1
 	find := curVideo.QueryVideoByID()
 	if !find {
 		tx.Rollback()
 		return false
 	}
-	author := &DBUser{ID: curVideo.Author}
-	find = author.QueryUserByID()
-	if !find {
+
+	// 查询视频作者
+	author, err := ID2DBUser(curVideo.Author)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
+
 	res = author.increaseFavorited(tx, 1)
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新被点赞者缓存
+	author.TotalFavorited++
+	author.UpdateRedis()
 
 	//  创建一条喜欢的记录后，还需要将视频的总赞数+1
 	res = curVideo.increaseFavorited(tx, 1)
@@ -68,6 +79,10 @@ func (l *Like) insert(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新视频缓存
+	curVideo.FavoriteCount++
+	curVideo.UpdateRedis(0)
 
 	// 提交事务
 	res = tx.Commit()

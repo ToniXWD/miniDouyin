@@ -296,7 +296,7 @@ func RedisGetChatRec(request *api.ChatRecordRequest, response *api.ChatRecordRes
 	}
 
 	for _, msg_id := range chatList {
-		//score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
+		// score, _ := Rdb.ZScore(ctx, chatRec_key, msg_id).Result()
 		content_key := "content_" + msg_id
 		content, _ := Rdb.HGetAll(ctx, content_key).Result()
 

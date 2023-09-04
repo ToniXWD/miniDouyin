@@ -1,9 +1,12 @@
 package pg
 
 import (
+	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -112,33 +115,60 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 
 	// 如果视频id有效再获取评论列表
 	// 缓存未命中，从数据库查
-	// TODO: 先尝试从缓存查找视频评论列表
-	// TODO：如果从缓存找到了视频评论列表，再从获取到的视频id查询评论（也是先尝试缓存查，再数据库查）
-	cDBlist, err := GetDBCommentList(v_id)
-	if err != nil {
-		return nil, err
-	}
-	// 将评论列表格式进行转换
-	for _, dbcomment := range cDBlist {
-		// 更新缓存
-		items := utils.StructToMap(&dbcomment)
-		msg := RedisMsg{
-			TYPE: CommentCreate,
-			DATA: items,
+	commentlist, find := rdb.GetVideoCommentList(int(v_id))
+	if find {
+		// 缓存命中
+		log.Debugln("GetCommentList: 从缓存查询评论列表成功")
+		for _, c_id := range commentlist {
+			// 尝试从缓存查询评论
+			cMap, find := rdb.GetCommentByID(c_id)
+			if !find {
+				return nil, r_err
+			}
+			// 缓存命中
+			log.Debugln("GetCommentList: 从缓存查询评论成功")
+			cDB := &Comment{}
+			cDB.InitSelfFromMap(cMap)
+			cUser := &DBUser{ID: cDB.UserId}
+			if !cUser.QueryUserByID() {
+				return nil, utils.ErrUserNotFound
+			}
+			ac, err := cDB.ToApiComment(cUser, clientUser)
+			if err != nil {
+				return nil, utils.ErrGetCommentListFailed
+			}
+			clist = append(clist, ac)
 		}
-		ChanFromDB <- msg
-
-		cUser := &DBUser{ID: dbcomment.UserId}
-		if !cUser.QueryUserByID() {
-			return nil, utils.ErrUserNotFound
-		}
-		ac, err := dbcomment.ToApiComment(cUser, clientUser)
+		return
+	} else {
+		// 从数据库查
+		cDBlist, err := GetDBCommentList(v_id)
 		if err != nil {
-			return nil, utils.ErrGetCommentListFailed
+			return nil, err
 		}
-		clist = append(clist, ac)
+		// 将评论列表格式进行转换
+		for _, dbcomment := range cDBlist {
+			// 更新缓存
+			items := utils.StructToMap(&dbcomment)
+			msg := RedisMsg{
+				TYPE: CommentCreate,
+				DATA: items,
+			}
+			ChanFromDB <- msg
+
+			cUser := &DBUser{ID: dbcomment.UserId}
+			if !cUser.QueryUserByID() {
+				return nil, utils.ErrUserNotFound
+			}
+			ac, err := dbcomment.ToApiComment(cUser, clientUser)
+			if err != nil {
+				return nil, utils.ErrGetCommentListFailed
+			}
+			clist = append(clist, ac)
+		}
+		return
 	}
-	return
+
 }
 
 // 根据评论请求封装发布评论
@@ -155,8 +185,19 @@ func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, err
 	return comm, nil
 }
 
-/*
-	评论模块架构设计
-		发送评论
-		当接收用户
-*/
+func (u *Comment) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(u).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			}
+		}
+	}
+}

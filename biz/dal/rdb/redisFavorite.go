@@ -11,30 +11,19 @@ import "context"
 
 // 新建 Like 缓存项目
 func NewLikeVideo(data map[string]interface{}) {
-
 	// 同时新建以ID和userID为key的项
 	ctx := context.Background()
-	// 设置key
-	ID := data["ID"].(int64)
-	like_id := strconv.Itoa(int(ID))
-	like_key := "like_" + like_id
-	_, err := Rdb.HMSet(ctx, like_key, data).Result()
-	if err != nil {
-		log.Debugln(err.Error())
-	}
-	// 设置过期时间
-	Rdb.Expire(ctx, like_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 
-	// UserID:[likeID]
+	// 用户喜欢的视频id的集合
 	UID := data["UserId"].(int64)
 	uid := strconv.Itoa(int(UID))
 	uid_key := "user_like_" + uid
 
 	item := redis.Z{
-		Member: like_id,
-		Score:  float64(ID),
+		Member: data["VideoId"],
+		Score:  float64(data["VideoId"].(int64)),
 	}
-	_, err = Rdb.ZAdd(ctx, uid_key, item).Result()
+	_, err := Rdb.ZAdd(ctx, uid_key, item).Result()
 	if err != nil {
 		log.Debugln(err.Error())
 	}
@@ -45,19 +34,13 @@ func NewLikeVideo(data map[string]interface{}) {
 // 从缓存中删除点赞
 func DelLikeVideo(data map[string]interface{}) {
 	ctx := context.Background()
-	// 删除整个like缓存
-	// 设置key
-	ID := data["ID"].(int64)
-	id := strconv.Itoa(int(ID))
-	key := "like_" + id
-	Rdb.Del(ctx, key)
 
 	// 获取点赞列表的key
 	UID := data["UserId"].(int64)
 	uid := strconv.Itoa(int(UID))
 	uid_key := "user_like_" + uid
 	// 从点赞列表里面删除对应的like的id
-	_, err := Rdb.ZRem(ctx, uid_key, data["ID"]).Result()
+	_, err := Rdb.ZRem(ctx, uid_key, data["VideoId"]).Result()
 	if err != nil {
 		log.Debugln("删除点赞列表中的元素错误", err.Error())
 	}
@@ -84,25 +67,6 @@ func GetFavoriteListByUserID(UserID int64) ([]string, bool) {
 		return nil, false
 	}
 	return clist, true
-}
-
-// 通过点赞ID获取点赞(cMap)
-func GetLikeByID(id string) (map[string]string, bool) {
-	ctx := context.Background()
-
-	key := "like_" + id
-
-	// 使用 Exists 方法判断键是否存在
-	exists, err := Rdb.Exists(ctx, key).Result()
-	if err != nil || exists != 1 {
-		log.Debugln("Error:", err)
-		return nil, false
-	}
-	comment, err := Rdb.HGetAll(ctx, key).Result()
-	if err != nil {
-		return nil, false
-	}
-	return comment, true
 }
 
 // 判断用户是否赞过某视频

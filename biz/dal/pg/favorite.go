@@ -122,17 +122,27 @@ func (l *Like) delete(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		tx.Rollback()
 		return false
 	}
-	author := &DBUser{ID: curVideo.Author}
-	find = author.QueryUserByID()
-	if !find {
+
+	// 更新点赞者缓存
+	clientUser.FavoriteCount--
+	clientUser.UpdateRedis()
+
+	// 查询视频作者
+	author, err := ID2DBUser(curVideo.Author)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
+
 	res = author.increaseFavorited(tx, -1)
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新被点赞者缓存
+	author.TotalFavorited--
+	author.UpdateRedis()
 
 	//  创建一条喜欢的记录后，还需要将视频的总赞数-1
 	res = curVideo.increaseFavorited(tx, -1)
@@ -141,15 +151,19 @@ func (l *Like) delete(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		return false
 	}
 
+	// 更新视频缓存
+	curVideo.FavoriteCount--
+	curVideo.UpdateRedis(0)
+
 	// 提交事务
 	res = tx.Commit()
-	r_ans := res.Error == nil
+	rAns := res.Error == nil
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
 
-	return r_ans
+	return rAns
 }
 
 // 根据用户id查找喜欢的视频id

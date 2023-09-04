@@ -177,14 +177,8 @@ func RedisGetFavoriteList(request *api.FavoriteListRequest, response *api.Favori
 		return false
 	}
 
-	for _, item := range ids {
+	for _, videoId := range ids {
 		// 通过点赞ID获取点赞(cMap)
-		lMap, valid := GetLikeByID(item)
-		if !valid {
-			// 缓存不能处理
-			return false
-		}
-		videoId := lMap["VideoId"]
 		vMap, valid := GetVideoById(videoId)
 		if !valid {
 			// 缓存不能处理

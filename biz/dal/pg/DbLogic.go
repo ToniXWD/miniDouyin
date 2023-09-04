@@ -133,9 +133,22 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 		response.StatusMsg = &str
 		return
 	}
-	response.StatusCode = 0
-	str := "Load video list successfully"
-	response.StatusMsg = &str
+	// 先获取client
+	// 尝试从缓存获取client
+	clientUser := &DBUser{}
+	if request.Token == nil {
+		// 未登录状态
+		clientUser = nil
+	} else {
+		// 获取clientUser
+		clientUser, err = Token2DBUser(*request.Token)
+		if err != nil {
+			response.StatusCode = 1
+			str := err.Error()
+			response.StatusMsg = &str
+			return
+		}
+	}
 	for idx, video := range vlist {
 		// 遍历视频时，顺手发送消息更新视频缓存
 		items := utils.StructToMap(&video)
@@ -149,26 +162,12 @@ func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
-		// 先获取client
-		// 尝试从缓存获取client
-		clientUser := &DBUser{}
-		var err error
-		if request.Token == nil {
-			// 未登录状态
-			clientUser = nil
-		} else {
-			// 获取clientUser
-			clientUser, err = Token2DBUser(*request.Token)
-			if err != nil {
-				response.StatusCode = 1
-				str := err.Error()
-				response.StatusMsg = &str
-				return
-			}
-		}
 		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
 	}
+	response.StatusCode = 0
+	str := "Load video list successfully"
+	response.StatusMsg = &str
 }
 
 // 接受上传视频
@@ -400,8 +399,6 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 	clientUser, err := Token2DBUser(request.Token)
 	if err != nil || clientUser.ID != request.UserID {
 		response.StatusCode = 1
-		str := err.Error()
-		response.StatusMsg = &str
 		return
 	}
 

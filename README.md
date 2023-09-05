@@ -21,6 +21,10 @@
 │   │   └── rdb
 │   │       ├── handler.go # 缓存处理的业务逻辑
 │   │       ├── init.go # 初始化Redis
+│   │       ├── redisChatRec.go # redis存储聊天信息
+│   │       ├── redisComment.go # redis存储评论
+│   │       ├── redisFavorite.go # redis点赞记录
+│   │       ├── redisFriend.go # redis好友关系
 │   │       ├── redisRelation.go # redis存储关系
 │   │       ├── redisUser.go # redis存储user
 │   │       └── redisVideo.go # redis存储视频
@@ -53,7 +57,7 @@
 # 2 组织架构
 ## 2.1 层级架构
 
-![img](./data/flow/Structure.png)
+<center><img src="./data/flow/Structure.png"></center>
 
 如图所示为miniDouyin的层级架构，各个层级功能说明如下：
 
@@ -83,7 +87,7 @@
   
 ## 2.2 业务流程
 ### 2.2.1 注册业务流程
-![img](./data/flow/Register.png)
+<center><img src="./data/flow/Register.png" width=350></center>
 
 注册业务过程如下：
 - 校验用户名/邮箱是否已存在
@@ -91,7 +95,7 @@
 - 更新Redis中的user缓存
 
 ### 2.2.2 登录业务流程
-![img](./data/flow/Login.png)
+<center><img src="./data/flow/Login.png" width=400></center>
 
 登录业务逻辑很简单：
 - 尝试从Redis缓存中获取完成整个登录流程，包括查询token查询和密码校验
@@ -102,7 +106,7 @@
 - 视频列表的获取相对复杂，需要进行有条件的排序操作，还涉及时间戳格式的转换，单纯使用缓存难以完成整个业务
 - 获取一个视频列表设计大量的表查询，因此可以利用该特性将该业务作为更新Redis缓存的一个功能函数
   
-![img](./data/flow/Feed.png)
+<center><img src="./data/flow/Feed.png"></center>
 
 业务逻辑如下：
 1. 获取client用户
@@ -119,7 +123,7 @@
 
 ### 2.2.4 获取用户信息业务流程
 
-![img](./data/flow/GetUserInfo.png)
+<center><img src="./data/flow/GetUserInfo.png" width=400></center>
 
 获取用户信息业务逻辑很简单：
 - 尝试从Redis缓存中获取完成整个业务流程，包括查询token查询和id校验
@@ -127,7 +131,7 @@
 
 ### 2.2.5 视频投稿业务
 
-![img](./data/flow/Publish.png)
+<center><img src="./data/flow/Publish.png" width=480></center>
 
 视频投稿业务由于是对数据库的写入，所以不会从缓存来完成。
 
@@ -138,9 +142,9 @@
 4. 前端为提供视频封面图片，因此采用ffmpeg进行抽帧作为封面。由于需要进行系统调用，因此将次开销较大的部分作为异步执行。
 5. 封面图和相关资源文件的命名格式见前文说明。
 
-### 2.3.1 赞操作业务流程
+### 2.2.6 赞操作业务流程
 
-![img_1.png](data/flow/FavoriteAction.png)
+<center><img src="data/flow/FavoriteAction.png" width=700></center>
 
 赞操作业务同样由于是对数据库的写入，所以不会从缓存来完成。
 
@@ -148,9 +152,9 @@
 - 直接访问数据库，获取 actionType 判断是点赞还是取消赞。
 - 根据赞操作类型完成对数据库的操作后更新缓存。
 
-### 2.3.2 喜欢列表业务流程
+### 2.2.7 喜欢列表业务流程
 
-![GetFavoriteList.png](data%2Fflow%2FGetFavoriteList.png)
+<center><img src="data%2Fflow%2FGetFavoriteList.png"></center>
 
 喜欢列表业务是查询业务，优先从缓存完成。
 
@@ -158,9 +162,9 @@
 - 如果缓存无法处理则从数据库查，并更新缓存。
 - 这里不仅要更新点赞缓存，还需要更新视频信息缓存。
 
-### 2.3.3 评论操作业务流程
+### 2.2.8 评论操作业务流程
 
-![img_1.png](data/flow/CommentAction.png)
+<center><img src="data/flow/CommentAction.png" width=700></center>
 
 评论操作业务同样由于是对数据库的写入，所以不会从缓存来完成。
 
@@ -168,9 +172,9 @@
 - 直接访问数据库，获取 actionType 判断是发评论还是删评论。
 - 同样是根据评论操作类型完成对数据库的操作后更新缓存。
 
-### 2.3.4 评论列表业务流程
+### 2.2.9 评论列表业务流程
 
-![GetCommentList.png](data%2Fflow%2FGetCommentList.png)
+<center><img src="data/flow/GetCommentList.png"></center>
 
 评论列表业务是查询业务，优先从缓存完成。
 
@@ -178,6 +182,8 @@
 - 如果缓存无法处理则从数据库处理，并更新缓存。
 
 ### 2.2.10 关注业务
+
+<center><img src="data/flow/action.drawio.png" width=340></center>
 
 业务逻辑如下：
 
@@ -187,6 +193,8 @@
 
 ### 2.2.11 获取关注列表业务
 
+<center><img src="data/flow/followlist.drawio.png" width=370></center>
+
 业务逻辑如下：
 
 - 先从缓存获取关注用户的 id 集合，然后去 user 缓存获取用户信息
@@ -194,12 +202,16 @@
 
 ### 2.2.12 获取粉丝列表业务
 
+<center><img src="data/flow/followerlist.drawio.png" width=370></center>
+
 业务逻辑如下：
 
 - 先从缓存获取粉丝用户的 id 集合，然后去 user 缓存获取用户信息
 - 如果缓存不存在该 key，则从数据库中查询，成功后更新缓存
 
 ### 2.2.13 获取好友列表业务
+
+<center><img src="data/flow/friendlist.drawio.png" width=600></center>
 
 业务逻辑如下：
 
@@ -215,6 +227,8 @@
 - 然后更新 friend 缓存中最新的消息内容
 
 ### 2.2.15 获取聊天记录业务
+
+<center><img src="data/flow/chatrec.drawio.png"></center>
 
 业务逻辑如下：
 
@@ -233,9 +247,19 @@
 5. 缓存使用过期时间完成替换，不进行额外的缓存替换策略设计
 
 ## 3.2 缓存内容
-缓存内容主要有2大部分
+### 3.2.1 缓存分类
+缓存内容主要有3大类：
 1. 将数据库表描述的结构体以Hash的形式存储于Redis
-2. 将数据库中的一对多关系以Set的形式存储于Redis，例如：某用户关注的用户的集合、某视频的评论集合。这种Set中存储的是其在Redis中的key（key通常和底层数据库的主键同名）
+2. 将数据库中的一对多关系(且不涉及排序)以Set的形式存储于Redis，例如：某用户关注的用户的集合。这种Set中存储的是其在Redis中的key（key通常和底层数据库的主键同名，一般是id）
+3. 将数据库中的一对多关系(涉及排序)以ZSet的形式存储于Redis，例如：某视频的评论集合。这种Set中存储的是其在Redis中的key（key通常和底层数据库的主键同名，一般是id）
+
+### 3.2.2 缓存使用方式
+第一类的缓存是数据库表中的记录在缓存中的备份，使用方式和数据库表查询一致。但第2和第3类缓存使用方式不一样。
+
+第2和第3类的缓存主要承担了2个任务：
+1. 判断关系，例如判断一个用户是否关注了另一个用户。
+2. 作为中转，例如要获取视频评论列表，先在某视频的评论集合里取出所有的key（id），再通过这个key在缓存或数据库中再次查询。
+
 
 ## 3.3 缓存类型和key命名约定
 ### 3.3.1 user缓存

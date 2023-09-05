@@ -150,7 +150,7 @@
 
 ### 2.3.2 喜欢列表业务流程
 
-![img.png](data/flow/GetFavoriteList.png)
+![GetFavoriteList.png](data%2Fflow%2FGetFavoriteList.png)
 
 喜欢列表业务是查询业务，优先从缓存完成。
 
@@ -170,7 +170,7 @@
 
 ### 2.3.4 评论列表业务流程
 
-![img.png](data/flow/GetCommentList.png)
+![GetCommentList.png](data%2Fflow%2FGetCommentList.png)
 
 评论列表业务是查询业务，优先从缓存完成。
 

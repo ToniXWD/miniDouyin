@@ -94,7 +94,7 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(api.UserResponse)
-	// 先尝试从缓存完成业务
+	//先尝试从缓存完成业务
 	if rdb.RedisGetUserInfo(&req, resp) {
 		log.Infoln("从缓存完成用户信息获取")
 	} else {

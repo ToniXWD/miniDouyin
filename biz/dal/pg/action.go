@@ -43,6 +43,7 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 			// 粉丝用户数据更新
 			fanUser, _ := ID2DBUser(u.UserID)
 			DB.Model(&DBUser{}).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count + ?", 1))
+
 			fanUser.FollowCount++
 			fanUser.UpdateRedis()
 
@@ -51,6 +52,17 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 			DB.Model(&DBUser{}).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count + ?", 1))
 			Followed.FollowerCount++
 			Followed.UpdateRedis()
+
+			// 判断对方是否关注了自己
+			relation := &DBAction{}
+			res := DB.Model(&DBAction{}).Find(relation, "user_id = ? AND follow_id = ?", u.FollowID, u.UserID)
+			if res.RowsAffected != 0 {
+				//查到对方也关注了自己
+				err := AddFriend(u.FollowID, u.UserID)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		msg.TYPE = UserFollowAdd
 
@@ -59,8 +71,21 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 		err = u.Delete()
 		if err == nil {
 			user := &DBUser{}
+			// 粉丝用户数据更新
 			DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count - ?", 1))
+			// 被关注者用户数据更新
 			DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count - ?", 1))
+
+			// 判断对方是否关注了自己
+			relation := &DBAction{}
+			res := DB.Model(&DBAction{}).Find(relation, "user_id = ? AND follow_id = ?", u.FollowID, u.UserID)
+			if res.RowsAffected != 0 {
+				//查到对方也关注了自己
+				err := DelFriend(u.FollowID, u.UserID)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		msg.TYPE = UserFollowDel
 	}

@@ -116,7 +116,14 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 
 // 处理视频流
 func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
-	vlist, err := GetNewVideoList(*request.LatestTime)
+	var vlist []DBVideo
+	var err error
+
+	if request.LatestTime != nil {
+		vlist, err = GetNewVideoList(*request.LatestTime)
+	} else {
+		vlist, err = GetNewVideoList(0)
+	}
 	if err != nil {
 		response.StatusCode = 1
 		str := utils.ErrGetFeedVideoListFailed.Error()

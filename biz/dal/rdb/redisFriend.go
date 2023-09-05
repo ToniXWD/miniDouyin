@@ -35,6 +35,20 @@ func NewFriend(data map[string]interface{}) {
 	Rdb.Expire(ctx, friend_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
 }
 
+func DelFriend(data map[string]interface{}) {
+	ctx := context.Background()
+	fid := strconv.Itoa(int(data["FromID"].(int64)))
+	tid := strconv.Itoa(int(data["ToID"].(int64)))
+	if fid > tid {
+		fid, tid = tid, fid
+	}
+	friend_key := "friend_" + fid + "_" + tid
+	_, err := Rdb.Del(ctx, friend_key).Result()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+}
+
 func UpdateFriendList(data map[string]interface{}) {
 	ctx := context.Background()
 	user_id := data["ID"].(int64)
@@ -47,6 +61,22 @@ func UpdateFriendList(data map[string]interface{}) {
 		Score:  float64(friend_id),
 	}
 	_, err := Rdb.ZAdd(ctx, frilist_key, item).Result()
+	if err != nil {
+		log.Debugln(err.Error())
+	}
+
+	// 设置过期时间
+	Rdb.Expire(ctx, frilist_key, time.Hour*time.Duration(utils.REDIS_HOUR_TTL))
+}
+
+func UpdateFriendListDel(data map[string]interface{}) {
+	ctx := context.Background()
+	user_id := data["ID"].(int64)
+	clientuser_id := strconv.Itoa(int(user_id))
+	friend_id := data["Friend"].(int64)
+	frilist_key := "friendlist_" + clientuser_id
+
+	_, err := Rdb.ZRem(ctx, frilist_key, friend_id).Result()
 	if err != nil {
 		log.Debugln(err.Error())
 	}

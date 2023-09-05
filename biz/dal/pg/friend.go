@@ -23,6 +23,97 @@ func (u *DBfriend) TableName() string {
 	return "friends"
 }
 
+func UpdateRedis(id1 int64, id2 int64, Type1 int, Type2 int) {
+	// 更新缓存一个好友关系
+	item1 := map[string]interface{}{
+		"FromID":  id1,
+		"ToID":    id2,
+		"Message": "",
+		"MsgType": 0,
+	}
+	msg1 := RedisMsg{
+		TYPE: Type1,
+		DATA: item1,
+	}
+	ChanFromDB <- msg1
+
+	// 更新另一个好友关系
+	item2 := map[string]interface{}{
+		"FromID":  id2,
+		"ToID":    id1,
+		"Message": "",
+		"MsgType": 0,
+	}
+	msg2 := RedisMsg{
+		TYPE: Type1,
+		DATA: item2,
+	}
+	ChanFromDB <- msg2
+
+	// 更新集合关系1
+	item3 := map[string]interface{}{
+		"ID":     id1,
+		"Friend": id2,
+	}
+	msg3 := RedisMsg{
+		TYPE: Type2,
+		DATA: item3,
+	}
+	ChanFromDB <- msg3
+
+	// 更新集合关系2
+	item4 := map[string]interface{}{
+		"ID":     id2,
+		"Friend": id1,
+	}
+	msg4 := RedisMsg{
+		TYPE: Type2,
+		DATA: item4,
+	}
+	ChanFromDB <- msg4
+
+}
+
+// 插入2条朋友关系
+func AddFriend(id1 int64, id2 int64) error {
+	f1 := &DBfriend{}
+	f1.UserID = id1
+	f1.FriendID = id2
+	res := DB.Model(f1).Create(f1)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	f2 := &DBfriend{}
+	f2.FriendID = id1
+	f2.UserID = id2
+	res = DB.Model(f2).Create(f2)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	UpdateRedis(id1, id2, Friend, FriendList)
+
+	return nil
+}
+
+// 删除2条朋友关系
+func DelFriend(id1 int64, id2 int64) error {
+	dbf := &DBfriend{}
+	res := DB.Model(&DBfriend{}).Where("user_id = ? AND friend_id = ?", id1, id2).Delete(dbf)
+	if res.Error != nil {
+		return res.Error
+	}
+	res = DB.Model(&DBfriend{}).Where("user_id = ? AND friend_id = ?", id2, id1).Delete(dbf)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	UpdateRedis(id1, id2, FriendDel, FriendListDel)
+
+	return nil
+}
+
 // 将user转化为friend
 func apiUser2apiFriend(user *api.User, client *DBUser) (friend *api.FriendUser, msg DBMessage) {
 	friend = new(api.FriendUser)

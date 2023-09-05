@@ -18,6 +18,8 @@ const (
 	LikeCreate
 	LikeDel
 	Friend
-	FriendList // 用户好友列表
+	FriendDel
+	FriendList    // 用户好友列表
+	FriendListDel // 用户好友列表
 	ChatRecord
 )

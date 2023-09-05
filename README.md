@@ -55,7 +55,7 @@
 
 ### 2.2.10 关注业务
 
-![Alt text](data/flow/action.png)
+![img](./data/flow/action.png)
 
 业务逻辑如下：
 
@@ -65,7 +65,7 @@
 
 ### 2.2.11 获取关注列表业务
 
-![Alt text](data/flow/followlist.png)
+![img](./data/flow/followlist.png)
 
 业务逻辑如下：
 
@@ -74,7 +74,7 @@
 
 ### 2.2.12 获取粉丝列表业务
 
-![Alt text](data/flow/followerlist.png)
+![img](./data/flow/followerlist.png)
 
 业务逻辑如下：
 
@@ -83,7 +83,7 @@
 
 ### 2.2.13 获取好友列表业务
 
-![Alt text](data/flow/friendlist.png)
+![img](./data/flow/friendlist.png)
 
 业务逻辑如下：
 
@@ -93,7 +93,7 @@
 
 ### 2.2.14 发送消息业务
 
-![Alt text](data/flow/sendmsg.png)
+![img](./data/flow/sendmsg.png)
 
 业务逻辑如下：
 
@@ -102,7 +102,7 @@
 
 ### 2.2.15 获取聊天记录业务
 
-![Alt text](data/flow/chatrec.png)
+![img](./data/flow/chatrec.png)
 
 业务逻辑如下：
 

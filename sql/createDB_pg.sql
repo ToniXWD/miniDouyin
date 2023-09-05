@@ -9,7 +9,7 @@ CREATE TABLE users
     follower_count   bigint DEFAULT 0,             --粉丝数
     work_count       bigint DEFAULT 0,             --作品数
     favorite_count   bigint DEFAULT 0,             --点赞数
-    token            VARCHAR(255),                 --鉴权
+    token            VARCHAR(255) NOT NULL UNIQUE, --鉴权
     avatar           VARCHAR(255),                 --头像url
     background_image VARCHAR(255),                 --背景图url
     signature        VARCHAR(255),                 --个人介绍

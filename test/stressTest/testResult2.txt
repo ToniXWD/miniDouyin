@@ -1,0 +1,121 @@
+压力测试1：获取视频流(未登录状态)
+Running 30s test @ http://10.201.83.51:8889/douyin/feed/
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   238.85ms   34.14ms 420.61ms   75.92%
+    Req/Sec   138.11     32.26   316.00     70.75%
+  49595 requests in 30.07s, 125.48MB read
+Requests/sec:   1649.30
+Transfer/sec:      4.17MB
+压力测试2：获取视频流(登录状态)
+Running 30s test @ http://10.201.83.51:8889/douyin/feed/?token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   450.54ms   60.35ms 716.25ms   70.89%
+    Req/Sec    73.01     25.08   181.00     68.85%
+  26207 requests in 30.08s, 66.23MB read
+Requests/sec:    871.33
+Transfer/sec:      2.20MB
+压力测试3：注册
+Running 30s test @ http://10.201.83.51:8889/douyin/user/login/
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   615.43us    1.45ms  28.39ms   94.10%
+    Req/Sec   105.70k    12.60k  223.91k    71.00%
+  37933995 requests in 30.09s, 7.14GB read
+  Non-2xx or 3xx responses: 37933995
+Requests/sec: 1260547.92
+Transfer/sec:    242.83MB
+压力测试4：登录
+Running 30s test @ http://10.201.83.51:8889/douyin/user/register/
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   611.18us    1.43ms  32.31ms   94.06%
+    Req/Sec   106.34k    12.98k  234.41k    71.80%
+  38103434 requests in 30.08s, 7.17GB read
+  Non-2xx or 3xx responses: 38103434
+Requests/sec: 1266661.67
+Transfer/sec:    244.01MB
+压力测试5：获取用户信息(未登录状态)
+Running 30s test @ http://10.201.83.51:8889/douyin/user/?user_id=1
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   588.42us    1.35ms  30.77ms   94.04%
+    Req/Sec   107.04k    12.34k  238.54k    71.95%
+  38361982 requests in 30.10s, 7.11GB read
+  Non-2xx or 3xx responses: 38361982
+Requests/sec: 1274496.90
+Transfer/sec:    241.88MB
+压力测试6：获取用户信息(登录状态)
+Running 30s test @ http://10.201.83.51:8889/douyin/user/?user_id=1&token=ghostfather1234567
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    19.56ms   13.94ms 108.05ms   56.01%
+    Req/Sec     1.78k   420.82    10.28k    97.03%
+  636726 requests in 30.06s, 208.89MB read
+Requests/sec:  21180.46
+Transfer/sec:      6.95MB
+压力测试7：发布列表
+Running 30s test @ http://10.201.83.51:8889/douyin/publish/list/?user_id=1&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   123.03ms   79.70ms 709.86ms   68.36%
+    Req/Sec   279.18     50.04   450.00     71.60%
+  100215 requests in 30.07s, 86.88MB read
+Requests/sec:   3332.31
+Transfer/sec:      2.89MB
+压力测试8：喜欢列表
+Running 30s test @ http://10.201.83.51:8889/douyin/favorite/list/?user_id=1&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    87.43ms   23.87ms 233.71ms   72.06%
+    Req/Sec   379.68     60.11     0.90k    79.22%
+  136118 requests in 30.10s, 216.27MB read
+Requests/sec:   4522.94
+Transfer/sec:      7.19MB
+压力测试9：评论列表
+Running 30s test @ http://10.201.83.51:8889/douyin/comment/list/?video_id=7&token=ghostfather1234567
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   128.93ms   77.47ms 569.45ms   70.47%
+    Req/Sec   264.72     44.41   460.00     68.88%
+  95085 requests in 30.08s, 118.79MB read
+Requests/sec:   3161.02
+Transfer/sec:      3.95MB
+压力测试10：关注列表
+Running 30s test @ http://10.201.83.51:8889/douyin/relation/follow/list/?user_id=1&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    28.08ms   22.64ms 164.92ms   58.25%
+    Req/Sec     1.26k   184.49     3.02k    75.58%
+  453079 requests in 30.04s, 132.65MB read
+Requests/sec:  15083.93
+Transfer/sec:      4.42MB
+压力测试11：粉丝列表
+Running 30s test @ http://10.201.83.51:8889/douyin/relation/follower/list/?user_id=1&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    52.07ms   33.96ms 455.91ms   81.68%
+    Req/Sec   663.25    103.89     2.07k    80.61%
+  237332 requests in 30.09s, 99.14MB read
+Requests/sec:   7887.10
+Transfer/sec:      3.29MB
+压力测试12：好友列表
+Running 30s test @ http://10.201.83.51:8889/douyin/relation/friend/list/?user_id=1&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    13.60ms    8.51ms  47.26ms   56.94%
+    Req/Sec     2.46k   219.81     3.58k    64.97%
+  880566 requests in 30.07s, 321.63MB read
+Requests/sec:  29281.56
+Transfer/sec:     10.70MB
+压力测试13：聊天记录
+Running 30s test @ http://10.201.83.51:8889/douyin/message/chat/?to_user_id=2&token=toni123456
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   613.53us    1.37ms  29.19ms   93.59%
+    Req/Sec   104.93k    12.75k  250.14k    73.79%
+  37706620 requests in 30.10s, 7.23GB read
+  Non-2xx or 3xx responses: 37706620
+Requests/sec: 1252867.51
+Transfer/sec:    246.13MB

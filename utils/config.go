@@ -7,22 +7,25 @@
  */
 package utils
 
-import log "github.com/sirupsen/logrus"
+import  (
+	log "github.com/sirupsen/logrus"
+	"os"
+)
 
 var (
 	// 关系型数据库配置项
-	DSN    = "user=toni password=tmdgnnwscjl dbname=douyin port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	DSN    = "user=postgres password="+os.Getenv("POSTGRE_SQL_PASSWORD")+" dbname=postgres host="+os.Getenv("POSTGRE_SQL_HOST")+" port="+os.Getenv("POSTGRE_SQL_PORT")+" sslmode=disable TimeZone=Asia/Shanghai"
 	DBTYPE = "pg"
 
 	// hertz配置项
-	PORT     = "8889"
-	URLIP    = "172.29.172.57"
+	PORT     = "8080"
+	URLIP    = os.Getenv("paas_url")
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024
 
 	// Redis配置项
-	REDIS_ADDR     = "localhost:6379"
-	REDIS_PASSWD   = ""
+	REDIS_ADDR     = os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT")
+	REDIS_PASSWD   = os.Getenv("REDISCLI_AUTH")
 	REDIS_DB       = 0
 	REDIS_HOUR_TTL = 5
 	REDIS_MAX_FEED = 1000

@@ -1,4 +1,3 @@
-\c douyin;
 CREATE TABLE users
 (
     id               SERIAL PRIMARY KEY,           -- 自增主键

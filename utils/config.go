@@ -18,7 +18,7 @@ var (
 	DBTYPE = "pg"
 
 	// hertz配置项
-	PORT     = "8080"
+	// PORT     = "8080"
 	URLIP    = os.Getenv("paas_url")
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024

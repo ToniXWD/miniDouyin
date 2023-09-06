@@ -23,7 +23,8 @@ var TimeFormat_MS string = "2006-01-02 15:04:05.000"
 var TimeFormat_MCS string = "2006-01-02 15:04:05.000000"
 
 func Realurl(s_url string) string {
-	r_url := "http://" + URLIP + ":" + PORT + "/data/" + s_url
+	// r_url := "https://" + URLIP + ":" + PORT + "/data/" + s_url
+	r_url := "https://" + URLIP + "/data/" + s_url
 	return r_url
 }
 

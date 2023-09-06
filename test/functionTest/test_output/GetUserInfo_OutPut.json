@@ -1,0 +1,14 @@
+{
+  "status_code": 0,
+  "status_msg": "Get user information successfully!",
+  "user": {
+    "id": 4,
+    "name": "test2",
+    "follow_count": 7,
+    "follower_count": 4,
+    "is_follow": true,
+    "total_favorited": 2,
+    "work_count": 1,
+    "favorite_count": 3
+  }
+}

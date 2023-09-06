@@ -338,11 +338,15 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		ans = newRecord.insert(DB, clientUser, curVideo)
 		// 发送消息更新缓存
 		newRecord.UpdateRedis(LikeCreate)
+		response.StatusCode = 0
+		response.StatusMsg = &utils.FavoriteVideoActionSuccess
 
 	} else if request.ActionType == 2 {
 		// 取消点赞
 		ans = newRecord.delete(DB, clientUser, curVideo)
 		newRecord.UpdateRedis(LikeDel)
+		response.StatusCode = 0
+		response.StatusMsg = &utils.UnFavoriteVideoActionSuccess
 	} else {
 		ans = false
 	}
@@ -352,9 +356,6 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		response.StatusMsg = &str
 		return
 	}
-
-	response.StatusCode = 0
-	response.StatusMsg = &utils.FavoriteVideoActionSuccess
 
 }
 

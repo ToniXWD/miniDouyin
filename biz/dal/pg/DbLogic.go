@@ -374,7 +374,7 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 	// 验证token
 	// 先尝试缓存获取clientUser
 	clientUser, err := Token2DBUser(request.Token)
-	if err != nil || clientUser.ID != request.UserID {
+	if err != nil || (clientUser != nil && clientUser.ID != request.UserID) {
 		response.StatusCode = 1
 		return
 	}

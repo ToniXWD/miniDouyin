@@ -71,7 +71,6 @@ func Test_FavoriteList(t *testing.T) {
 	CreateLogFile("FavoriteList", body)
 }
 
-// TODO：未测试
 func Test_Comment(t *testing.T) {
 
 	url := address + "/douyin/comment/action/?token=toni123456&video_id=28&action_type=1"

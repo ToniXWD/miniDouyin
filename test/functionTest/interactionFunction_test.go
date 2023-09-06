@@ -12,7 +12,7 @@ import (
 
 func Test_FavoriteAction(t *testing.T) {
 
-	url := address + "/douyin/favorite/action/?token=test2123456&video_id=4&action_type=2"
+	url := address + "/douyin/favorite/action/?token=toni123456&video_id=38&action_type=1"
 	method := "POST"
 
 	client := &http.Client{}

@@ -1,0 +1,21 @@
+{
+  "status_code": 0,
+  "status_msg": "Get follower list successfully",
+
+  // 没有获取到粉丝列表
+  "user_list": [
+    {
+      "id": 2,
+      "name": "test5",
+      "follow_count": 3,
+      "follower_count": 6,  // 数据库中是 5，这里应该是吧自己算上了
+      "is_follow": true,
+      "avatar": "http://192.168.1.113:8889/data/",
+      "background_image": "http://192.168.1.113:8889/data/",
+      "signature": "",
+      "total_favorited": 7,
+      "work_count": 1,
+      "favorite_count": 5
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "status_code": 0,
+  "video_list": [
+    {
+      "id": 4,
+      "author": {
+        "id": 4,
+        "name": "test2",
+        "follow_count": 7,
+        "follower_count": 4,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 2,
+        "work_count": 1,
+        "favorite_count": 3
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693382583366090000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693382583366090000.png",
+      "favorite_count": 2,
+      "comment_count": 2,
+      "is_favorite": true,
+      "title": "test\n"
+    }
+  ]
+}

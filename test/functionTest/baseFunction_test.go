@@ -1,18 +1,22 @@
 package functionTest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestFeed(t *testing.T) {
-	url := "http://172.29.172.57:8889/douyin/feed/"
+	url := address + "/douyin/feed/"
 	method := "GET"
 
 	client := &http.Client{}
@@ -62,8 +66,73 @@ func TestFeed(t *testing.T) {
 
 func Test_Register(t *testing.T) {
 
-	url := "http://172.29.172.57:8889/douyin/user/register/?username=XXX&password=111111"
+	url := address + "/douyin/user/register/?username=XXX&password=111111"
 	method := "POST"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	file, _ := os.Create("Register_Output.json")
+	defer file.Close()
+	file.Write(body)
+}
+
+func Test_Login(t *testing.T) {
+
+	url := address + "/douyin/user/login/?username=test2&password=123456"
+	method := "POST"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(body))
+
+	file, _ := os.Create("Login_Output.json")
+	defer file.Close()
+	file.Write(body)
+}
+
+func Test_GetUserInfo(t *testing.T) {
+
+	url := address + "/douyin/user/?user_id=4&token=test2123456"
+	method := "GET"
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, nil)
@@ -86,8 +155,88 @@ func Test_Register(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
-
-	file, _ := os.Create("Register_Output.json")
+	fmt.Println(string(body))
+	file, _ := os.Create("GetUserInfo_OutPut.json")
 	defer file.Close()
 	file.Write(body)
+}
+
+func Test_Publish(t *testing.T) {
+
+	url := address + "/douyin/publish/action/"
+	method := "POST"
+
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	file, errFile1 := os.Open("./1692802841737052100.mp4")
+	defer file.Close()
+	part1,
+		errFile1 := writer.CreateFormFile("data", filepath.Base("1692803039066493800"))
+	_, errFile1 = io.Copy(part1, file)
+	if errFile1 != nil {
+		fmt.Println(errFile1)
+		return
+	}
+	_ = writer.WriteField("token", "toni123456")
+	_ = writer.WriteField("title", "basetest")
+	err := writer.Close()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(body))
+	CreateLogFile("Publish", body)
+}
+
+func Test_PublishList(t *testing.T) {
+
+	url := address + "/douyin/publish/list/?token=test2123456&user_id=4"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(body))
+	CreateLogFile("PublishList", body)
 }

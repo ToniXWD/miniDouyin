@@ -161,7 +161,6 @@ func Test_GetUserInfo(t *testing.T) {
 	file.Write(body)
 }
 
-// TODO: 未测试
 func Test_Publish(t *testing.T) {
 
 	url := address + "/douyin/publish/action/"
@@ -169,17 +168,17 @@ func Test_Publish(t *testing.T) {
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	file, errFile1 := os.Open("")
+	file, errFile1 := os.Open("/Users/queyibuke/GolandProjects/miniDouyin/data/videos/1692803039066493800.mp4")
 	defer file.Close()
 	part1,
-		errFile1 := writer.CreateFormFile("data", filepath.Base(""))
+		errFile1 := writer.CreateFormFile("data", filepath.Base("1692803039066493800"))
 	_, errFile1 = io.Copy(part1, file)
 	if errFile1 != nil {
 		fmt.Println(errFile1)
 		return
 	}
-	_ = writer.WriteField("token", "")
-	_ = writer.WriteField("title", "")
+	_ = writer.WriteField("token", "test2123456")
+	_ = writer.WriteField("title", "basetest")
 	err := writer.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -209,6 +208,7 @@ func Test_Publish(t *testing.T) {
 		return
 	}
 	fmt.Println(string(body))
+	CreateLogFile("Publish", body)
 }
 
 func Test_PublishList(t *testing.T) {

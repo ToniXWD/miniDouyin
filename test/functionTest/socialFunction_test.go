@@ -128,7 +128,7 @@ func Test_FriendList(t *testing.T) {
 
 func Test_Message(t *testing.T) {
 
-	url := address + "/douyin/message/action/?token=test2123456&to_user_id=2&action_type=1&content=2222"
+	url := address + "/douyin/message/action/?token=test2123456&to_user_id=2&action_type=1&content=nihao"
 	method := "POST"
 
 	client := &http.Client{}

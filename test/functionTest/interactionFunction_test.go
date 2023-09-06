@@ -1,7 +1,6 @@
 package functionTest
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -73,19 +72,26 @@ func Test_FavoriteList(t *testing.T) {
 // TODO：未测试
 func Test_Comment(t *testing.T) {
 
-	url := address + "/douyin/comment/action/?token=test2123456&video_id=4&action_type=1"
+	url := address + "/douyin/comment/action/?token=test2123456&video_id=4&action_type=1&content_text=testcomment"
 	method := "POST"
 
 	client := &http.Client{}
-	message := "你好啊，测试一下评论"
-	reqbody := bytes.NewReader([]byte(message))
-	req, err := http.NewRequest(method, url, reqbody)
+	req, err := http.NewRequest(method, url, nil)
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
+
+	// payload := &bytes.Buffer{}
+	// writer := multipart.NewWriter(payload)
+	//
+	// message := "你好啊，测试一下评论"
+	//
+	// _ = writer.WriteField("comment_text", message)
+	//
+	// req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	res, err := client.Do(req)
 	if err != nil {

@@ -1,13 +1,14 @@
 package pg
 
 import (
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"reflect"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -150,6 +151,9 @@ func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r
 			// 尝试从查询评论
 			C_ID, _ := strconv.Atoi(c_id)
 			cDB, err := ID2Comment(int64(C_ID))
+			if err != nil {
+				return nil, err
+			}
 
 			// 查询评论者
 			cUser, err := ID2DBUser(cDB.UserId)

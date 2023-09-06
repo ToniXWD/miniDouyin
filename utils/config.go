@@ -15,8 +15,9 @@ var (
 	DBTYPE = "pg"
 
 	// hertz配置项
-	PORT     = "8889"
-	URLIP    = "10.201.83.51"
+	PORT  = "8889"
+	URLIP = "10.201.83.51"
+	// STATIC_DOMAIN = "https://x3498181z6.vicp.fun/"
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024
 

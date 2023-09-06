@@ -1,12 +1,13 @@
 package pg
 
 import (
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"reflect"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -247,6 +248,10 @@ func (u *DBUser) UpdateRedis() {
 
 // 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
 func Token2DBUser(token string) (*DBUser, error) {
+	if token == "" {
+		// 未登录状态
+		return nil, nil
+	}
 	var tokenErr error
 	var user = &DBUser{}
 	uMap, find := rdb.GetUserByToken(token)

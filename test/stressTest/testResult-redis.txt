@@ -16,16 +16,6 @@ Running 30s test @ http://10.201.83.51:8889/douyin/feed/?token=toni123456
   26207 requests in 30.08s, 66.23MB read
 Requests/sec:    871.33
 Transfer/sec:      2.20MB
-压力测试3：注册
-Running 30s test @ http://10.201.83.51:8889/douyin/user/login/
-  12 threads and 400 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   615.43us    1.45ms  28.39ms   94.10%
-    Req/Sec   105.70k    12.60k  223.91k    71.00%
-  37933995 requests in 30.09s, 7.14GB read
-  Non-2xx or 3xx responses: 37933995
-Requests/sec: 1260547.92
-Transfer/sec:    242.83MB
 压力测试4：登录
 Running 30s test @ http://10.201.83.51:8889/douyin/user/register/
   12 threads and 400 connections

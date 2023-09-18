@@ -2,12 +2,13 @@ package rdb
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"strconv"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	log "github.com/sirupsen/logrus"
 )
 
 // 新建 Comment 缓存项
@@ -106,7 +107,7 @@ func GetCommentByID(id string) (map[string]string, bool) {
 }
 
 // 从 CMap 转化为api.Comment
-func CMap2ApiComment(cMap map[string]string) (*api.Comment, bool) {
+func CMap2ApiComment(cMap map[string]string, clientToken string) (*api.Comment, bool) {
 	strID := cMap["ID"]
 	ID, _ := strconv.Atoi(strID)
 	content := cMap["Content"]
@@ -127,5 +128,24 @@ func CMap2ApiComment(cMap map[string]string) (*api.Comment, bool) {
 		Content:    content,
 		CreateDate: createdAt,
 	}
+
+	// 判断当前用户是否关注了评论作者
+	if clientToken == "" {
+		// 前端未登录
+		return apic, true
+	}
+
+	// 登录则需要判断是否关注了评论用户
+	clientUserMap, find := GetUserByToken(clientToken)
+	if !find {
+		return nil, false
+	}
+	ClientID, _ := strconv.Atoi(clientUserMap["ID"])
+	isfollow, err := IsFollow(int64(ClientID), int64(userId))
+	if err != nil {
+		// 缓存关系缺失
+		return nil, false
+	}
+	apic.User.IsFollow = isfollow
 	return apic, true
 }

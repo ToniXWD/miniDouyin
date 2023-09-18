@@ -2,9 +2,10 @@ package rdb
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -154,7 +155,7 @@ func RedisGetCommentList(request *api.CommentListRequest, response *api.CommentL
 			response.CommentList = nil
 			return false
 		}
-		apiC, conv := CMap2ApiComment(cMap)
+		apiC, conv := CMap2ApiComment(cMap, request.Token)
 		if !conv {
 			response.CommentList = nil
 			return false

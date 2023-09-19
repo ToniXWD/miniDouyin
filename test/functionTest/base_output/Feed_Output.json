@@ -1,0 +1,117 @@
+{
+  "status_code": 0,
+  "status_msg": "Load video list successfully",
+  "video_list": [
+    {
+      "id": 37,
+      "author": {
+        "id": 4,
+        "name": "toni",
+        "follow_count": 1,
+        "follower_count": 0,
+        "is_follow": false,
+        "avatar": "http://172.29.172.57:8889/data/",
+        "background_image": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+        "signature": "",
+        "total_favorited": 9,
+        "work_count": 4,
+        "favorite_count": 11
+      },
+      "play_url": "http://172.29.172.57:8889/data/videos/1693328249603101073.mp4",
+      "cover_url": "http://172.29.172.57:8889/data/bgs/1693328249603101073.png",
+      "favorite_count": 1,
+      "comment_count": 1,
+      "is_favorite": false,
+      "title": "另一个测试视频"
+    },
+    {
+      "id": 36,
+      "author": {
+        "id": 4,
+        "name": "toni",
+        "follow_count": 1,
+        "follower_count": 0,
+        "is_follow": false,
+        "avatar": "http://172.29.172.57:8889/data/",
+        "background_image": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+        "signature": "",
+        "total_favorited": 9,
+        "work_count": 4,
+        "favorite_count": 11
+      },
+      "play_url": "http://172.29.172.57:8889/data/videos/1693327830237200234.mp4",
+      "cover_url": "http://172.29.172.57:8889/data/bgs/1693327830237200234.png",
+      "favorite_count": 0,
+      "comment_count": 0,
+      "is_favorite": false,
+      "title": "测试视频"
+    },
+    {
+      "id": 35,
+      "author": {
+        "id": 4,
+        "name": "toni",
+        "follow_count": 1,
+        "follower_count": 0,
+        "is_follow": false,
+        "avatar": "http://172.29.172.57:8889/data/",
+        "background_image": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+        "signature": "",
+        "total_favorited": 9,
+        "work_count": 4,
+        "favorite_count": 11
+      },
+      "play_url": "http://172.29.172.57:8889/data/videos/1693324752094281872.mp4",
+      "cover_url": "http://172.29.172.57:8889/data/bgs/1693324752094281872.png",
+      "favorite_count": 0,
+      "comment_count": 0,
+      "is_favorite": false,
+      "title": "测试视频"
+    },
+    {
+      "id": 28,
+      "author": {
+        "id": 4,
+        "name": "toni",
+        "follow_count": 1,
+        "follower_count": 0,
+        "is_follow": false,
+        "avatar": "http://172.29.172.57:8889/data/",
+        "background_image": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+        "signature": "",
+        "total_favorited": 9,
+        "work_count": 4,
+        "favorite_count": 11
+      },
+      "play_url": "http://172.29.172.57:8889/data/videos/1692641556055249618.mp4",
+      "cover_url": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+      "favorite_count": 8,
+      "comment_count": 5,
+      "is_favorite": false,
+      "title": "鲨鱼"
+    },
+    {
+      "id": 27,
+      "author": {
+        "id": 37,
+        "name": "ghostfather",
+        "follow_count": 0,
+        "follower_count": 1,
+        "is_follow": false,
+        "avatar": "http://172.29.172.57:8889/data/",
+        "background_image": "http://172.29.172.57:8889/data/",
+        "signature": "",
+        "total_favorited": 2,
+        "work_count": 1,
+        "favorite_count": 0
+      },
+      "play_url": "http://172.29.172.57:8889/data/videos/1692632933866609243.mp4",
+      "cover_url": "http://172.29.172.57:8889/data/deaults/douyin.jpg",
+      "favorite_count": 2,
+      "comment_count": 10,
+      "is_favorite": false,
+      "title": "飞机起飞"
+    }
+  ],
+  "next_time": 1692661733868
+}

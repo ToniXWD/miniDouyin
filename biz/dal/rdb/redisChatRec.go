@@ -66,10 +66,10 @@ func GetChatRec(fid int64, tid int64) ([]string, string, bool) {
 	chatrec_key := "chatrec_" + strconv.Itoa(int(fid)) + "_" + strconv.Itoa(int(tid))
 
 	// 使用 Exists 方法判断键是否存在
-	_, err := Rdb.Exists(ctx, chatrec_key).Result()
-	if err != nil {
+	exists, err := Rdb.Exists(ctx, chatrec_key).Result()
+	if err != nil || exists != 1 {
 		log.Debugln("Error:", err)
-		return nil, "", false
+		return nil, chatrec_key, false
 	}
 
 	chatrec, err := Rdb.ZRange(ctx, chatrec_key, 0, -1).Result()

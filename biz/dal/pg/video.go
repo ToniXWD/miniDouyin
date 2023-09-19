@@ -5,6 +5,8 @@ import (
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -93,28 +95,10 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 	}
 
 	// 填充用户
-	var dbuser DBUser
-
-	// 先尝试从Redis缓存获取用户
-	dbMap, find := rdb.GetUserById(v.Author)
-	if find {
-		// 如果缓存命中
-		log.Debugln("ToApiVideo: 从缓存查询视频author记录成功")
-		dbuser.InitSelfFromMap(dbMap)
-	} else {
-		// 否则需要重数据库加载用户
-		res := DB.Model(&DBUser{}).First(&dbuser, "ID = ?", v.Author)
-		if res.Error != nil {
-			av.Author = nil
-			return nil, utils.ErrVideoUserNotExist
-		}
-		// 发送消息更新用户缓存
-		items := utils.StructToMap(&dbuser)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	// 先尝试从Redis缓存获取作者
+	dbuser, err := ID2DBUser(v.Author)
+	if err != nil {
+		return nil, err
 	}
 
 	av.Author, _ = dbuser.ToApiUser(clientUser)
@@ -131,13 +115,8 @@ func (v *DBVideo) ToApiVideo(db *gorm.DB, clientUser *DBUser, islike bool) (*api
 		return av, nil
 	}
 
-	// 否则需要进行查询以判断前端用户是否喜欢该视频
-	findres := &Like{}
-	r := db.Model(&Like{}).First(findres, "user_id = ? AND video_id = ?", clientUser.ID, v.ID)
-	if r.RowsAffected != 0 {
-		// 如果找到了记录，设置IsFavorite为true
-		av.IsFavorite = true
-	}
+	// 判断用户是否对视频点过赞
+	av.IsFavorite = IsVideoLikedByUser(clientUser.ID, v.ID)
 	return av, nil
 }
 
@@ -145,6 +124,58 @@ func (v *DBVideo) GetMinTimestamp() time.Time {
 	var minViews time.Time
 	DB.Model(v).Select("MIN(created_at)").Scan(&minViews)
 	return minViews
+}
+
+func (v *DBVideo) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(v).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			case reflect.Struct:
+				if field.Type() == reflect.TypeOf(time.Time{}) {
+					// 如果字段类型是time.Time，尝试将字符串解析为时间
+					t, err := utils.Str2Time(fieldValue)
+					if err == nil {
+						field.Set(reflect.ValueOf(t))
+					}
+				}
+			}
+		}
+	}
+}
+
+// 更新视频缓存 和 用户发布视频的集合
+// authorID 不为0表示新发布了视频
+func (v *DBVideo) UpdateRedis(authorID int64) {
+	// 更新视频缓存
+	items1 := utils.StructToMap(v)
+	msg1 := RedisMsg{
+		TYPE: VideoInfo,
+		DATA: items1,
+	}
+	ChanFromDB <- msg1
+
+	if authorID == 0 {
+		// authorID =0 表示视频被点赞或评论了，不需要更新用户发布视频的集合
+		return
+	}
+
+	// 更新用户发布视频的集合
+	msg2 := RedisMsg{
+		TYPE: Publish,
+		DATA: map[string]interface{}{
+			"ID":     authorID,
+			"Videos": []interface{}{v.ID},
+		},
+	}
+	ChanFromDB <- msg2
 }
 
 // 返回至多30条视频列表
@@ -177,6 +208,7 @@ func GetNewVideoList(maxDate int64) (vlist []DBVideo, r_err error) {
 	return
 }
 
+// 查询用户发布的视频列表，并更新到缓存集合
 func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 	r_err = nil
 
@@ -199,4 +231,22 @@ func GetUserVideoList(userID int64) (vlist []DBVideo, r_err error) {
 		}}
 	ChanFromDB <- msg
 	return
+}
+
+func ID2VideoBy(ID int64) (*DBVideo, error) {
+	dbv := &DBVideo{}
+	// 先尝试缓存获取
+	vMap, find := rdb.GetVideoById(strconv.FormatInt(ID, 10))
+	if find {
+		//	缓存命中
+		dbv.InitSelfFromMap(vMap)
+	} else {
+		dbv.ID = ID
+		find := dbv.QueryVideoByID()
+		if !find {
+			return nil, utils.ErrVideoNotExist
+		}
+		dbv.UpdateRedis(0)
+	}
+	return dbv, nil
 }

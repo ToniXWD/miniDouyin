@@ -2,7 +2,7 @@
  * @Description:
  * @Author: Zjy
  * @Date: 2023-08-23 11:10:17
- * @LastEditTime: 2023-09-03 12:32:44
+ * @LastEditTime: 2023-08-23 11:10:50
  * @version: 1.0
  */
 package utils
@@ -11,12 +11,12 @@ import log "github.com/sirupsen/logrus"
 
 var (
 	// 关系型数据库配置项
-	DSN    = "user=postgres password=031024 dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	DSN    = "user=toni password=tmdgnnwscjl dbname=douyin port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	DBTYPE = "pg"
 
 	// hertz配置项
 	PORT     = "8889"
-	URLIP    = "172.27.181.7"
+	URLIP    = "172.29.172.57"
 	ServerIP = "0.0.0.0"
 	MaxBody  = 128 * 1024 * 1024
 
@@ -33,5 +33,5 @@ var (
 	LOG_LEVEL    = log.DebugLevel
 
 	// Gorm 配置
-	GORM_LOGGER_TERMINAL = true // 日志输出到终端？
+	GORM_LOGGER_TERMINAL = false // 日志输出到终端？
 )

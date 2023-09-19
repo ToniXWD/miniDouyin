@@ -1,12 +1,13 @@
 package pg
 
 import (
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"reflect"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -100,7 +101,7 @@ func (u *DBUser) increaseFavorite(db *gorm.DB, num int64) *gorm.DB {
 }
 
 // 获赞数自增
-// 将当前结构体插入数据库，返回是否成功
+// 将当前结构体插入数据库，返回*gorm.DB查询结果
 // 需要提前保证该结构体有效
 func (u *DBUser) increaseFavorited(db *gorm.DB, num int64) *gorm.DB {
 	return db.Model(u).Where("ID = ?", u.ID).Update("total_favorited", gorm.Expr("total_favorited + ?", num))
@@ -140,7 +141,7 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 
 	// 否则需要根据clientUser查询该用户是否被关注
 	// 先尝试从缓存查询关注记录
-	res, err := rdb.IsFollow(clientUser.Token, u.ID)
+	res, err := rdb.IsFollow(clientUser.ID, u.ID)
 	if err == nil {
 		// 缓存查询成功
 		log.Debugln("ToApiUser: 从缓存查询关注记录成功")
@@ -158,8 +159,8 @@ func (u *DBUser) ToApiUser(clientUser *DBUser) (apiuser *api.User, err error) {
 			msg := RedisMsg{
 				TYPE: UserFollowAdd,
 				DATA: map[string]interface{}{
-					"Token": clientUser.Token,
-					"ID":    u.ID,
+					"UserID":   clientUser.ID,
+					"FollowID": u.ID,
 				}}
 			ChanFromDB <- msg
 			return apiuser, nil
@@ -207,9 +208,9 @@ func DBUserFromRegisterRequest(request *api.UserRegisterRequest) DBUser {
 }
 
 // 从获取用户信息请求请求构造新用户
-func DBGetUser(request *api.UserRequest) (*DBUser, error) {
+func DBGetUserByID(UserID int64) (*DBUser, error) {
 	var user DBUser
-	res := DB.First(&user, "ID = ?", request.UserID)
+	res := DB.First(&user, "ID = ?", UserID)
 
 	if res.Error != nil {
 		// 没有找到记录
@@ -233,4 +234,62 @@ func ValidateToken(token string) (*DBUser, error) {
 		return nil, utils.ErrTokenVerifiedFailed
 	}
 	return &user, nil
+}
+
+// 更新用户缓存
+func (u *DBUser) UpdateRedis() {
+	items1 := utils.StructToMap(u)
+	msg1 := RedisMsg{
+		TYPE: UserInfo,
+		DATA: items1,
+	}
+	ChanFromDB <- msg1
+}
+
+// 通过token读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
+func Token2DBUser(token string) (*DBUser, error) {
+	if token == "" {
+		// 未登录状态
+		return nil, nil
+	}
+	var tokenErr error
+	var user = &DBUser{}
+	uMap, find := rdb.GetUserByToken(token)
+	if find {
+		// 缓存命中
+		user.InitSelfFromMap(uMap)
+	} else {
+		// 否则数据库读取
+		user, tokenErr = ValidateToken(token)
+		if tokenErr != nil {
+			return nil, utils.ErrTokenVerifiedFailed
+		}
+		// 发送消息更新缓存
+		user.UpdateRedis()
+
+		log.Infoln("Token2DBUser：更新user缓存")
+	}
+	return user, nil
+}
+
+// 通过ID读取用户，先尝试缓存读取，失败后再读取数据库并更新缓存
+func ID2DBUser(ID int64) (*DBUser, error) {
+	var IdErr error
+	var user = &DBUser{}
+	uMap, find := rdb.GetUserById(ID)
+	if find {
+		// 缓存命中
+		user.InitSelfFromMap(uMap)
+	} else {
+		// 否则数据库读取
+		user, IdErr = DBGetUserByID(ID)
+		if IdErr != nil {
+			return nil, utils.ErrUserNotFound
+		}
+		// 发送消息更新缓存
+		user.UpdateRedis()
+
+		log.Infoln("ID2DBUser：更新user缓存")
+	}
+	return user, nil
 }

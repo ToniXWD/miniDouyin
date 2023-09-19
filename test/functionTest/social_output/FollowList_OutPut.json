@@ -1,0 +1,58 @@
+{
+  "status_code": 0,
+  "status_msg": "Get follow list successfully",
+  "user_list": [
+    {
+      "id": 1,
+      "name": "toni111",
+      "follow_count": 0,
+      "follower_count": 2,
+      "is_follow": true,
+      "avatar": "http://192.168.1.113:8889/data/",
+      "background_image": "http://192.168.1.113:8889/data/",
+      "signature": "",
+      "total_favorited": 4,
+      "work_count": 2,
+      "favorite_count": 0
+    },
+    {
+      "id": 1,
+      "name": "toni111",
+      "follow_count": 0,
+      "follower_count": 2,
+      "is_follow": true,
+      "avatar": "http://192.168.1.113:8889/data/",
+      "background_image": "http://192.168.1.113:8889/data/",
+      "signature": "",
+      "total_favorited": 4,
+      "work_count": 2,
+      "favorite_count": 0
+    },
+    {
+      "id": 4,
+      "name": "test2",
+      "follow_count": 7,
+      "follower_count": 4,
+      "is_follow": true,
+      "avatar": "http://192.168.1.113:8889/data/",
+      "background_image": "http://192.168.1.113:8889/data/",
+      "signature": "",
+      "total_favorited": 0,
+      "work_count": 1,
+      "favorite_count": 1
+    },
+    {
+      "id": 3,
+      "name": "test6",
+      "follow_count": 2,
+      "follower_count": 1,
+      "is_follow": false,
+      "avatar": "http://192.168.1.113:8889/data/",
+      "background_image": "http://192.168.1.113:8889/data/",
+      "signature": "",
+      "total_favorited": 0,
+      "work_count": 0,
+      "favorite_count": 1
+    }
+  ]
+}

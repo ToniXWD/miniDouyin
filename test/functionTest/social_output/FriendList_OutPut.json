@@ -1,0 +1,18 @@
+{
+  "status_code": 0,
+  "status_msg": "Get friend list successfully",
+  "user_list": [
+    {
+      "id": 4,
+      "name": "test2",
+      "follow_count": 9,
+      "follower_count": 5,
+      "is_follow": false,
+      "total_favorited": 1,
+      "work_count": 1,
+      "favorite_count": 3,
+      "message": "",
+      "msgType": 0
+    }
+  ]
+}

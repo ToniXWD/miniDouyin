@@ -1,0 +1,6 @@
+{
+  "status_code": 1,
+  "status_msg": "User already exists!",
+  "user_id": 0,
+  "token": ""
+}

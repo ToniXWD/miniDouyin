@@ -1,9 +1,14 @@
 package pg
 
 import (
+	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
+	"reflect"
+	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -47,6 +52,17 @@ func (v *Comment) CreateComment() (int64, error) {
 	return v.ID, result.Error
 }
 
+// 更新缓存
+func (u *Comment) UpdateRedis(Type int) {
+	items := utils.StructToMap(u)
+	msg := RedisMsg{
+		TYPE: Type,
+		DATA: items,
+	}
+	ChanFromDB <- msg
+
+}
+
 // 删除评论
 func DeleteComment(commentId int64) (*Comment, error) {
 	comment := Comment{}
@@ -64,6 +80,19 @@ func DeleteComment(commentId int64) (*Comment, error) {
 	return &comment, nil
 }
 
+// 从获取用户信息请求请求构造新用户
+func DBGetCommentByID(CommentID int64) (*Comment, error) {
+	var comm Comment
+	res := DB.First(&comm, "ID = ?", CommentID)
+
+	if res.Error != nil {
+		// 没有找到记录
+		return nil, utils.ErrUserNotFound
+	}
+
+	return &comm, nil
+}
+
 // 根据 video_id获取评论列表
 func GetDBCommentList(v_id int64) (clist []Comment, err error) {
 	err = nil
@@ -75,55 +104,92 @@ func GetDBCommentList(v_id int64) (clist []Comment, err error) {
 	return
 }
 
-func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
-	r_err = nil
-	var clientUser *DBUser = nil
-	if token != "" {
-		// token不为空，表示客户端已经登录
-		// 校验token
-		// TODO:尝试从缓存查询用户
-		clientUser, r_err = ValidateToken(token)
-		if r_err != nil {
-			return nil, r_err
+func ID2Comment(cID int64) (*Comment, error) {
+	// 尝试从缓存查询评论
+	var cDB = &Comment{}
+	var err error
+	cMap, find := rdb.GetCommentByID(strconv.FormatInt(cID, 10))
+	if find {
+		// 缓存命中
+		log.Debugln("ID2Comment: 从缓存查询评论成功")
+		cDB = &Comment{}
+		cDB.InitSelfFromMap(cMap)
+	} else {
+		//从数据库查找
+		cDB, err = DBGetCommentByID(cID)
+		if err != nil {
+			return nil, utils.ErrCommentNotExist
 		}
+		// 发送消息更新缓存
+		cDB.UpdateRedis(CommentCreate)
+		log.Infoln("ID2Comment：更新comment缓存")
+	}
+	return cDB, nil
+}
+
+// 获取评论列表
+func NewGetCommentListService(v_id int64, token string) (clist []*api.Comment, r_err error) {
+	clientUser, err := Token2DBUser(token)
+	if err != nil {
+		return nil, err
 	}
 
 	// 校验视频id合法性
 	v := &DBVideo{}
-	// TODO:先尝试从缓存获取视频
 	res := DB.Model(v).First(v, "ID = ?", v_id)
 	if res.Error != nil {
 		return nil, utils.ErrVideoNotExist
 	}
 
 	// 如果视频id有效再获取评论列表
-	// TODO: 先尝试从缓存查找视频评论列表
-	// TODO：如果从缓存找到了视频评论列表，再从获取到的视频id查询评论（也是先尝试缓存查，再数据库查）
-	cDBlist, err := GetDBCommentList(v_id)
-	if err != nil {
-		return nil, err
-	}
-	// 将评论列表格式进行转换
-	for _, dbcomment := range cDBlist {
-		// 更新缓存
-		items := utils.StructToMap(&dbcomment)
-		msg := RedisMsg{
-			TYPE: CommentCreate,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	// 缓存未命中，从数据库查
+	commentlist, find := rdb.GetVideoCommentList(int(v_id))
+	if find {
+		// 缓存命中
+		log.Debugln("GetCommentList: 从缓存查询评论列表成功")
+		for _, c_id := range commentlist {
+			// 尝试从查询评论
+			C_ID, _ := strconv.Atoi(c_id)
+			cDB, err := ID2Comment(int64(C_ID))
+			if err != nil {
+				return nil, err
+			}
 
-		cUser := &DBUser{ID: dbcomment.UserId}
-		if !cUser.QueryUserByID() {
-			return nil, utils.ErrUserNotFound
+			// 查询评论者
+			cUser, err := ID2DBUser(cDB.UserId)
+			if err != nil {
+				return nil, err
+			}
+			ac, err := cDB.ToApiComment(cUser, clientUser)
+			if err != nil {
+				return nil, utils.ErrGetCommentListFailed
+			}
+			clist = append(clist, ac)
 		}
-		ac, err := dbcomment.ToApiComment(cUser, clientUser)
+		return
+	} else {
+		// 从数据库查
+		cDBlist, err := GetDBCommentList(v_id)
 		if err != nil {
-			return nil, utils.ErrGetCommentListFailed
+			return nil, err
 		}
-		clist = append(clist, ac)
+		// 将评论列表格式进行转换
+		for _, dbcomment := range cDBlist {
+			// 更新缓存
+			dbcomment.UpdateRedis(CommentCreate)
+
+			cUser, err := ID2DBUser(dbcomment.UserId)
+			if err != nil {
+				return nil, utils.ErrUserNotFound
+			}
+			ac, err := dbcomment.ToApiComment(cUser, clientUser)
+			if err != nil {
+				return nil, utils.ErrGetCommentListFailed
+			}
+			clist = append(clist, ac)
+		}
+		return
 	}
-	return
 }
 
 // 根据评论请求封装发布评论
@@ -138,4 +204,21 @@ func dbCreateComment(req *api.CommentActionRequest, userId int64) (*Comment, err
 		return nil, err
 	}
 	return comm, nil
+}
+
+func (u *Comment) InitSelfFromMap(uMap map[string]string) {
+	reflectVal := reflect.ValueOf(u).Elem()
+
+	for fieldName, fieldValue := range uMap {
+		field := reflectVal.FieldByName(fieldName)
+		if field.IsValid() && field.CanSet() {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int64:
+				tmp, _ := strconv.ParseInt(fieldValue, 10, 64)
+				field.SetInt(tmp)
+			case reflect.String:
+				field.SetString(fieldValue)
+			}
+		}
+	}
 }

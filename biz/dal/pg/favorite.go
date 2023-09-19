@@ -1,6 +1,10 @@
 package pg
 
 import (
+	log "github.com/sirupsen/logrus"
+	"miniDouyin/biz/dal/rdb"
+	"miniDouyin/utils"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,7 +16,7 @@ type Like struct {
 	VideoId   int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Deleted   gorm.DeletedAt `gorm:"default:NULL"`
+	//Deleted   gorm.DeletedAt `gorm:"default:NULL"` // 没有必要软删除
 }
 
 func (l *Like) TableName() string {
@@ -40,23 +44,34 @@ func (l *Like) insert(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新点赞者缓存
+	clientUser.FavoriteCount++
+	clientUser.UpdateRedis()
+
 	//  创建一条喜欢的记录后，还需要将被点赞者的获赞数+1
-	find := curVideo.QueryVideoByID()
-	if !find {
+	curVideo, err := ID2VideoBy(curVideo.ID)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
-	author := &DBUser{ID: curVideo.Author}
-	find = author.QueryUserByID()
-	if !find {
+
+	// 查询视频作者
+	author, err := ID2DBUser(curVideo.Author)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
+
 	res = author.increaseFavorited(tx, 1)
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新被点赞者缓存
+	author.TotalFavorited++
+	author.UpdateRedis()
 
 	//  创建一条喜欢的记录后，还需要将视频的总赞数+1
 	res = curVideo.increaseFavorited(tx, 1)
@@ -64,6 +79,10 @@ func (l *Like) insert(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新视频缓存
+	curVideo.FavoriteCount++
+	curVideo.UpdateRedis(0)
 
 	// 提交事务
 	res = tx.Commit()
@@ -98,22 +117,32 @@ func (l *Like) delete(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		return false
 	}
 	//  创建一条喜欢的记录后，还需要将被点赞者的获赞数-1
-	find := curVideo.QueryVideoByID()
-	if !find {
+	curVideo, err := ID2VideoBy(curVideo.ID)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
-	author := &DBUser{ID: curVideo.Author}
-	find = author.QueryUserByID()
-	if !find {
+
+	// 更新点赞者缓存
+	clientUser.FavoriteCount--
+	clientUser.UpdateRedis()
+
+	// 查询视频作者
+	author, err := ID2DBUser(curVideo.Author)
+	if err != nil {
 		tx.Rollback()
 		return false
 	}
+
 	res = author.increaseFavorited(tx, -1)
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
+
+	// 更新被点赞者缓存
+	author.TotalFavorited--
+	author.UpdateRedis()
 
 	//  创建一条喜欢的记录后，还需要将视频的总赞数-1
 	res = curVideo.increaseFavorited(tx, -1)
@@ -122,15 +151,19 @@ func (l *Like) delete(db *gorm.DB, clientUser *DBUser, curVideo *DBVideo) bool {
 		return false
 	}
 
+	// 更新视频缓存
+	curVideo.FavoriteCount--
+	curVideo.UpdateRedis(0)
+
 	// 提交事务
 	res = tx.Commit()
-	r_ans := res.Error == nil
+	rAns := res.Error == nil
 	if res.Error != nil {
 		tx.Rollback()
 		return false
 	}
 
-	return r_ans
+	return rAns
 }
 
 // 根据用户id查找喜欢的视频id
@@ -139,22 +172,91 @@ func (l *Like) QueryVideoByUser(db *gorm.DB) (dblist []DBVideo, find bool) {
 		return nil, false
 	}
 	var likelist []Like
-	res := db.Model(&Like{}).Where("user_id = ?", l.UserId).
-		Order("ID desc").Find(&likelist)
-
-	// 检查是否找到了记录
-	if res.RowsAffected > 0 {
-		for _, item := range likelist {
-			dbv, _ := item.ToDBVideo(db)
-			dblist = append(dblist, dbv)
+	// 先尝试从缓存获取喜欢列表
+	str_ids, redisFind := rdb.GetFavoriteListByUserID(l.UserId)
+	if redisFind {
+		// 缓存命中
+		for _, id := range str_ids {
+			ID, _ := strconv.Atoi(id)
+			dbv, err := ID2VideoBy(int64(ID))
+			if err != nil {
+				return nil, false
+			}
+			dblist = append(dblist, *dbv)
 		}
+		log.Infoln("QueryVideoByUser: 从缓存完成视频列表获取")
 		return dblist, true
+	} else {
+		// 从数据库中查找
+		res := db.Model(&Like{}).Where("user_id = ?", l.UserId).
+			Order("ID desc").Find(&likelist)
+		// 检查是否找到了记录
+		if res.RowsAffected > 0 {
+			for _, item := range likelist {
+				// 加入到缓存中
+				item.UpdateRedis(LikeCreate)
+
+				dbv, _ := item.ToDBVideo(db)
+				dblist = append(dblist, dbv)
+			}
+			return dblist, true
+		}
 	}
+
 	return nil, false
 }
 
 // 获取记录项中的视频
 func (l *Like) ToDBVideo(db *gorm.DB) (dbv DBVideo, ans bool) {
-	res := db.Model(&DBVideo{}).First(&dbv, "ID = ?", l.VideoId)
-	return dbv, res.Error == nil
+	var find bool
+	var err error
+	dbvPtr := &DBVideo{}
+
+	vMap, find := rdb.GetVideoById(strconv.Itoa(int(l.VideoId)))
+	if find {
+		//	缓存命中
+		dbv.InitSelfFromMap(vMap)
+	} else {
+		dbvPtr, err = ID2VideoBy(l.VideoId)
+		if err != nil {
+			return dbv, false
+		}
+		dbv = *dbvPtr
+	}
+	return dbv, true
+}
+
+// 判断视频是否被用户点赞，先尝试查缓存，并更新缓存
+func IsVideoLikedByUser(userID int64, videoID int64) bool {
+	// 先从缓存判断
+	islike, err := rdb.IsVideoLikedById(videoID, userID)
+	if err == nil {
+		//	缓存命中
+		log.Infof("IsVideoLikedByUser：缓存命中：用户%v 与是否点赞了视频 %v? %t", userID, videoID, islike)
+		return islike
+	}
+	// 否则查询数据库
+	findres := &Like{}
+	r := DB.Model(&Like{}).First(findres, "user_id = ? AND video_id = ?", userID, videoID)
+	if r.RowsAffected != 0 {
+		// 如果找到了记录，返回true
+		// 更新缓存
+		newRecord := &Like{
+			UserId:  userID,
+			VideoId: videoID,
+		}
+		newRecord.UpdateRedis(LikeCreate)
+		log.Infoln("IsVideoLikedByUser：更新Like缓存")
+		return true
+	}
+	return false
+}
+
+func (u *Like) UpdateRedis(Type int) {
+	items := utils.StructToMap(u)
+	msg := RedisMsg{
+		TYPE: Type,
+		DATA: items,
+	}
+	ChanFromDB <- msg
 }

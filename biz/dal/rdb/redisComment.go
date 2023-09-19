@@ -2,17 +2,18 @@ package rdb
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"strconv"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	log "github.com/sirupsen/logrus"
 )
 
 // 新建 Comment 缓存项
 func NewComment(data map[string]interface{}) {
-	// 同时新建以ID和token为key的项
+	// 同时新建以ID和videoID为key的项
 	ctx := context.Background()
 	// 设置key
 	ID := data["ID"].(int64)
@@ -47,6 +48,13 @@ func GetVideoCommentList(VideoID int) ([]string, bool) {
 	ctx := context.Background()
 	vid := strconv.Itoa(int(VideoID))
 	clist_key := "video_comment_" + vid
+
+	// 使用 Exists 方法判断键是否存在
+	exists, err := Rdb.Exists(ctx, clist_key).Result()
+	if err != nil || exists != 1 {
+		log.Debugln("Error:", err)
+		return nil, false
+	}
 
 	clist, err := Rdb.ZRange(ctx, clist_key, 0, -1).Result()
 	if err != nil {
@@ -99,7 +107,7 @@ func GetCommentByID(id string) (map[string]string, bool) {
 }
 
 // 从 CMap 转化为api.Comment
-func CMap2ApiComment(cMap map[string]string) (*api.Comment, bool) {
+func CMap2ApiComment(cMap map[string]string, clientToken string) (*api.Comment, bool) {
 	strID := cMap["ID"]
 	ID, _ := strconv.Atoi(strID)
 	content := cMap["Content"]
@@ -120,5 +128,24 @@ func CMap2ApiComment(cMap map[string]string) (*api.Comment, bool) {
 		Content:    content,
 		CreateDate: createdAt,
 	}
+
+	// 判断当前用户是否关注了评论作者
+	if clientToken == "" {
+		// 前端未登录
+		return apic, true
+	}
+
+	// 登录则需要判断是否关注了评论用户
+	clientUserMap, find := GetUserByToken(clientToken)
+	if !find {
+		return nil, false
+	}
+	ClientID, _ := strconv.Atoi(clientUserMap["ID"])
+	isfollow, err := IsFollow(int64(ClientID), int64(userId))
+	if err != nil {
+		// 缓存关系缺失
+		return nil, false
+	}
+	apic.User.IsFollow = isfollow
 	return apic, true
 }

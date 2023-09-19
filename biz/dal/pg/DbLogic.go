@@ -8,9 +8,7 @@
 package pg
 
 import (
-	"context"
 	"mime/multipart"
-	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"miniDouyin/utils"
 	"time"
@@ -42,12 +40,7 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		str := "Login successfully!"
 		response.StatusMsg = &str
 		// 发送消息更新缓存
-		items := utils.StructToMap(&user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 		// select {
 		// case ChanFromDB <- msg:
@@ -84,12 +77,7 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 		response.StatusMsg = &str
 
 		// 发送消息更新缓存
-		items := utils.StructToMap(&user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		user.UpdateRedis()
 
 	} else {
 		response.StatusCode = 2
@@ -100,53 +88,24 @@ func DBUserRegister(request *api.UserRegisterRequest, response *api.UserRegister
 
 // 获取User信息
 func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
-	var user *DBUser
-	var err error
 	// 先尝试从缓存查找用户
-	uMap, find := rdb.GetUserById(request.UserID)
-	if find {
-		// 缓存命中
-		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
-		user.InitSelfFromMap(uMap)
-	} else {
-		// 缓存命中失败则从数据库中查询
-		user, err = DBGetUser(request)
-		if err != nil {
-			// 没有找到用户
-			response.StatusCode = 1
-			str := err.Error()
-			response.StatusMsg = &str
-			return
-		}
-		// 发送消息更新缓存
-		items := utils.StructToMap(user)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	user, err := ID2DBUser(request.UserID)
+	if err != nil {
+		response.StatusCode = 3
+		str := err.Error()
+		response.StatusMsg = &str
+		return
 	}
 
 	// 填充结构体
-
 	// 先获取client
 	// 尝试从缓存获取client
-	var clientUser *DBUser
-	cMap, find := rdb.GetUserByToken(request.Token)
-	if find {
-		// 缓存命中
-		log.Debugln("DBGetUserinfo: 从缓存查询client记录成功")
-		clientUser.InitSelfFromMap(cMap)
-	} else {
-		// 从数据库直接查询
-		clientUser, _ = ValidateToken(request.Token)
-		// 发送消息更新缓存
-		items := utils.StructToMap(clientUser)
-		msg := RedisMsg{
-			TYPE: UserInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+	clientUser, err := Token2DBUser(request.Token)
+	if err != nil {
+		response.StatusCode = 1
+		str := err.Error()
+		response.StatusMsg = &str
+		return
 	}
 
 	response.User, _ = user.ToApiUser(clientUser)
@@ -157,53 +116,50 @@ func DBGetUserinfo(request *api.UserRequest, response *api.UserResponse) {
 
 // 处理视频流
 func DBVideoFeed(request *api.FeedRequest, response *api.FeedResponse) {
-	vlist, err := GetNewVideoList(*request.LatestTime)
+	var vlist []DBVideo
+	var err error
+
+	if request.LatestTime != nil {
+		vlist, err = GetNewVideoList(*request.LatestTime)
+	} else {
+		vlist, err = GetNewVideoList(0)
+	}
 	if err != nil {
 		response.StatusCode = 1
 		str := utils.ErrGetFeedVideoListFailed.Error()
 		response.StatusMsg = &str
 		return
 	}
-	response.StatusCode = 0
-	str := "Load video list successfully"
-	response.StatusMsg = &str
+	// 先获取client
+	// 尝试从缓存获取client
+	clientUser := &DBUser{}
+	if request.Token == nil {
+		// 未登录状态
+		clientUser = nil
+	} else {
+		// 获取clientUser
+		clientUser, err = Token2DBUser(*request.Token)
+		if err != nil {
+			response.StatusCode = 1
+			str := err.Error()
+			response.StatusMsg = &str
+			return
+		}
+	}
 	for idx, video := range vlist {
 		// 遍历视频时，顺手发送消息更新视频缓存
-		items := utils.StructToMap(&video)
-		msg := RedisMsg{
-			TYPE: VideoInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msg
+		video.UpdateRedis(0)
 
 		if idx == len(vlist)-1 {
 			newNext := video.CreatedAt.UnixMilli()
 			response.NextTime = &newNext
 		}
-		var clientUser *DBUser = nil
-		if request.Token != nil {
-			// 先尝试从缓存获取User
-			uMap, find := rdb.GetUserByToken(*request.Token)
-			if find {
-				// 缓存更新用户信息
-				log.Debugln("DBVideoFeed: 从缓存查询client user记录成功")
-				clientUser.InitSelfFromMap(uMap)
-			} else {
-				// 缓存未命中。数据库查询
-				clientUser, _ = ValidateToken(*request.Token)
-				// 发送消息更新缓存
-				items := utils.StructToMap(clientUser)
-				msg := RedisMsg{
-					TYPE: UserInfo,
-					DATA: items,
-				}
-				ChanFromDB <- msg
-			}
-		}
 		newVideo, _ := video.ToApiVideo(DB, clientUser, false)
 		response.VideoList = append(response.VideoList, newVideo)
-
 	}
+	response.StatusCode = 0
+	str := "Load video list successfully"
+	response.StatusMsg = &str
 }
 
 // 接受上传视频
@@ -212,14 +168,15 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 	request.Title = form.Value["title"][0]
 
 	// 先验证token
-	user, err := ValidateToken(request.Token)
-
+	// 先尝试缓存获取clientUser
+	clientUser, err := Token2DBUser(request.Token)
 	if err != nil {
 		response.StatusCode = 1
-		str := utils.ErrTokenVerifiedFailed.Error()
+		str := err.Error()
 		response.StatusMsg = &str
 		return
 	}
+
 	file := form.File["data"][0]
 
 	_, saveName, dbURL := utils.GetVideoNameAndPath()
@@ -235,7 +192,7 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 
 	saveCoverPath, dbCoverPath := utils.GetVideoCoverName(saveName)
 
-	video := DBVideo{Author: user.ID, Title: request.Title, PlayUrl: dbURL, CoverUrl: dbCoverPath}
+	video := DBVideo{Author: clientUser.ID, Title: request.Title, PlayUrl: dbURL, CoverUrl: dbCoverPath}
 
 	tx := DB.Begin()
 	res := video.insert(tx)
@@ -248,7 +205,7 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		return
 	}
 
-	res = user.increaseWork(tx, 1)
+	res = clientUser.increaseWork(tx, 1)
 
 	if !res {
 		response.StatusCode = 2
@@ -267,34 +224,14 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 	}
 
 	// 事务成功后需要将user的work_count自增
-	user.WorkCount++
+	clientUser.WorkCount++
 
 	// 发送消息更新缓存
 	// 由于视频发布后user的字段发送了变化，需要更新缓存的user
-	items1 := utils.StructToMap(user)
-	msg1 := RedisMsg{
-		TYPE: UserInfo,
-		DATA: items1,
-	}
-	ChanFromDB <- msg1
+	clientUser.UpdateRedis()
 
-	// 更新视频缓存
-	items2 := utils.StructToMap(&video)
-	msg2 := RedisMsg{
-		TYPE: VideoInfo,
-		DATA: items2,
-	}
-	ChanFromDB <- msg2
-
-	// 更新用户发布视频的集合
-	msg3 := RedisMsg{
-		TYPE: Publish,
-		DATA: map[string]interface{}{
-			"ID":     video.Author,
-			"Videos": []interface{}{video.ID},
-		},
-	}
-	ChanFromDB <- msg3
+	// 更新视频缓存、用户发布视频的集合
+	video.UpdateRedis(video.Author)
 
 	response.StatusCode = 0
 	response.StatusMsg = &utils.UploadVideosSuccess
@@ -312,17 +249,16 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		return
 	}
 
-	var clientUser *DBUser
-	// 先尝试从缓存查找用户
-	uMap, find := rdb.GetUserByToken(request.Token)
-	if find {
-		// 缓存命中
-		log.Debugln("DBGetUserinfo: 从缓存查询视频author记录成功")
-		clientUser.InitSelfFromMap(uMap)
-	} else {
-		// 从数据库查询
-		clientUser, _ = ValidateToken(request.Token)
+	// 先获取client
+	// 尝试从缓存获取client
+	clientUser, err := Token2DBUser(request.Token)
+	if err != nil {
+		response.StatusCode = 1
+		str := err.Error()
+		response.StatusMsg = &str
+		return
 	}
+
 	// 准备将发布列表更新到缓存
 	ids := make([]interface{}, len(vlist))
 
@@ -332,12 +268,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 		response.StatusCode = 0
 		ids[idx] = video.ID
 		// 更新视频缓存
-		items := utils.StructToMap(&video)
-		msgV := RedisMsg{
-			TYPE: VideoInfo,
-			DATA: items,
-		}
-		ChanFromDB <- msgV
+		video.UpdateRedis(0)
 	}
 	// 同时更新用户发布的集合缓存
 	if clientUser != nil {
@@ -357,7 +288,7 @@ func DBVideoPublishList(request *api.PublishListRequest, response *api.PublishLi
 func DBUserAction(request *api.RelationActionRequest, response *api.RelationActionResponse) {
 	action := DBActionFromActionRequest(request)
 
-	err := action.ifFollow(request.ActionType, request.Token)
+	err := action.ifFollow(request.ActionType)
 	log.Debugf("action = %+v\n", action)
 	if err == nil {
 		// 关注或取消关注成功
@@ -372,7 +303,7 @@ func DBUserAction(request *api.RelationActionRequest, response *api.RelationActi
 }
 
 // 喜欢操作
-func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse, ctx context.Context) {
+func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.FavoriteActionResponse) {
 	// 校验 VideoID
 	if request.VideoID <= 0 {
 		response.StatusCode = 2
@@ -381,14 +312,15 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 		return
 	}
 	// 校验 token
-	_, err := ValidateToken(request.Token)
+	// 先尝试缓存获取clientUser
+	clientUser, err := Token2DBUser(request.Token)
 	if err != nil {
 		response.StatusCode = 1
-		str := utils.ErrTokenVerifiedFailed.Error()
+		str := err.Error()
 		response.StatusMsg = &str
 		return
 	}
-	clientUser, _ := ValidateToken(request.Token)
+
 	newRecord := &Like{
 		VideoId: request.VideoID,
 		UserId:  clientUser.ID,
@@ -404,22 +336,26 @@ func DBFavoriteAction(request *api.FavoriteActionRequest, response *api.Favorite
 	if request.ActionType == 1 {
 		// 点赞
 		ans = newRecord.insert(DB, clientUser, curVideo)
+		// 发送消息更新缓存
+		newRecord.UpdateRedis(LikeCreate)
+		response.StatusCode = 0
+		response.StatusMsg = &utils.FavoriteVideoActionSuccess
 
 	} else if request.ActionType == 2 {
 		// 取消点赞
 		ans = newRecord.delete(DB, clientUser, curVideo)
+		newRecord.UpdateRedis(LikeDel)
+		response.StatusCode = 0
+		response.StatusMsg = &utils.UnFavoriteVideoActionSuccess
 	} else {
 		ans = false
 	}
 	if !ans {
 		response.StatusCode = 2
-		str := utils.ErrLikeFaile.Error()
+		str := utils.ErrLikeFailed.Error()
 		response.StatusMsg = &str
 		return
 	}
-
-	response.StatusCode = 0
-	response.StatusMsg = &utils.FavoriteVideoActionSuccess
 
 }
 
@@ -436,13 +372,13 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 	}
 
 	// 验证token
-	clientUser, err := ValidateToken(request.Token)
-	if err != nil || clientUser.ID != request.UserID {
+	// 先尝试缓存获取clientUser
+	clientUser, err := Token2DBUser(request.Token)
+	if err != nil || (clientUser != nil && clientUser.ID != request.UserID) {
 		response.StatusCode = 1
-		str := utils.ErrWrongToken.Error()
-		response.StatusMsg = &str
 		return
 	}
+
 	likeobj := &Like{UserId: request.UserID}
 
 	// 根据映射关系查询喜欢列表
@@ -455,9 +391,12 @@ func DBFavoriteList(request *api.FavoriteListRequest, response *api.FavoriteList
 		return
 	}
 
-	for _, item := range dbvlist {
+	for _, video := range dbvlist {
+		// 更新视频缓存
+		video.UpdateRedis(0)
+
 		// true 表示确信当前的视频被喜欢
-		apiVideo, _ := item.ToApiVideo(DB, clientUser, true)
+		apiVideo, _ := video.ToApiVideo(DB, clientUser, true)
 		response.VideoList = append(response.VideoList, apiVideo)
 	}
 	response.StatusCode = 0
@@ -476,8 +415,11 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 	}
 
 	// 验证 token
-	clientUser, err := ValidateToken(request.Token)
+	clientUser, err := Token2DBUser(request.Token)
 	if err != nil {
+		response.StatusCode = 1
+		str := err.Error()
+		response.StatusMsg = &str
 		return
 	}
 
@@ -495,14 +437,7 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 		cUser := &DBUser{ID: comment.UserId}
 		response.Comment, err = comment.ToApiComment(cUser, clientUser)
 		// 发送消息更新缓存
-		items := utils.StructToMap(comment)
-		log.Debugf("%T", items["CreateAt"])
-		msg := RedisMsg{
-			TYPE: CommentCreate,
-			DATA: items,
-		}
-		ChanFromDB <- msg
-
+		comment.UpdateRedis(CommentCreate)
 	} else if request.ActionType == 2 {
 		// 删除评论
 		// 校验CommentID 是否合法
@@ -513,19 +448,12 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 			return
 		}
 		// 从数据库删除
-		_, err := DeleteComment(*request.CommentID)
+		comment, err := DeleteComment(*request.CommentID)
 		if err != nil {
 			return
 		}
 		// 再从缓存中删除
-		msg := RedisMsg{
-			TYPE: CommentDel,
-			DATA: map[string]interface{}{
-				"ID":      *request.CommentID,
-				"VideoId": request.VideoID,
-			},
-		}
-		ChanFromDB <- msg
+		comment.UpdateRedis(CommentDel)
 
 		response.StatusCode = 0
 		response.StatusMsg = &utils.DeleteCommentSuccess
@@ -534,10 +462,16 @@ func DBCommentAction(request *api.CommentActionRequest, response *api.CommentAct
 	}
 
 	// 评论计数
-	dbv := &DBVideo{ID: request.VideoID}
+	// 视频是一定存在的
+	dbv, _ := ID2VideoBy(request.VideoID)
+
 	txn := DB.Begin()
 	dbv.increaseComment(txn)
 	txn.Commit()
+
+	// 更新视频缓存
+	dbv.CommentCount++
+	dbv.UpdateRedis(0)
 }
 
 // 获取评论列表
@@ -548,15 +482,31 @@ func DBCommentList(request *api.CommentListRequest, response *api.CommentListRes
 		response.StatusMsg = &str
 		return
 	}
-
 	comments, _ := NewGetCommentListService(request.VideoID, request.Token)
 	response.CommentList = comments
 }
 
+// 用户关注列表
 func DBFollowList(request *api.RelationFollowListRequest, response *api.RelationFollowListResponse) {
-	clientuser, _ := ValidateToken(request.Token)
+	// 先验证token
+	// 先尝试缓存获取clientUser
+	clientUser, Terr := Token2DBUser(request.Token)
+	if Terr != nil {
+		response.StatusCode = 3
+		str := Terr.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	// 从Redis完成业务
+	res := GetFollowListFromRedis(response, clientUser)
+	if res {
+		return
+	}
+
+	// 缓存未命中则需要数据库再次查询
 	var followlist []DBAction
-	err := DB.Where("user_id = ?", clientuser.ID).Find(&followlist)
+	err := DB.Where("user_id = ?", clientUser.ID).Find(&followlist)
 	if err.Error != nil {
 		response.StatusCode = 1
 		str := "Get follow list failed"
@@ -575,19 +525,42 @@ func DBFollowList(request *api.RelationFollowListRequest, response *api.Relation
 			response.UserList = nil
 			return
 		}
-		apiuser, _ := user.ToApiUser(clientuser)
+		apiuser, _ := user.ToApiUser(clientUser)
 
 		response.UserList = append(response.UserList, apiuser)
+		// 更新缓存
+		msg := RedisMsg{
+			TYPE: UserFollowAdd,
+			DATA: map[string]interface{}{
+				"UserID":   follow.UserID, // 粉丝
+				"FollowID": follow.FollowID,
+			}}
+		ChanFromDB <- msg
 	}
 	response.StatusCode = 0
 	str := "Get follow list successfully"
 	response.StatusMsg = &str
 }
 
+// 用户粉丝列表
 func DBFollowerList(request *api.RelationFollowerListRequest, response *api.RelationFollowerListResponse) {
-	clientuser, _ := ValidateToken(request.Token)
+	// 验证Token
+	clientUser, Terr := Token2DBUser(request.Token)
+	if Terr != nil {
+		response.StatusCode = 1
+		str := Terr.Error()
+		response.StatusMsg = &str
+		return
+	}
+
+	// 从Redis完成业务
+	res := GetFollowerListFromRedis(response, clientUser)
+	if res {
+		return
+	}
+
 	var followerList []DBAction
-	err := DB.Where("follow_id = ?", clientuser.ID).Find(&followerList)
+	err := DB.Where("follow_id = ?", clientUser.ID).Find(&followerList)
 	if err.Error != nil {
 		response.StatusCode = 1
 		str := "Get follower list failed"
@@ -597,16 +570,24 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 	}
 
 	for _, follower := range followerList {
-		user := &DBUser{}
-		err := DB.Where("id = ?", follower.UserID).First(user)
-		if err.Error != nil {
+		user, err := ID2DBUser(follower.UserID)
+		if err != nil {
 			response.StatusCode = 1
 			str := "Get follower list failed"
 			response.StatusMsg = &str
 			response.UserList = nil
 			return
 		}
-		apiuser, _ := user.ToApiUser(clientuser)
+		// 更新关注缓存
+		msg := RedisMsg{
+			TYPE: UserFollowAdd,
+			DATA: map[string]interface{}{
+				"UserID":   follower.UserID, // 粉丝
+				"FollowID": follower.FollowID,
+			}}
+		ChanFromDB <- msg
+
+		apiuser, _ := user.ToApiUser(clientUser)
 		response.UserList = append(response.UserList, apiuser)
 	}
 	response.StatusCode = 0
@@ -614,10 +595,18 @@ func DBFollowerList(request *api.RelationFollowerListRequest, response *api.Rela
 	response.StatusMsg = &str
 }
 
+// 用户好友列表
 func DBFriendList(request *api.RelationFriendListRequest, response *api.RelationFriendListResponse) {
-	clientuser, _ := ValidateToken(request.Token)
+	clientUser, Terr := Token2DBUser(request.Token)
+	if Terr != nil {
+		response.StatusCode = 1
+		str := Terr.Error()
+		response.StatusMsg = &str
+		return
+	}
+
 	var friendList []DBfriend
-	err := DB.Where("user_id = ?", clientuser.ID).Find(&friendList)
+	err := DB.Where("user_id = ?", clientUser.ID).Find(&friendList)
 	if err.Error != nil {
 		response.StatusCode = 1
 		str := "Get friend list failed"
@@ -636,12 +625,12 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 			response.UserList = nil
 			return
 		}
-		apiuser, _ := user.ToApiUser(clientuser)
-		apiFriend, content := apiUser2apiFriend(apiuser, clientuser)
+		apiuser, _ := user.ToApiUser(clientUser)
+		apiFriend, content := apiUser2apiFriend(apiuser, clientUser)
 		response.UserList = append(response.UserList, apiFriend)
 
 		item := map[string]interface{}{
-			"FromID":  clientuser.ID,
+			"FromID":  clientUser.ID,
 			"ToID":    friend.FriendID,
 			"Message": content.Content,
 			"MsgType": apiFriend.MsgType,
@@ -653,7 +642,7 @@ func DBFriendList(request *api.RelationFriendListRequest, response *api.Relation
 		ChanFromDB <- msg
 
 		item = map[string]interface{}{
-			"ID":     clientuser.ID,
+			"ID":     clientUser.ID,
 			"Friend": friend.FriendID,
 		}
 		msg = RedisMsg{
@@ -707,7 +696,13 @@ func DBSendMsg(request *api.SendMsgRequest, response *api.SendMsgResponse) {
 }
 
 func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse) {
-	clientuser, _ := ValidateToken(request.Token)
+	clientUser, Terr := Token2DBUser(request.Token)
+	if Terr != nil {
+		response.StatusCode = 1
+		str := Terr.Error()
+		response.StatusMsg = &str
+		return
+	}
 	var msgList []DBMessage
 	log.Debugln("传入的时间戳为 = ", request.PreMsgTime)
 
@@ -722,7 +717,7 @@ func DBChatRec(request *api.ChatRecordRequest, response *api.ChatRecordResponse)
 
 	log.Debugf("DBChatRec cmp = %v\n", cmp)
 
-	err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) AND created_at > ?", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID, cmp).Order("ID").Find(&msgList)
+	err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) AND created_at > ?", request.ToUserID, clientUser.ID, clientUser.ID, request.ToUserID, cmp).Order("ID").Find(&msgList)
 	// err := DB.Where("((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?))", request.ToUserID, clientuser.ID, clientuser.ID, request.ToUserID).Order("ID desc").Find(&msgList)
 	if err.Error != nil {
 		response.StatusCode = 1

@@ -1,0 +1,116 @@
+{
+  "status_code": 0,
+  "status_msg": "successfully get the favorite video list",
+  "video_list": [
+    {
+      "id": 3,
+      "author": {
+        "id": 2,
+        "name": "test5",
+        "follow_count": 3,
+        "follower_count": 5,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 7,
+        "work_count": 1,
+        "favorite_count": 5
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693280149503915000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693280149503915000.png",
+      "favorite_count": 7,
+      "comment_count": 45,
+      "is_favorite": true,
+      "title": "123\n"
+    },
+    {
+      "id": 3,
+      "author": {
+        "id": 2,
+        "name": "test5",
+        "follow_count": 3,
+        "follower_count": 5,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 7,
+        "work_count": 1,
+        "favorite_count": 5
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693280149503915000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693280149503915000.png",
+      "favorite_count": 7,
+      "comment_count": 45,
+      "is_favorite": true,
+      "title": "123\n"
+    },
+    {
+      "id": 3,
+      "author": {
+        "id": 2,
+        "name": "test5",
+        "follow_count": 3,
+        "follower_count": 5,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 7,
+        "work_count": 1,
+        "favorite_count": 5
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693280149503915000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693280149503915000.png",
+      "favorite_count": 7,
+      "comment_count": 45,
+      "is_favorite": true,
+      "title": "123\n"
+    },
+    {
+      "id": 3,
+      "author": {
+        "id": 2,
+        "name": "test5",
+        "follow_count": 3,
+        "follower_count": 5,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 7,
+        "work_count": 1,
+        "favorite_count": 5
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693280149503915000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693280149503915000.png",
+      "favorite_count": 7,
+      "comment_count": 45,
+      "is_favorite": true,
+      "title": "123\n"
+    },
+    {
+      "id": 3,
+      "author": {
+        "id": 2,
+        "name": "test5",
+        "follow_count": 3,
+        "follower_count": 5,
+        "is_follow": true,
+        "avatar": "http://192.168.1.113:8889/data/",
+        "background_image": "http://192.168.1.113:8889/data/",
+        "signature": "",
+        "total_favorited": 7,
+        "work_count": 1,
+        "favorite_count": 5
+      },
+      "play_url": "http://192.168.1.113:8889/data/videos/1693280149503915000.mp4",
+      "cover_url": "http://192.168.1.113:8889/data/bgs/1693280149503915000.png",
+      "favorite_count": 7,
+      "comment_count": 45,
+      "is_favorite": true,
+      "title": "123\n"
+    }
+  ]
+}

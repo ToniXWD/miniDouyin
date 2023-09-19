@@ -1,16 +1,8 @@
-/*
- * @Description:a
- * @Author: Zjy
- * @Date: 2023-09-01 18:42:48
- * @LastEditTime: 2023-09-02 18:58:37
- * @version: 1.0
- */
 package pg
 
 import (
-	"miniDouyin/biz/dal/rdb"
-
 	log "github.com/sirupsen/logrus"
+	"miniDouyin/biz/dal/rdb"
 )
 
 func PGserver() {
@@ -38,12 +30,24 @@ func PGserver() {
 		case CommentDel:
 			log.Infoln("删除评论缓存")
 			go rdb.DelComment(msg.DATA)
+		case LikeCreate:
+			log.Infoln("更新点赞缓存")
+			go rdb.NewLikeVideo(msg.DATA)
+		case LikeDel:
+			log.Infoln("删除点赞缓存")
+			go rdb.DelLikeVideo(msg.DATA)
 		case Friend:
-			log.Infoln("更新好友缓存")
+			log.Infoln("更新好友缓存-增加")
 			go rdb.NewFriend(msg.DATA)
+		case FriendDel:
+			log.Infoln("更新好友缓存-删除")
+			go rdb.DelFriend(msg.DATA)
 		case FriendList:
-			log.Infoln("更新好友列表缓存")
+			log.Infoln("更新好友列表缓存-增加")
 			go rdb.UpdateFriendList(msg.DATA)
+		case FriendListDel:
+			log.Infoln("更新好友列表缓存-删除")
+			go rdb.UpdateFriendListDel(msg.DATA)
 		case ChatRecord:
 			log.Infoln("更新聊天记录缓存")
 			go rdb.UpdateChatRec(msg.DATA)

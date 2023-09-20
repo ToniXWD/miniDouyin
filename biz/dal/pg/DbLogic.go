@@ -36,7 +36,7 @@ func DBUserLogin(request *api.UserLoginRequest, response *api.UserLoginResponse)
 		}
 		response.StatusCode = 0
 		response.UserID = int64(user.ID)
-		response.Token = user.Username + user.Passwd
+		response.Token, _ = utils.GenerateToken(user.Username, user.Passwd)
 		str := "Login successfully!"
 		response.StatusMsg = &str
 		// 发送消息更新缓存

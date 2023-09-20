@@ -205,15 +205,6 @@ func DBReceiveVideo(request *api.PublishActionRequest, response *api.PublishActi
 		return
 	}
 
-	res = clientUser.increaseWork(tx, 1)
-
-	if !res {
-		response.StatusCode = 2
-		str := utils.ErrDBSaveVideoFaile.Error()
-		response.StatusMsg = &str
-		tx.Rollback()
-		return
-	}
 	tx_res := tx.Commit()
 	if tx_res.Error != nil {
 		response.StatusCode = 2

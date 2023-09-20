@@ -8,7 +8,6 @@
 package pg
 
 import (
-	"gorm.io/gorm"
 	"miniDouyin/biz/model/miniDouyin/api"
 )
 
@@ -16,7 +15,6 @@ type DBfriend struct {
 	ID       int64 `gorm:"primaryKey"`
 	UserID   int64
 	FriendID int64
-	Deleted  gorm.DeletedAt `gorm:"default:NULL"`
 }
 
 func (u *DBfriend) TableName() string {

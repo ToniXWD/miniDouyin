@@ -5,15 +5,12 @@ import (
 	"miniDouyin/biz/dal/rdb"
 	"miniDouyin/biz/model/miniDouyin/api"
 	"strconv"
-
-	"gorm.io/gorm"
 )
 
 type DBAction struct {
 	ID       int64 `gorm:"primaryKey"`
 	UserID   int64
 	FollowID int64
-	Deleted  gorm.DeletedAt `gorm:"default:NULL"`
 }
 
 func (u *DBAction) TableName() string {
@@ -70,11 +67,17 @@ func (u *DBAction) ifFollow(actiontype int64) error {
 		// 取消关注
 		err = u.Delete()
 		if err == nil {
-			user := &DBUser{}
+			fanUser, _ := ID2DBUser(u.UserID)
 			// 粉丝用户数据更新
 			// DB.Model(user).Where("ID = ?", u.UserID).Update("follow_count", gorm.Expr("follow_count - ?", 1))
+			fanUser.FollowCount--
+			fanUser.UpdateRedis()
+
 			// 被关注者用户数据更新
+			Followed, _ := ID2DBUser(u.FollowID)
 			// DB.Model(user).Where("ID = ?", u.FollowID).Update("follower_count", gorm.Expr("follower_count - ?", 1))
+			Followed.FollowerCount--
+			Followed.UpdateRedis()
 
 			// 判断对方是否关注了自己
 			relation := &DBAction{}

@@ -32,7 +32,7 @@ BEGIN
     -- 开始一个事务块
     BEGIN
         UPDATE users
-        SET follower_count = follower_count - 1
+        SET follow_count = follow_count - 1
         WHERE id = OLD.user_id;
 
         UPDATE users

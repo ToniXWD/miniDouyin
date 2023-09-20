@@ -183,8 +183,6 @@
 
 ### 2.2.10 关注业务
 
-<center><img src="data/flow/action.drawio.png" width=340></center>
-
 业务逻辑如下：
 
 - 根据用户请求关注的对方 id，更新数据库中 follows 表
@@ -193,8 +191,6 @@
 
 ### 2.2.11 获取关注列表业务
 
-<center><img src="data/flow/followlist.drawio.png" width=370></center>
-
 业务逻辑如下：
 
 - 先从缓存获取关注用户的 id 集合，然后去 user 缓存获取用户信息
@@ -202,16 +198,12 @@
 
 ### 2.2.12 获取粉丝列表业务
 
-<center><img src="data/flow/followerlist.drawio.png" width=370></center>
-
 业务逻辑如下：
 
 - 先从缓存获取粉丝用户的 id 集合，然后去 user 缓存获取用户信息
 - 如果缓存不存在该 key，则从数据库中查询，成功后更新缓存
 
 ### 2.2.13 获取好友列表业务
-
-<center><img src="data/flow/friendlist.drawio.png" width=600></center>
 
 业务逻辑如下：
 
@@ -221,14 +213,14 @@
 
 ### 2.2.14 发送消息业务
 
+![img](./data/flow/sendmsg.png)
+
 业务逻辑如下：
 
 - 根据请求传来的用户 ID 和 ToID，向数据库的 message 表中插入消息内容
 - 然后更新 friend 缓存中最新的消息内容
 
 ### 2.2.15 获取聊天记录业务
-
-<center><img src="data/flow/chatrec.drawio.png"></center>
 
 业务逻辑如下：
 
